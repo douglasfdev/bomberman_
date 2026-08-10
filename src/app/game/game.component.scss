@@ -1,0 +1,140 @@
+.game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #0f1420;
+}
+
+.game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.hud-top {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font: 14px/1.4 sans-serif;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.controls {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.d-pad {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, 56px);
+  grid-template-rows: repeat(3, 56px);
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.d-btn {
+  border: none;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 20px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.d-btn:active {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.up {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.left {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.right {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.action-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: none;
+  font-size: 32px;
+  background: rgba(255, 87, 34, 0.85);
+  color: #fff;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.action-btn:active {
+  background: rgba(255, 87, 34, 1);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+.overlay-title {
+  font-size: 42px;
+  margin: 0;
+}
+
+.restart-btn {
+  padding: 12px 26px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  background: #37e06b;
+  color: #062b12;
+  cursor: pointer;
+}
+
+.error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  text-align: center;
+}

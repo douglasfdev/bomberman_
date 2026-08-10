@@ -1,0 +1,51 @@
+<div class="game-container" #gameContainer>
+  <canvas class="game-canvas" #gameCanvas></canvas>
+
+  <div class="hud-top">
+    <span>Pontos: {{ score() }}</span>
+    <span>Inimigos: {{ enemiesRemaining() }}</span>
+    <span>Bombas: {{ maxBombs() }}</span>
+    <span>Alcance: {{ range() }}</span>
+    <span *ngIf="speed()">Vel +{{ speed() }}</span>
+    <span *ngIf="pierce()">Atravessa</span>
+  </div>
+
+  <div class="controls" *ngIf="isTouch">
+    <div class="d-pad">
+      <button
+        class="d-btn up"
+        (pointerdown)="onDirection(Direction.Up)"
+        (pointerup)="onDirection(null)"
+        (pointerleave)="onDirection(null)"
+      >▲</button>
+      <button
+        class="d-btn left"
+        (pointerdown)="onDirection(Direction.Left)"
+        (pointerup)="onDirection(null)"
+        (pointerleave)="onDirection(null)"
+      >◀</button>
+      <button
+        class="d-btn right"
+        (pointerdown)="onDirection(Direction.Right)"
+        (pointerup)="onDirection(null)"
+        (pointerleave)="onDirection(null)"
+      >▶</button>
+      <button
+        class="d-btn down"
+        (pointerdown)="onDirection(Direction.Down)"
+        (pointerup)="onDirection(null)"
+        (pointerleave)="onDirection(null)"
+      >▼</button>
+    </div>
+    <button class="action-btn" (pointerdown)="onAction()">💣</button>
+  </div>
+
+  <div class="overlay" *ngIf="gamePhase() !== GamePhase.Playing">
+    <h2 class="overlay-title">
+      {{ gamePhase() === GamePhase.Victory ? 'Vitória!' : 'Derrota' }}
+    </h2>
+    <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+  </div>
+
+  <div class="error" *ngIf="initError()">Seu navegador não suporta WebGL.</div>
+</div>
