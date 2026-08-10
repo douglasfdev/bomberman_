@@ -1,0 +1,16 @@
+export const GRID_SIZE = 15;
+export const BOMB_FUSE_MS = 3000;
+export const BASE_MOVE_DURATION_MS = 350;
+export const MIN_MOVE_DURATION_MS = 150;
+export const SPEED_STEP_MS = 30;
+export const BASE_BOMBS = 1;
+export const BASE_RANGE = 1;
+export const POWER_UP_DROP_CHANCE = 0.4;
+export const ENEMY_COUNT = 3;
+export const SPAWN_CLEAR_RADIUS = 2;
+export const EXPLOSION_MS = 350;
+export const SCORE_BOX = 10;
+export const SCORE_ENEMY = 50;
+export const SCORE_POWER_UP = 20;
+export const EXIT_MIN_SPAWN_DISTANCE = 5;
+export const BOX_CHANCE = 0.6;
