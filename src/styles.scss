@@ -1,1 +1,145 @@
-/* You can add global styles to this file, and also import other style files */
+/* Reset e otimizações para mobile/game */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: #0f1420;
+  color: white;
+}
+
+.game-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1420;
+  overflow: hidden;
+}
+
+.game-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated; /* Mantém o visual nítido/retrô */
+}
+
+.hud-top {
+  position: absolute;
+  top: env(safe-area-inset-top, 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none; /* Permite clicar através do HUD */
+  z-index: 10;
+}
+
+.controls {
+  position: absolute;
+  bottom: env(safe-area-inset-bottom, 20px);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  z-index: 10;
+}
+
+.d-pad {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.d-btn {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  color: white;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.d-btn.up { top: 0; left: 50%; transform: translateX(-50%); }
+.d-btn.down { bottom: 0; left: 50%; transform: translateX(-50%); }
+.d-btn.left { left: 0; top: 50%; transform: translateY(-50%); }
+.d-btn.right { right: 0; top: 50%; transform: translateY(-50%); }
+
+.action-btn {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 69, 0, 0.7);
+  border: 3px solid rgba(255, 140, 0, 0.9);
+  color: white;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: manipulation;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.overlay-title {
+  font-size: 3rem;
+  margin-bottom: 24px;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.restart-btn {
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #ff4444;
+  padding: 16px;
+  border-radius: 8px;
+  z-index: 30;
+}
