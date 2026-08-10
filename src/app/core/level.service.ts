@@ -37,6 +37,9 @@ export class LevelService {
     this.playerSpawn = { x: 1, y: 1 };
     this.enemySpawns = this.computeEnemySpawns();
     const spawns = [this.playerSpawn, ...this.enemySpawns];
+    for (const s of spawns) {
+      this.setTile(s, TileType.Empty);
+    }
     this.placeBoxes(spawns);
     this.exitBox = this.chooseExitBox(spawns);
   }

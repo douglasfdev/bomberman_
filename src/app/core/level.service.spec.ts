@@ -61,6 +61,15 @@ describe('LevelService', () => {
     expect(boxes).toBeGreaterThan(0);
   });
 
+  it('mantém os spawns andáveis', () => {
+    const spawns = [service.playerSpawn, ...service.enemySpawns];
+    expect(spawns.length).toBeGreaterThan(0);
+    for (const spawn of spawns) {
+      expect(service.tileAt(spawn).type).toBe(TileType.Empty);
+      expect(service.isWalkable(spawn)).toBe(true);
+    }
+  });
+
   it('esconde a saída sob uma caixa', () => {
     expect(service.tileAt(service.exitBox).type).toBe(TileType.Box);
   });
