@@ -45,6 +45,7 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   readonly GamePhase = GamePhase;
 
   private readonly subscriptions: Subscription[] = [];
+  private initialized = false;
 
   ngAfterViewInit(): void {
     try {
@@ -53,6 +54,7 @@ export class GameComponent implements AfterViewInit, OnDestroy {
       this.initError.set(true);
       return;
     }
+    this.initialized = true;
     this.sceneBuilder.init(this.engine.scene);
     this.logic.start();
     this.engine.startLoop((deltaMs) => {
@@ -70,8 +72,10 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.input.detach();
     this.engine.stopLoop();
-    this.engine.dispose();
-    this.sceneBuilder.dispose();
+    if (this.initialized) {
+      this.engine.dispose();
+      this.sceneBuilder.dispose();
+    }
   }
 
   onDirection(direction: Direction | null): void {
