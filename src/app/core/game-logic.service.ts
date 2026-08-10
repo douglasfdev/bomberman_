@@ -3,8 +3,13 @@ import {
   BASE_BOMBS,
   BASE_MOVE_DURATION_MS,
   BASE_RANGE,
+  BOMB_FUSE_MS,
   ENEMY_COUNT,
+  EXPLOSION_MS,
   MIN_MOVE_DURATION_MS,
+  POWER_UP_DROP_CHANCE,
+  SCORE_BOX,
+  SCORE_ENEMY,
   SCORE_POWER_UP,
   SPEED_STEP_MS,
 } from './models/game-config';
@@ -104,6 +109,8 @@ export class GameLogicService {
       return;
     }
     this.advancePlayer(deltaMs);
+    this.checkBombFuses();
+    this.explosions = this.explosions.filter((e) => e.expiresAtMs > this.gameTimeMs);
   }
 
   move(direction: Direction | null): void {
@@ -258,6 +265,107 @@ export class GameLogicService {
         this.player.pierce = true;
         this.pierce.set(true);
         break;
+    }
+  }
+
+  private checkBombFuses(): void {
+    const due = this.bombs.filter((b) => this.gameTimeMs - b.plantedAtMs >= BOMB_FUSE_MS);
+    if (due.length === 0) {
+      return;
+    }
+    const queue: Bomb[] = [...due];
+    const processed = new Set<number>();
+    while (queue.length > 0) {
+      const bomb = queue.shift() as Bomb;
+      if (processed.has(bomb.id)) {
+        continue;
+      }
+      processed.add(bomb.id);
+      const tiles = this.computeBlast(bomb);
+      for (const other of [...this.bombs]) {
+        if (
+          other.id !== bomb.id &&
+          !processed.has(other.id) &&
+          tiles.some((t) => samePosition(t, other.position))
+        ) {
+          queue.push(other);
+        }
+      }
+      this.applyBlast(bomb, tiles);
+      this.bombs = this.bombs.filter((b) => b.id !== bomb.id);
+      this.explosions.push({
+        id: this.nextExplosionId++,
+        position: { ...bomb.position },
+        tiles,
+        expiresAtMs: this.gameTimeMs + EXPLOSION_MS,
+      });
+    }
+  }
+
+  private computeBlast(bomb: Bomb): GridPosition[] {
+    const tiles: GridPosition[] = [{ ...bomb.position }];
+    for (const direction of [Direction.Up, Direction.Down, Direction.Left, Direction.Right]) {
+      const delta = directionDelta(direction);
+      for (let step = 1; step <= bomb.range; step++) {
+        const p: GridPosition = {
+          x: bomb.position.x + delta.x * step,
+          y: bomb.position.y + delta.y * step,
+        };
+        if (!this.level.isInBounds(p)) {
+          break;
+        }
+        const type = this.level.tileAt(p).type;
+        if (type === TileType.Wall) {
+          break;
+        }
+        tiles.push(p);
+        if (type === TileType.Box && !bomb.pierce) {
+          break;
+        }
+      }
+    }
+    return tiles;
+  }
+
+  private applyBlast(bomb: Bomb, tiles: GridPosition[]): void {
+    for (const tilePos of tiles) {
+      if (this.level.tileAt(tilePos).type === TileType.Box) {
+        this.level.setTile(tilePos, TileType.Empty);
+        this.score.update((s) => s + SCORE_BOX);
+        this.maybeDropPowerUp(tilePos);
+      }
+    }
+    for (const enemy of this.enemies) {
+      if (enemy.alive && tiles.some((t) => samePosition(t, enemy.position))) {
+        enemy.alive = false;
+        this.enemiesRemaining.update((n) => n - 1);
+        this.score.update((s) => s + SCORE_ENEMY);
+      }
+    }
+    if (this.player.alive && tiles.some((t) => samePosition(t, this.player.position))) {
+      this.defeat();
+    }
+    this.checkExitOpened();
+  }
+
+  private maybeDropPowerUp(position: GridPosition): void {
+    if (this.level.random() < POWER_UP_DROP_CHANCE) {
+      const types = [PowerUpType.Bomb, PowerUpType.Range, PowerUpType.Speed, PowerUpType.Pierce];
+      this.powerUps.push({
+        position: { ...position },
+        type: types[this.level.randomInt(types.length)],
+      });
+    }
+  }
+
+  private checkExitOpened(): void {
+    if (
+      this.enemiesRemaining() === 0 &&
+      this.level.tileAt(this.level.exitBox).type !== TileType.Box &&
+      !this.exitOpen()
+    ) {
+      this.exitOpen.set(true);
+      this.level.setTile(this.level.exitBox, TileType.Exit);
     }
   }
 

@@ -71,4 +71,79 @@ describe('GameLogicService', () => {
     }
     expect(logic.getEnemyViews().map((v) => v.id)).toEqual([1, 2, 3]);
   });
+
+  describe('bombas e explosão', () => {
+    it('limita bombas simultâneas ao máximo', () => {
+      logic.plantBomb();
+      logic.plantBomb();
+      expect(logic.getBombs().length).toBe(1);
+    });
+
+    it('explode em cruz após o timer', () => {
+      logic.plantBomb();
+      logic.tick(3001);
+      const explosions = logic.getExplosions();
+      expect(explosions.length).toBe(1);
+      const tiles = explosions[0].tiles;
+      expect(tiles).toContainEqual({ x: 1, y: 1 });
+      expect(tiles).toContainEqual({ x: 2, y: 1 });
+      expect(tiles).toContainEqual({ x: 1, y: 2 });
+      expect(tiles).not.toContainEqual({ x: 0, y: 1 });
+      expect(tiles).not.toContainEqual({ x: 1, y: 0 });
+    });
+
+    it('destrói caixas no raio da explosão', () => {
+      logic.move(Direction.Down);
+      tickMove();
+      level.setTile({ x: 2, y: 2 }, TileType.Box);
+      logic.plantBomb();
+      logic.move(Direction.Up);
+      tickMove();
+      logic.move(Direction.Right);
+      tickMove();
+      logic.tick(3001);
+      expect(level.tileAt({ x: 2, y: 2 }).type).toBe(TileType.Empty);
+      expect(logic.gamePhase()).toBe(GamePhase.Playing);
+    });
+
+    it('não atravessa caixas sem o power-up', () => {
+      (logic as unknown as { player: { range: number; pierce: boolean } }).player.range = 3;
+      logic.move(Direction.Down);
+      tickMove();
+      level.setTile({ x: 2, y: 2 }, TileType.Box);
+      level.setTile({ x: 3, y: 2 }, TileType.Box);
+      logic.plantBomb();
+      logic.move(Direction.Up);
+      tickMove();
+      logic.move(Direction.Right);
+      tickMove();
+      logic.tick(3001);
+      expect(level.tileAt({ x: 2, y: 2 }).type).toBe(TileType.Empty);
+      expect(level.tileAt({ x: 3, y: 2 }).type).toBe(TileType.Box);
+    });
+
+    it('com power-up atravessa caixas', () => {
+      const player = (logic as unknown as { player: { range: number; pierce: boolean } }).player;
+      player.range = 3;
+      player.pierce = true;
+      logic.move(Direction.Down);
+      tickMove();
+      level.setTile({ x: 2, y: 2 }, TileType.Box);
+      level.setTile({ x: 3, y: 2 }, TileType.Box);
+      logic.plantBomb();
+      logic.move(Direction.Up);
+      tickMove();
+      logic.move(Direction.Right);
+      tickMove();
+      logic.tick(3001);
+      expect(level.tileAt({ x: 2, y: 2 }).type).toBe(TileType.Empty);
+      expect(level.tileAt({ x: 3, y: 2 }).type).toBe(TileType.Empty);
+    });
+
+    it('derrota o jogador que está na área da explosão', () => {
+      logic.plantBomb();
+      logic.tick(3001);
+      expect(logic.gamePhase()).toBe(GamePhase.Defeat);
+    });
+  });
 });
