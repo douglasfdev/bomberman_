@@ -47,10 +47,9 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   private readonly subscriptions: Subscription[] = [];
   private initialized = false;
 
-  // Controle da Câmera
-  private cameraOrbitRadius = 18;
-  private cameraAzimuth = -Math.PI / 4; // Rotação horizontal
-  private cameraElevation = Math.PI / 6; // Inclinação vertical
+  private cameraOrbitRadius = 22;
+  private cameraAzimuth = 0;
+  private cameraElevation = 1.1;
   private isDragging = false;
   private previousPointerPosition = { x: 0, y: 0 };
 
@@ -73,14 +72,12 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     this.initialized = true;
     this.sceneBuilder.init(this.engine.scene);
     this.logic.start();
-    this.updateCameraPosition(); // Define a posição inicial da câmera
+    this.updateCameraPosition();
 
     this.engine.startLoop((deltaMs) => {
       this.logic.tick(deltaMs);
       this.sceneBuilder.sync(this.logic, deltaMs);
     });
-
-    // Adiciona os listeners de evento no canvas apenas para desktop/mouse
 
     const canvas = this.canvas.nativeElement;
     canvas.addEventListener('pointerdown', this.onPointerDown);
@@ -123,7 +120,6 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     this.cameraAzimuth -= deltaX * 0.005;
     this.cameraElevation += deltaY * 0.005;
 
-    // Limita a elevação para não "virar" a câmera de cabeça para baixo
     this.cameraElevation = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, this.cameraElevation));
 
     this.updateCameraPosition();

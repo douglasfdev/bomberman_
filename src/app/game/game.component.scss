@@ -41,8 +41,8 @@
 
 .d-pad {
   position: absolute;
-  left: max(5vmin, env(safe-area-inset-left, 5vmin));
-  bottom: max(5vmin, env(safe-area-inset-bottom, 5vmin));
+  left: max(5vw, env(safe-area-inset-left, 20px));
+  bottom: max(15vh, env(safe-area-inset-bottom, 40px));
   width: clamp(140px, 22vmin, 200px);
   height: clamp(140px, 22vmin, 200px);
   display: grid;
@@ -82,8 +82,8 @@
 
 .action-btn {
   position: absolute;
-  right: max(5vmin, env(safe-area-inset-right, 5vmin));
-  bottom: max(5vmin, env(safe-area-inset-bottom, 5vmin));
+  right: max(5vw, env(safe-area-inset-right, 20px));
+  bottom: max(15vh, env(safe-area-inset-bottom, 40px));
   width: clamp(100px, 16vmin, 140px);
   height: clamp(100px, 16vmin, 140px);
   border-radius: 50%;
