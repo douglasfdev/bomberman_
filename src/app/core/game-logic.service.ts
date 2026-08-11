@@ -32,17 +32,13 @@ import { GridPosition, keyOf, manhattan, samePosition } from './models/position.
 import { PowerUpType } from './models/power-up.model';
 import { Tile, TileType } from './models/tile.model';
 import { LevelService } from './level.service';
-
-interface MoveTiming {
-  from: GridPosition;
-  to: GridPosition;
-  elapsed: number;
-  duration: number;
-}
+import { MoveTiming } from './models/move-timing.model';
+import { InputManagerService } from './input-manager.service';
 
 @Injectable({ providedIn: 'root' })
 export class GameLogicService {
   private readonly level = inject(LevelService);
+  private readonly input = inject(InputManagerService);
 
   readonly score = signal(0);
   readonly highScore = signal(0);
@@ -51,7 +47,7 @@ export class GameLogicService {
   readonly range = signal(BASE_RANGE);
   readonly speed = signal(0);
   readonly pierce = signal(false);
-  readonly gamePhase = signal<GamePhase>(GamePhase.Playing);
+  readonly gamePhase = signal<GamePhase>(GamePhase.Ready);
   readonly exitOpen = signal(false);
 
   private player: PlayerState = { position: { x: 1, y: 1 }, alive: true, maxBombs: BASE_BOMBS, range: BASE_RANGE, moveDurationMs: BASE_MOVE_DURATION_MS, pierce: false };
@@ -73,7 +69,14 @@ export class GameLogicService {
   start(): void {
     this.level.generate();
     this.resetGame();
-    this.gamePhase.set(GamePhase.Playing);
+    this.gamePhase.set(GamePhase.Ready);
+  }
+
+  play(): void {
+    if (this.gamePhase() === GamePhase.Ready) {
+      this.lastTickMs = 0; // Reseta o contador de tempo
+      this.gamePhase.set(GamePhase.Playing);
+    }
   }
 
   restart(): void {
@@ -105,6 +108,7 @@ export class GameLogicService {
       position: { ...this.level.enemySpawns[i] },
       alive: true,
       moveDurationMs: BASE_MOVE_DURATION_MS,
+      currentMove: null,
       nextMoveAtMs: 0,
       nextBombAtMs: ENEMY_BOMB_INTERVAL_MS,
       currentDirection: null,
@@ -125,12 +129,20 @@ export class GameLogicService {
     const elapsed = now - this.lastTickMs;
     this.lastTickMs = now;
 
+    this.handleInput();
     this.updatePlayer(elapsed);
     this.updateEnemies(elapsed, now);
     this.updateBombs(now);
     this.updateExplosions(now);
     this.checkCollisions();
     this.checkWinCondition();
+  }
+
+  private handleInput(): void {
+    const direction = this.input.getDirection();
+    if (direction !== null) {
+      this.move(direction);
+    }
   }
 
   move(direction: Direction | null): void {
@@ -153,13 +165,20 @@ export class GameLogicService {
 
   plantBomb(): void {
     if (this.gamePhase() !== GamePhase.Playing || !this.player.alive) return;
-    if (this.bombs.filter(b => samePosition(b.position, this.player.position)).length >= this.maxBombs()) return;
+
+    // Verifica se o jogador já atingiu seu limite de bombas ativas
+    const playerBombs = this.bombs.filter(b => b.planterId === 'player').length;
+    if (playerBombs >= this.player.maxBombs) return;
+
+    // Verifica se já existe uma bomba na posição atual
+    if (this.bombs.some(b => samePosition(b.position, this.player.position))) return;
 
     this.bombs.push({
       id: Date.now(),
+      planterId: 'player',
       position: { ...this.player.position },
-      range: this.range(),
-      pierce: this.pierce(),
+      range: this.player.range,
+      pierce: this.player.pierce,
       plantedAtMs: performance.now(),
     });
   }
@@ -179,12 +198,23 @@ export class GameLogicService {
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
-      // Movimento da IA
+      // Atualiza o movimento atual do inimigo
+      if (enemy.currentMove) {
+        enemy.currentMove.elapsed += elapsed;
+        if (enemy.currentMove.elapsed >= enemy.currentMove.duration) {
+          enemy.position = { ...enemy.currentMove.to };
+          enemy.currentMove = null;
+        }
+        continue; // Se está se movendo, não toma nova decisão ainda
+      }
+
+      // Lógica de decisão da IA para o próximo movimento
       if (now >= enemy.nextMoveAtMs) {
         const possibleDirs: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
         let bestDir: Direction | null = null;
         let minDist = Infinity;
 
+        // Tenta encontrar o jogador
         for (const dir of possibleDirs) {
           const delta = directionDelta(dir);
           const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
@@ -198,7 +228,7 @@ export class GameLogicService {
           }
         }
 
-        // Fallback para movimento aleatório se ficar preso ou por probabilidade
+        // Fallback para movimento aleatório
         if (!bestDir || Math.random() > 0.7) {
           const validDirs = possibleDirs.filter(dir => {
             const delta = directionDelta(dir);
@@ -212,24 +242,33 @@ export class GameLogicService {
 
         if (bestDir) {
           const delta = directionDelta(bestDir);
+          const target = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
+          enemy.currentMove = {
+            from: { ...enemy.position },
+            to: target,
+            elapsed: 0,
+            duration: enemy.moveDurationMs,
+          };
           enemy.currentDirection = bestDir;
-          enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
-          enemy.position = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-        } else {
-          enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
         }
+        enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
       }
 
       // Plantio de Bombas pela IA
       if (now >= enemy.nextBombAtMs && Math.random() < ENEMY_BOMB_CHANCE) {
-        this.bombs.push({
-          id: Date.now() + enemy.id,
-          position: { ...enemy.position },
-          range: 2,
-          pierce: false,
-          plantedAtMs: now,
-        });
-        enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
+        const enemyBombs = this.bombs.filter(b => b.planterId === enemy.id).length;
+        // Inimigos simples têm um limite de 1 bomba
+        if (enemyBombs < 1 && !this.bombs.some(b => samePosition(b.position, enemy.position))) {
+          this.bombs.push({
+            id: Date.now() + enemy.id,
+            planterId: enemy.id,
+            position: { ...enemy.position },
+            range: 2,
+            pierce: false,
+            plantedAtMs: now,
+          });
+          enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
+        }
       }
     }
   }
@@ -261,10 +300,19 @@ export class GameLogicService {
         const pos = { x: bomb.position.x + delta.x * r, y: bomb.position.y + delta.y * r };
         if (!this.level.isInBounds(pos)) break;
 
+        const tile = this.level.tileAt(pos);
         tiles.push(pos);
 
-        const tile = this.level.tileAt(pos);
-        if (tile.type === TileType.Wall) break;
+        if (tile.type === TileType.Wall) {
+          break;
+        }
+
+        if (tile.type === TileType.Box) {
+          this.level.setTile(pos, TileType.Empty);
+          this.score.update(s => s + SCORE_BOX);
+          this.trySpawnPowerUp(pos); // Tenta gerar um power-up
+          break;
+        }
       }
     }
 
@@ -275,6 +323,16 @@ export class GameLogicService {
       tiles,
       expiresAtMs: performance.now() + EXPLOSION_MS,
     });
+  }
+
+  private trySpawnPowerUp(position: GridPosition): void {
+    if (Math.random() < POWER_UP_DROP_CHANCE) {
+      const types: PowerUpType[] = [PowerUpType.Range, PowerUpType.Bomb, PowerUpType.Speed];
+      this.powerUps.push({
+        position: { ...position },
+        type: types[Math.floor(Math.random() * types.length)],
+      });
+    }
   }
 
   private checkCollisions(): void {
@@ -306,15 +364,7 @@ export class GameLogicService {
         enemy.alive = false;
         this.enemiesRemaining.set(this.enemiesRemaining() - 1);
         this.score.update(s => s + SCORE_ENEMY);
-
-        // Chance de dropar power-up
-        if (Math.random() < POWER_UP_DROP_CHANCE) {
-          const types: PowerUpType[] = [PowerUpType.Range, PowerUpType.Bomb, PowerUpType.Speed];
-          this.powerUps.push({
-            position: { ...enemy.position },
-            type: types[Math.floor(Math.random() * types.length)],
-          });
-        }
+        this.trySpawnPowerUp(enemy.position);
       }
 
       // Colisão Jogador vs Inimigo
@@ -332,9 +382,18 @@ export class GameLogicService {
         const pu = this.powerUps.splice(i, 1)[0];
         this.score.update(s => s + SCORE_POWER_UP);
         switch (pu.type) {
-          case PowerUpType.Range: this.range.update(r => r + 1); break;
-          case PowerUpType.Bomb: this.maxBombs.update(b => b + 1); break;
-          case PowerUpType.Speed: this.player.moveDurationMs = Math.max(MIN_MOVE_DURATION_MS, this.player.moveDurationMs - SPEED_STEP_MS); break;
+          case PowerUpType.Range:
+            this.player.range++;
+            this.range.update(r => r + 1);
+            break;
+          case PowerUpType.Bomb:
+            this.player.maxBombs++;
+            this.maxBombs.update(b => b + 1);
+            break;
+          case PowerUpType.Speed:
+            this.player.moveDurationMs = Math.max(MIN_MOVE_DURATION_MS, this.player.moveDurationMs - SPEED_STEP_MS);
+            this.speed.update(s => s + 1); // Atualiza o signal de velocidade para a UI
+            break;
         }
       }
     }
@@ -372,11 +431,19 @@ export class GameLogicService {
   }
 
   getEnemyViews(): EnemyView[] {
-    return this.enemies.map(e => ({
-      id: e.id,
-      position: e.position,
-      move: null,
-    }));
+    return this.enemies
+      .filter(e => e.alive)
+      .map(e => {
+        if (!e.currentMove) {
+          return { id: e.id, position: e.position, move: null };
+        }
+        const progress = Math.min(e.currentMove.elapsed / e.currentMove.duration, 1);
+        return {
+          id: e.id,
+          position: e.position,
+          move: { from: e.currentMove.from, to: e.currentMove.to, progress },
+        };
+      });
   }
 
   getBombs(): Bomb[] { return this.bombs; }

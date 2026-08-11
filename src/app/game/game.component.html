@@ -41,10 +41,20 @@
   </div>
 
   <div class="overlay" *ngIf="gamePhase() !== GamePhase.Playing">
-    <h2 class="overlay-title">
-      {{ gamePhase() === GamePhase.Victory ? 'Vitória!' : 'Derrota' }}
-    </h2>
-    <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+    <ng-container [ngSwitch]="gamePhase()">
+      <div *ngSwitchCase="GamePhase.Ready">
+        <h2 class="overlay-title">Bomberman</h2>
+        <button class="restart-btn" (click)="play()">Iniciar Jogo</button>
+      </div>
+      <div *ngSwitchCase="GamePhase.Victory">
+        <h2 class="overlay-title">Vitória!</h2>
+        <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+      </div>
+      <div *ngSwitchCase="GamePhase.Defeat">
+        <h2 class="overlay-title">Derrota</h2>
+        <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+      </div>
+    </ng-container>
   </div>
 
   <div class="error" *ngIf="initError()">Seu navegador não suporta WebGL.</div>

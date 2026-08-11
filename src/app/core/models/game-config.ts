@@ -12,6 +12,7 @@ export const EXPLOSION_MS = 350;
 export const SCORE_BOX = 10;
 export const SCORE_ENEMY = 50;
 export const SCORE_POWER_UP = 20;
+export const SCORE_LEVEL_CLEAR = 200;
 export const EXIT_MIN_SPAWN_DISTANCE = 5;
 export const BOX_CHANCE = 0.6;
 

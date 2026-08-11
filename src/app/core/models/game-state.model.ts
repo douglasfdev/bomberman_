@@ -2,6 +2,7 @@ import { GridPosition } from './position.model';
 import { PowerUpType } from './power-up.model';
 
 export enum GamePhase {
+  Ready = 'ready',
   Playing = 'playing',
   Victory = 'victory',
   Defeat = 'defeat',

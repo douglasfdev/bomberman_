@@ -145,7 +145,7 @@ export class SceneBuilderService {
       this.playerMesh.add(eye);
       this.scene?.add(this.playerMesh);
     }
-    this.applyView(this.playerMesh, view.position, view.move);
+    this.applyView(this.playerMesh, view?.position!, view?.move!);
   }
 
   private syncEnemies(logic: GameLogicService): void {
@@ -296,7 +296,10 @@ export class SceneBuilderService {
         continue;
       }
       const progress = (logic.getGameTimeMs() - startedAt) / EXPLOSION_MS;
-      group.scale.setScalar(Math.max(0.1, progress));
+      // Aplica a escala em cada cubo individualmente, não no grupo
+      for (const child of group.children) {
+        child.scale.setScalar(Math.max(0.1, progress));
+      }
     }
   }
 

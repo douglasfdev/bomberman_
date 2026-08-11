@@ -56,6 +56,10 @@ export class InputManagerService {
     this.actionSubject.next();
   }
 
+  getDirection(): Direction | null {
+    return this.directionSubject.value;
+  }
+
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     const direction = KEY_DIRECTIONS[event.code];
     if (direction) {

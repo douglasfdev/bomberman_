@@ -47,6 +47,22 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   private readonly subscriptions: Subscription[] = [];
   private initialized = false;
 
+  // Controle da Câmera
+  private cameraOrbitRadius = 18;
+  private cameraAzimuth = -Math.PI / 4; // Rotação horizontal
+  private cameraElevation = Math.PI / 6; // Inclinação vertical
+  private isDragging = false;
+  private previousPointerPosition = { x: 0, y: 0 };
+
+  private updateCameraPosition(): void {
+    const cam = this.engine.camera;
+    const x = this.cameraOrbitRadius * Math.sin(this.cameraAzimuth) * Math.cos(this.cameraElevation);
+    const z = this.cameraOrbitRadius * Math.cos(this.cameraAzimuth) * Math.cos(this.cameraElevation);
+    const y = this.cameraOrbitRadius * Math.sin(this.cameraElevation);
+    cam.position.set(x, y, z);
+    cam.lookAt(0, 0, 0);
+  }
+
   ngAfterViewInit(): void {
     try {
       this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
@@ -57,26 +73,66 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     this.initialized = true;
     this.sceneBuilder.init(this.engine.scene);
     this.logic.start();
+    this.updateCameraPosition(); // Define a posição inicial da câmera
+
     this.engine.startLoop((deltaMs) => {
       this.logic.tick(deltaMs);
       this.sceneBuilder.sync(this.logic, deltaMs);
     });
+
+    // Adiciona os listeners de evento no canvas
+    const canvas = this.canvas.nativeElement;
+    canvas.addEventListener('pointerdown', this.onPointerDown);
+    canvas.addEventListener('pointermove', this.onPointerMove);
+    canvas.addEventListener('pointerup', this.onPointerUp);
+    canvas.addEventListener('pointerleave', this.onPointerUp); // Também para quando o mouse sai da tela
+
     this.input.attach();
-    this.subscriptions.push(
-      this.input.direction$.subscribe((d) => this.logic.move(d)),
-      this.input.action$.subscribe(() => this.logic.plantBomb()),
-    );
+    this.subscriptions.push(this.input.action$.subscribe(() => this.logic.plantBomb()));
   }
 
   ngOnDestroy(): void {
     this.subscriptions.forEach((s) => s.unsubscribe());
     this.input.detach();
     this.engine.stopLoop();
+
+    const canvas = this.canvas.nativeElement;
+    canvas.removeEventListener('pointerdown', this.onPointerDown);
+    canvas.removeEventListener('pointermove', this.onPointerMove);
+    canvas.removeEventListener('pointerup', this.onPointerUp);
+    canvas.removeEventListener('pointerleave', this.onPointerUp);
+
     if (this.initialized) {
       this.engine.dispose();
       this.sceneBuilder.dispose();
     }
   }
+
+  private readonly onPointerDown = (event: PointerEvent) => {
+    this.isDragging = true;
+    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
+  };
+
+  private readonly onPointerMove = (event: PointerEvent) => {
+    if (!this.isDragging) return;
+
+    const deltaX = event.clientX - this.previousPointerPosition.x;
+    const deltaY = event.clientY - this.previousPointerPosition.y;
+
+    this.cameraAzimuth -= deltaX * 0.005;
+    this.cameraElevation += deltaY * 0.005;
+
+    // Limita a elevação para não "virar" a câmera de cabeça para baixo
+    this.cameraElevation = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, this.cameraElevation));
+
+    this.updateCameraPosition();
+
+    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
+  };
+
+  private readonly onPointerUp = () => {
+    this.isDragging = false;
+  };
 
   onDirection(direction: Direction | null): void {
     this.input.setDirection(direction);
@@ -88,5 +144,9 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   restart(): void {
     this.logic.restart();
+  }
+
+  play(): void {
+    this.logic.play();
   }
 }
