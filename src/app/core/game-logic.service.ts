@@ -253,30 +253,55 @@ export class GameLogicService {
 
       if (now >= enemy.nextMoveAtMs) {
         const possibleDirs: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+
+        // Verifica se uma posição é segura (não perigosa e não é beco sem saída)
+        const isTileDangerous = (pos: GridPosition): boolean => {
+          if (!this.level.isInBounds(pos) || !this.level.isWalkable(pos)) return true;
+          if (this.bombs.some(b => samePosition(b.position, pos))) return true;
+          if (this.explosions.some(e => samePosition(e.position, pos) || e.tiles.some(t => samePosition(t, pos)))) return true;
+
+          // Evita encurralamento: verifica se há pelo menos um vizinho acessível
+          let hasAdjacentWalkable = false;
+          for (const d of possibleDirs) {
+            const adj = { x: pos.x + directionDelta(d).x, y: pos.y + directionDelta(d).y };
+            if (this.level.isInBounds(adj) && this.level.isWalkable(adj)) {
+              hasAdjacentWalkable = true;
+              break;
+            }
+          }
+          return !hasAdjacentWalkable;
+        };
+
+        // Filtra direções seguras
+        const safeDirs = possibleDirs.filter(dir => {
+          const delta = directionDelta(dir);
+          const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
+          return !isTileDangerous(targetPos);
+        });
+
         let bestDir: Direction | null = null;
         let minDist = Infinity;
 
-        for (const dir of possibleDirs) {
-          const delta = directionDelta(dir);
-          const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-
-          if (this.level.isInBounds(targetPos) && this.level.isWalkable(targetPos) && !this.bombs.some(b => samePosition(b.position, targetPos))) {
+        if (safeDirs.length > 0) {
+          // Prioriza perseguir o jogador entre as direções seguras
+          for (const dir of safeDirs) {
+            const delta = directionDelta(dir);
+            const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
             const dist = manhattan(targetPos, this.player.position);
             if (dist < minDist) {
               minDist = dist;
               bestDir = dir;
             }
           }
-        }
-
-        if (!bestDir || Math.random() > 0.7) {
-          const validDirs = possibleDirs.filter(dir => {
+        } else {
+          // Fallback: se não houver direção segura, tenta qualquer movimento válido para não ficar parado
+          const fallbackDirs = possibleDirs.filter(dir => {
             const delta = directionDelta(dir);
             const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-            return this.level.isInBounds(targetPos) && this.level.isWalkable(targetPos) && !this.bombs.some(b => samePosition(b.position, targetPos));
+            return this.level.isInBounds(targetPos) && this.level.isWalkable(targetPos);
           });
-          if (validDirs.length > 0) {
-            bestDir = validDirs[Math.floor(Math.random() * validDirs.length)];
+          if (fallbackDirs.length > 0) {
+            bestDir = fallbackDirs[Math.floor(Math.random() * fallbackDirs.length)];
           }
         }
 
