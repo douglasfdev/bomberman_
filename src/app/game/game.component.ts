@@ -145,11 +145,9 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   play(): void {
     this.logic.play();
-    
-    // Solicita tela cheia em dispositivos móveis para esconder a UI do navegador
-    // (barra de endereço, botões de navegação, etc.)
+
     if (this.isTouch && document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => {});
+      document.documentElement.requestFullscreen().catch(() => { });
     }
   }
 }
