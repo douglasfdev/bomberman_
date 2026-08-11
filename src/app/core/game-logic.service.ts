@@ -36,6 +36,8 @@ import { LevelService } from './level.service';
 import { MoveTiming } from './models/move-timing.model';
 import { InputManagerService } from './input-manager.service';
 
+type EnemyAIState = 'chase' | 'fleeing' | 'waiting';
+
 @Injectable({ providedIn: 'root' })
 export class GameLogicService {
   private readonly level = inject(LevelService);
@@ -53,7 +55,7 @@ export class GameLogicService {
   readonly exitOpen = signal(false);
 
   private player: PlayerState = { position: { x: 1, y: 1 }, alive: true, maxBombs: BASE_BOMBS, range: BASE_RANGE, moveDurationMs: BASE_MOVE_DURATION_MS, pierce: false };
-  private enemies: EnemyState[] = [];
+  private enemies: (EnemyState & { aiState: EnemyAIState; safeTargetPos: GridPosition | null; plantedBombId: number | null })[] = [];
   private bombs: Bomb[] = [];
   private explosions: Explosion[] = [];
   private powerUps: PowerUpDrop[] = [];
@@ -126,7 +128,9 @@ export class GameLogicService {
       currentMove: null,
       nextMoveAtMs: 0,
       nextBombAtMs: ENEMY_BOMB_INTERVAL_MS,
-      currentDirection: null,
+      aiState: 'chase' as EnemyAIState,
+      safeTargetPos: null,
+      plantedBombId: null,
     }));
 
     this.bombs = [];
@@ -158,7 +162,9 @@ export class GameLogicService {
       currentMove: null,
       nextMoveAtMs: 0,
       nextBombAtMs: ENEMY_BOMB_INTERVAL_MS,
-      currentDirection: null,
+      aiState: 'chase' as EnemyAIState,
+      safeTargetPos: null,
+      plantedBombId: null,
     }));
 
     this.bombs = [];
@@ -242,277 +248,133 @@ export class GameLogicService {
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
+      // Atualiza interpolação de movimento em andamento
       if (enemy.currentMove) {
         enemy.currentMove.elapsed += elapsed;
         if (enemy.currentMove.elapsed >= enemy.currentMove.duration) {
           enemy.position = { ...enemy.currentMove.to };
           enemy.currentMove = null;
+          
+          // Se estava fugindo e chegou no destino seguro, entra em modo de espera
+          if (enemy.aiState === 'fleeing' && enemy.safeTargetPos && samePosition(enemy.position, enemy.safeTargetPos)) {
+            enemy.aiState = 'waiting';
+            const myBomb = this.bombs.find(b => b.planterId === enemy.id);
+            if (myBomb) enemy.plantedBombId = myBomb.id;
+          }
         }
         continue;
       }
 
-      if (now >= enemy.nextMoveAtMs) {
-        const possibleDirs: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
-
-        // Verifica se uma posição é segura (não perigosa e não é beco sem saída)
-        const isTileDangerous = (pos: GridPosition): boolean => {
-          if (!this.level.isInBounds(pos) || !this.level.isWalkable(pos)) return true;
-          if (this.bombs.some(b => samePosition(b.position, pos))) return true;
-          if (this.explosions.some(e => samePosition(e.position, pos) || e.tiles.some(t => samePosition(t, pos)))) return true;
-
-          // Evita encurralamento: verifica se há pelo menos um vizinho acessível
-          let hasAdjacentWalkable = false;
-          for (const d of possibleDirs) {
-            const adj = { x: pos.x + directionDelta(d).x, y: pos.y + directionDelta(d).y };
-            if (this.level.isInBounds(adj) && this.level.isWalkable(adj)) {
-              hasAdjacentWalkable = true;
-              break;
+      // Máquina de estados da IA
+      if (enemy.aiState === 'chase') {
+        const distToPlayer = manhattan(enemy.position, this.player.position);
+        
+        // Decide soltar bomba se estiver perto o suficiente e cooldown permitir
+        if (now >= enemy.nextBombAtMs && distToPlayer <= 4) {
+          const enemyBombs = this.bombs.filter(b => b.planterId === enemy.id).length;
+          if (enemyBombs < 1 && !this.bombs.some(b => samePosition(b.position, enemy.position))) {
+            // Planta a bomba
+            this.bombs.push({
+              id: Date.now() + enemy.id,
+              planterId: enemy.id,
+              position: { ...enemy.position },
+              range: 2,
+              pierce: false,
+              plantedAtMs: now,
+            });
+            
+            // Tenta encontrar um tile adjacente seguro para fugir
+            const safeSpot = this.findSafeSpot(enemy.position, { ...enemy.position }, 2);
+            if (safeSpot) {
+              enemy.aiState = 'fleeing';
+              enemy.safeTargetPos = safeSpot;
+            } else {
+              // Sem lugar seguro imediato, volta a perseguir com cooldown
+              enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
             }
+          } else {
+            enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
           }
-          return !hasAdjacentWalkable;
-        };
-
-        // Filtra direções seguras
-        const safeDirs = possibleDirs.filter(dir => {
-          const delta = directionDelta(dir);
-          const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-          return !isTileDangerous(targetPos);
-        });
-
-        let bestDir: Direction | null = null;
-        let minDist = Infinity;
-
-        if (safeDirs.length > 0) {
-          // Prioriza perseguir o jogador entre as direções seguras
-          for (const dir of safeDirs) {
-            const delta = directionDelta(dir);
-            const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-            const dist = manhattan(targetPos, this.player.position);
-            if (dist < minDist) {
-              minDist = dist;
-              bestDir = dir;
-            }
-          }
-        } else {
-          // Fallback: se não houver direção segura, tenta qualquer movimento válido para não ficar parado
-          const fallbackDirs = possibleDirs.filter(dir => {
-            const delta = directionDelta(dir);
-            const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-            return this.level.isInBounds(targetPos) && this.level.isWalkable(targetPos);
-          });
-          if (fallbackDirs.length > 0) {
-            bestDir = fallbackDirs[Math.floor(Math.random() * fallbackDirs.length)];
-          }
+        } else if (now >= enemy.nextMoveAtMs) {
+          this.moveEnemyTowardsPlayer(enemy);
+          enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
         }
-
-        if (bestDir) {
-          const delta = directionDelta(bestDir);
-          const target = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
-          enemy.currentMove = {
-            from: { ...enemy.position },
-            to: target,
-            elapsed: 0,
-            duration: enemy.moveDurationMs,
-          };
-          enemy.currentDirection = bestDir;
+      } 
+      else if (enemy.aiState === 'fleeing') {
+        if (enemy.safeTargetPos && now >= enemy.nextMoveAtMs) {
+          this.moveEnemyToTarget(enemy, enemy.safeTargetPos);
+          enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
         }
-        enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
-      }
-
-      if (now >= enemy.nextBombAtMs && Math.random() < ENEMY_BOMB_CHANCE) {
-        const enemyBombs = this.bombs.filter(b => b.planterId === enemy.id).length;
-        if (enemyBombs < 1 && !this.bombs.some(b => samePosition(b.position, enemy.position))) {
-          this.bombs.push({
-            id: Date.now() + enemy.id,
-            planterId: enemy.id,
-            position: { ...enemy.position },
-            range: 2,
-            pierce: false,
-            plantedAtMs: now,
-          });
-          enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
+      } 
+      else if (enemy.aiState === 'waiting') {
+        // Aguarda a bomba explodir e a área ficar segura
+        const bomb = this.bombs.find(b => b.id === enemy.plantedBombId);
+        if (bomb && now > bomb.plantedAtMs + BOMB_FUSE_MS) {
+          enemy.aiState = 'chase';
+          enemy.safeTargetPos = null;
+          enemy.plantedBombId = null;
+          enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS; // Pequeno delay antes de retomar a caça
         }
       }
     }
   }
 
-  private updateBombs(now: number): void {
-    for (let i = this.bombs.length - 1; i >= 0; i--) {
-      if (now - this.bombs[i].plantedAtMs >= BOMB_FUSE_MS) {
-        this.explode(this.bombs[i]);
-        this.bombs.splice(i, 1);
-      }
-    }
-  }
-
-  private updateExplosions(now: number): void {
-    for (let i = this.explosions.length - 1; i >= 0; i--) {
-      if (now - this.explosions[i].expiresAtMs > EXPLOSION_MS) {
-        this.explosions.splice(i, 1);
-      }
-    }
-  }
-
-  private explode(bomb: Bomb): void {
-    const tiles: GridPosition[] = [bomb.position];
+  private findSafeSpot(from: GridPosition, bombPos: GridPosition, range: number): GridPosition | null {
+    const dangerTiles = new Set<string>();
+    dangerTiles.add(keyOf(bombPos));
+    
     const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
-
     for (const dir of dirs) {
       const delta = directionDelta(dir);
-      for (let r = 1; r <= bomb.range; r++) {
-        const pos = { x: bomb.position.x + delta.x * r, y: bomb.position.y + delta.y * r };
+      for (let r = 1; r <= range; r++) {
+        const pos = { x: bombPos.x + delta.x * r, y: bombPos.y + delta.y * r };
         if (!this.level.isInBounds(pos)) break;
-
-        const tile = this.level.tileAt(pos);
-        tiles.push(pos);
-
-        if (tile.type === TileType.Wall) {
-          break;
-        }
-
-        if (tile.type === TileType.Box) {
-          this.level.setTile(pos, TileType.Empty);
-          this.score.update(s => s + SCORE_BOX);
-          this.trySpawnPowerUp(pos);
-          break;
-        }
+        dangerTiles.add(keyOf(pos));
+        if (this.level.tileAt(pos).type === TileType.Wall) break;
       }
     }
 
-    const id = Date.now();
-    this.explosions.push({
-      id,
-      position: bomb.position,
-      tiles,
-      expiresAtMs: performance.now() + EXPLOSION_MS,
-    });
-  }
-
-  private trySpawnPowerUp(position: GridPosition): void {
-    if (Math.random() < POWER_UP_DROP_CHANCE) {
-      const types: PowerUpType[] = [PowerUpType.Range, PowerUpType.Bomb, PowerUpType.Speed];
-      this.powerUps.push({
-        position: { ...position },
-        type: types[Math.floor(Math.random() * types.length)],
-      });
+    // Verifica tiles adjacentes ao inimigo atual
+    for (const dir of dirs) {
+      const delta = directionDelta(dir);
+      const target = { x: from.x + delta.x, y: from.y + delta.y };
+      if (this.level.isInBounds(target) && this.level.isWalkable(target) && !dangerTiles.has(keyOf(target))) {
+        return target;
+      }
     }
+    return null;
   }
 
-  private checkCollisions(): void {
-    // Jogador vs Explosões
-    for (const exp of this.explosions) {
-      if (samePosition(this.player.position, exp.position) || exp.tiles.some(t => samePosition(t, this.player.position))) {
-        if (!this.pierce()) {
-          this.player.alive = false;
-          this.gamePhase.set(GamePhase.Defeat);
-          this.updateHighScore();
-          return;
-        }
+  private moveEnemyTowardsPlayer(enemy: EnemyState & { aiState: EnemyAIState; safeTargetPos: GridPosition | null; plantedBombId: number | null }): void {
+    const possibleDirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+    let bestDir: Direction | null = null;
+    let minDist = Infinity;
+
+    for (const dir of possibleDirs) {
+      const delta = directionDelta(dir);
+      const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
+      
+      if (!this.level.isInBounds(targetPos) || !this.level.isWalkable(targetPos)) continue;
+      if (this.bombs.some(b => samePosition(b.position, targetPos))) continue;
+      if (this.explosions.some(e => samePosition(e.position, targetPos) || e.tiles.some(t => samePosition(t, targetPos)))) continue;
+
+      const dist = manhattan(targetPos, this.player.position);
+      if (dist < minDist) {
+        minDist = dist;
+        bestDir = dir;
       }
     }
 
-    // Inimigos vs Explosões e Jogador
-    for (const enemy of this.enemies) {
-      if (!enemy.alive) continue;
-
-      let hit = false;
-      for (const exp of this.explosions) {
-        if (samePosition(enemy.position, exp.position) || exp.tiles.some(t => samePosition(t, enemy.position))) {
-          hit = true;
-          break;
-        }
-      }
-
-      if (hit) {
-        enemy.alive = false;
-        this.enemiesRemaining.set(this.enemiesRemaining() - 1);
-        this.score.update(s => s + SCORE_ENEMY);
-        this.trySpawnPowerUp(enemy.position);
-      }
-
-      // Colisão Jogador vs Inimigo
-      if (samePosition(this.player.position, enemy.position)) {
-        this.player.alive = false;
-        this.gamePhase.set(GamePhase.Defeat);
-        this.updateHighScore();
-        return;
-      }
-    }
-
-    // Coleta de Power-ups
-    for (let i = this.powerUps.length - 1; i >= 0; i--) {
-      if (samePosition(this.player.position, this.powerUps[i].position)) {
-        const pu = this.powerUps.splice(i, 1)[0];
-        this.score.update(s => s + SCORE_POWER_UP);
-        switch (pu.type) {
-          case PowerUpType.Range:
-            this.player.range++;
-            this.range.update(r => r + 1);
-            break;
-          case PowerUpType.Bomb:
-            this.player.maxBombs++;
-            this.maxBombs.update(b => b + 1);
-            break;
-          case PowerUpType.Speed:
-            this.player.moveDurationMs = Math.max(MIN_MOVE_DURATION_MS, this.player.moveDurationMs - SPEED_STEP_MS);
-            this.speed.update(s => s + 1); // Atualiza o signal de velocidade para a UI
-            break;
-        }
-      }
-    }
-
-    // Saída
-    if (this.exitOpen() && samePosition(this.player.position, this.level.exitBox)) {
-      this.gamePhase.set(GamePhase.Victory);
-      this.updateHighScore();
+    if (bestDir) {
+      const delta = directionDelta(bestDir);
+      enemy.currentMove = {
+        from: { ...enemy.position },
+        to: { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y },
+        elapsed: 0,
+        duration: enemy.moveDurationMs,
+      };
     }
   }
 
-  private checkWinCondition(): void {
-    if (this.enemiesRemaining() <= 0 && !this.exitOpen()) {
-      this.exitOpen.set(true);
-      this.level.setTile(this.level.exitBox, TileType.Exit);
-    }
-  }
-
-  private updateHighScore(): void {
-    const current = this.score();
-    if (current > this.highScore()) {
-      this.highScore.set(current);
-      localStorage.setItem('highScore', current.toString());
-    }
-  }
-
-  // Getters para renderização
-  getPlayerView(): EntityView | null {
-    if (!this.currentMove) return { position: this.player.position, move: null };
-    const progress = Math.min(this.currentMove.elapsed / this.currentMove.duration, 1);
-    return {
-      position: this.player.position,
-      move: { from: this.currentMove.from, to: this.currentMove.to, progress },
-    };
-  }
-
-  getEnemyViews(): EnemyView[] {
-    return this.enemies
-      .filter(e => e.alive)
-      .map(e => {
-        if (!e.currentMove) {
-          return { id: e.id, position: e.position, move: null };
-        }
-        const progress = Math.min(e.currentMove.elapsed / e.currentMove.duration, 1);
-        return {
-          id: e.id,
-          position: e.position,
-          move: { from: e.currentMove.from, to: e.currentMove.to, progress },
-        };
-      });
-  }
-
-  getBombs(): Bomb[] { return this.bombs; }
-  getExplosions(): Explosion[] { return this.explosions; }
-  getPowerUps(): PowerUpDrop[] { return this.powerUps; }
-  getGrid(): Tile[][] { return this.level.grid; }
-  getExitBox(): GridPosition { return this.level.exitBox; }
-  getGameTimeMs(): number { return performance.now(); }
-}
+  private moveEnemyToTarget(enemy: EnemyState & { aiState: EnemyAIState; safeTargetPos: GridPosition | null; plantedBombId: number | null }, target: GridPosition): void {
+    const possibleDirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
