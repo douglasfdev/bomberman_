@@ -81,13 +81,12 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     });
 
     // Adiciona os listeners de evento no canvas apenas para desktop/mouse
-    if (!this.isTouch) {
-      const canvas = this.canvas.nativeElement;
-      canvas.addEventListener('pointerdown', this.onPointerDown);
-      canvas.addEventListener('pointermove', this.onPointerMove);
-      canvas.addEventListener('pointerup', this.onPointerUp);
-      canvas.addEventListener('pointerleave', this.onPointerUp);
-    }
+
+    const canvas = this.canvas.nativeElement;
+    canvas.addEventListener('pointerdown', this.onPointerDown);
+    canvas.addEventListener('pointermove', this.onPointerMove);
+    canvas.addEventListener('pointerup', this.onPointerUp);
+    canvas.addEventListener('pointerleave', this.onPointerUp);
 
     this.input.attach();
     this.subscriptions.push(this.input.action$.subscribe(() => this.logic.plantBomb()));
@@ -98,13 +97,11 @@ export class GameComponent implements AfterViewInit, OnDestroy {
     this.input.detach();
     this.engine.stopLoop();
 
-    if (!this.isTouch) {
-      const canvas = this.canvas.nativeElement;
-      canvas.removeEventListener('pointerdown', this.onPointerDown);
-      canvas.removeEventListener('pointermove', this.onPointerMove);
-      canvas.removeEventListener('pointerup', this.onPointerUp);
-      canvas.removeEventListener('pointerleave', this.onPointerUp);
-    }
+    const canvas = this.canvas.nativeElement;
+    canvas.removeEventListener('pointerdown', this.onPointerDown);
+    canvas.removeEventListener('pointermove', this.onPointerMove);
+    canvas.removeEventListener('pointerup', this.onPointerUp);
+    canvas.removeEventListener('pointerleave', this.onPointerUp);
 
     if (this.initialized) {
       this.engine.dispose();
