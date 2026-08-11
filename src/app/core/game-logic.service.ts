@@ -11,6 +11,7 @@ import {
   SCORE_BOX,
   SCORE_ENEMY,
   SCORE_POWER_UP,
+  SCORE_LEVEL_CLEAR,
   SPEED_STEP_MS,
   ENEMY_MOVE_INTERVAL_MS,
   ENEMY_BOMB_INTERVAL_MS,
@@ -42,6 +43,7 @@ export class GameLogicService {
 
   readonly score = signal(0);
   readonly highScore = signal(0);
+  readonly phase = signal(1);
   readonly enemiesRemaining = signal(0);
   readonly maxBombs = signal(BASE_BOMBS);
   readonly range = signal(BASE_RANGE);
@@ -68,24 +70,36 @@ export class GameLogicService {
 
   start(): void {
     this.level.generate();
-    this.resetGame();
+    this.resetFullGame();
     this.gamePhase.set(GamePhase.Ready);
   }
 
   play(): void {
     if (this.gamePhase() === GamePhase.Ready) {
-      this.lastTickMs = 0; // Reseta o contador de tempo
+      this.lastTickMs = 0;
       this.gamePhase.set(GamePhase.Playing);
     }
   }
 
   restart(): void {
     this.level.generate();
-    this.resetGame();
+    this.resetFullGame();
     this.gamePhase.set(GamePhase.Playing);
   }
 
-  private resetGame(): void {
+  nextPhase(): void {
+    if (this.gamePhase() !== GamePhase.Victory) return;
+
+    // Adiciona bônus de fase e preserva stats acumulados
+    this.score.update(s => s + SCORE_LEVEL_CLEAR);
+    this.phase.update(p => p + 1);
+
+    this.level.generate();
+    this.resetLevelState();
+    this.gamePhase.set(GamePhase.Playing);
+  }
+
+  private resetFullGame(): void {
     this.score.set(0);
     this.enemiesRemaining.set(ENEMY_COUNT);
     this.maxBombs.set(BASE_BOMBS);
@@ -93,6 +107,7 @@ export class GameLogicService {
     this.speed.set(0);
     this.pierce.set(false);
     this.exitOpen.set(false);
+    this.phase.set(1);
 
     this.player = {
       position: { ...this.level.playerSpawn },
@@ -101,6 +116,38 @@ export class GameLogicService {
       range: BASE_RANGE,
       moveDurationMs: BASE_MOVE_DURATION_MS,
       pierce: false
+    };
+
+    this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
+      id: i + 1,
+      position: { ...this.level.enemySpawns[i] },
+      alive: true,
+      moveDurationMs: BASE_MOVE_DURATION_MS,
+      currentMove: null,
+      nextMoveAtMs: 0,
+      nextBombAtMs: ENEMY_BOMB_INTERVAL_MS,
+      currentDirection: null,
+    }));
+
+    this.bombs = [];
+    this.explosions = [];
+    this.powerUps = [];
+    this.currentMove = null;
+    this.lastTickMs = 0;
+  }
+
+  private resetLevelState(): void {
+    this.enemiesRemaining.set(ENEMY_COUNT);
+    this.exitOpen.set(false);
+
+    // Preserva stats acumulados entre fases
+    this.player = {
+      position: { ...this.level.playerSpawn },
+      alive: true,
+      maxBombs: this.maxBombs(),
+      range: this.range(),
+      moveDurationMs: BASE_MOVE_DURATION_MS,
+      pierce: this.pierce()
     };
 
     this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
@@ -166,11 +213,8 @@ export class GameLogicService {
   plantBomb(): void {
     if (this.gamePhase() !== GamePhase.Playing || !this.player.alive) return;
 
-    // Verifica se o jogador já atingiu seu limite de bombas ativas
     const playerBombs = this.bombs.filter(b => b.planterId === 'player').length;
     if (playerBombs >= this.player.maxBombs) return;
-
-    // Verifica se já existe uma bomba na posição atual
     if (this.bombs.some(b => samePosition(b.position, this.player.position))) return;
 
     this.bombs.push({
@@ -198,23 +242,20 @@ export class GameLogicService {
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
 
-      // Atualiza o movimento atual do inimigo
       if (enemy.currentMove) {
         enemy.currentMove.elapsed += elapsed;
         if (enemy.currentMove.elapsed >= enemy.currentMove.duration) {
           enemy.position = { ...enemy.currentMove.to };
           enemy.currentMove = null;
         }
-        continue; // Se está se movendo, não toma nova decisão ainda
+        continue;
       }
 
-      // Lógica de decisão da IA para o próximo movimento
       if (now >= enemy.nextMoveAtMs) {
         const possibleDirs: Direction[] = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
         let bestDir: Direction | null = null;
         let minDist = Infinity;
 
-        // Tenta encontrar o jogador
         for (const dir of possibleDirs) {
           const delta = directionDelta(dir);
           const targetPos = { x: enemy.position.x + delta.x, y: enemy.position.y + delta.y };
@@ -228,7 +269,6 @@ export class GameLogicService {
           }
         }
 
-        // Fallback para movimento aleatório
         if (!bestDir || Math.random() > 0.7) {
           const validDirs = possibleDirs.filter(dir => {
             const delta = directionDelta(dir);
@@ -254,10 +294,8 @@ export class GameLogicService {
         enemy.nextMoveAtMs = now + ENEMY_MOVE_INTERVAL_MS;
       }
 
-      // Plantio de Bombas pela IA
       if (now >= enemy.nextBombAtMs && Math.random() < ENEMY_BOMB_CHANCE) {
         const enemyBombs = this.bombs.filter(b => b.planterId === enemy.id).length;
-        // Inimigos simples têm um limite de 1 bomba
         if (enemyBombs < 1 && !this.bombs.some(b => samePosition(b.position, enemy.position))) {
           this.bombs.push({
             id: Date.now() + enemy.id,
@@ -310,7 +348,7 @@ export class GameLogicService {
         if (tile.type === TileType.Box) {
           this.level.setTile(pos, TileType.Empty);
           this.score.update(s => s + SCORE_BOX);
-          this.trySpawnPowerUp(pos); // Tenta gerar um power-up
+          this.trySpawnPowerUp(pos);
           break;
         }
       }
