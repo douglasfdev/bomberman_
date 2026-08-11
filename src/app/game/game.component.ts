@@ -141,9 +141,22 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   restart(): void {
     this.logic.restart();
+    this.requestFullscreen();
   }
 
   play(): void {
     this.logic.play();
+    this.requestFullscreen();
+  }
+
+  private requestFullscreen(): void {
+    const elem = document.documentElement as any;
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen().catch(() => { });
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
   }
 }
