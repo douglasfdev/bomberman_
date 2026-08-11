@@ -14,3 +14,8 @@ export const SCORE_ENEMY = 50;
 export const SCORE_POWER_UP = 20;
 export const EXIT_MIN_SPAWN_DISTANCE = 5;
 export const BOX_CHANCE = 0.6;
+
+// Configurações da IA dos Inimigos
+export const ENEMY_MOVE_INTERVAL_MS = 400;
+export const ENEMY_BOMB_INTERVAL_MS = 5000;
+export const ENEMY_BOMB_CHANCE = 0.3;
