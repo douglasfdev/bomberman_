@@ -41,16 +41,19 @@
 
 .d-pad {
   position: absolute;
-  left: max(8vw, env(safe-area-inset-left, 8vw));
-  bottom: max(10vh, env(safe-area-inset-bottom, 10vh));
-  width: clamp(130px, 20vmin, 180px);
-  height: clamp(130px, 20vmin, 180px);
+  left: max(5vmin, env(safe-area-inset-left, 5vmin));
+  bottom: max(5vmin, env(safe-area-inset-bottom, 5vmin));
+  width: clamp(140px, 22vmin, 200px);
+  height: clamp(140px, 22vmin, 200px);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
+  grid-template-areas: 
+    ". up ."
+    "left . right"
+    ". down .";
   gap: clamp(4px, 1vmin, 8px);
   pointer-events: auto;
-  box-sizing: border-box;
 }
 
 .d-btn {
@@ -66,24 +69,23 @@
   align-items: center;
   justify-content: center;
   transition: background 0.1s;
-  box-sizing: border-box;
 }
 
 .d-btn:active {
   background: rgba(255, 255, 255, 0.45);
 }
 
-.up { grid-column: 2; grid-row: 1; }
-.left { grid-column: 1; grid-row: 2; }
-.right { grid-column: 8; grid-row: 2; }
-.down { grid-column: 2; grid-row: 4; }
+.up { grid-area: up; }
+.left { grid-area: left; }
+.right { grid-area: right; }
+.down { grid-area: down; }
 
 .action-btn {
   position: absolute;
-  right: max(8vw, env(safe-area-inset-right, 8vw));
-  bottom: max(10vh, env(safe-area-inset-bottom, 10vh));
-  width: clamp(90px, 14vmin, 130px);
-  height: clamp(90px, 14vmin, 130px);
+  right: max(5vmin, env(safe-area-inset-right, 5vmin));
+  bottom: max(5vmin, env(safe-area-inset-bottom, 5vmin));
+  width: clamp(100px, 16vmin, 140px);
+  height: clamp(100px, 16vmin, 140px);
   border-radius: 50%;
   border: none;
   font-size: clamp(28px, 5vmin, 36px);
@@ -96,7 +98,6 @@
   align-items: center;
   justify-content: center;
   transition: background 0.1s;
-  box-sizing: border-box;
 }
 
 .action-btn:active {
