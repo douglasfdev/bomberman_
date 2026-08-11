@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import * as THREE from 'three';
 import { GameLogicService } from '../core/game-logic.service';
 import { EXPLOSION_MS, GRID_SIZE } from '../core/models/game-config';
-import { EnemyView } from '../core/models/game-state.model';
-import { InterpolatedMove } from '../core/models/game-state.model';
+import { EnemyView, Explosion, InterpolatedMove } from '../core/models/game-state.model';
 import { GridPosition, keyOf, samePosition } from '../core/models/position.model';
 import { PowerUpType } from '../core/models/power-up.model';
 import { TileType } from '../core/models/tile.model';
@@ -40,7 +39,7 @@ export class SceneBuilderService {
     if (!this.scene) {
       return;
     }
-    const timeMs = logic.getGameTimeMs();
+    const timeMs = 'getGameTimeMs' in logic ? (logic as any).getGameTimeMs() : performance.now();
     this.syncTiles(logic);
     this.syncPlayer(logic);
     this.syncEnemies(logic);
@@ -289,14 +288,13 @@ export class SceneBuilderService {
       this.renderedExplosions.set(explosion.id, { group, startedAt: timeMs });
     }
     for (const [id, { group, startedAt }] of this.renderedExplosions) {
-      if (!explosions.some((e) => e.id === id)) {
+      if (!explosions.some((e: Explosion) => e.id === id)) {
         this.scene?.remove(group);
         this.disposeGroup(group);
         this.renderedExplosions.delete(id);
         continue;
       }
-      const progress = (logic.getGameTimeMs() - startedAt) / EXPLOSION_MS;
-      // Aplica a escala em cada cubo individualmente, não no grupo
+      const progress = (timeMs - startedAt) / EXPLOSION_MS;
       for (const child of group.children) {
         child.scale.setScalar(Math.max(0.1, progress));
       }
