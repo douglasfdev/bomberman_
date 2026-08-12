@@ -47,3 +47,5 @@ Thumbs.db
 # Environment variables
 .env
 /src/generated/prisma
+./public/assets/kenney_blocky-characters_20/Models/FBX
+./public/assets/kenney_blocky-characters_20/Models/OBJ

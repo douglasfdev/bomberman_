@@ -13,9 +13,12 @@ datasource db {
 }
 
 model User {
-  id    String     @id @default(ulid())
-  email String  @unique
-  name  String?
-  googleId String  @unique
-  isDonor Boolean @default(false)
+  id        String   @id @default(ulid())
+  email     String   @unique
+  name      String?
+  googleId  String?  @unique
+  microsoftId String? @unique
+  buymeId   String?  @unique
+  isDonor   Boolean  @default(false)
+  donorAvatars Int    @default(0)
 }

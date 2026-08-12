@@ -45,14 +45,17 @@
       <div *ngSwitchCase="GamePhase.Ready">
         <h2 class="overlay-title">Bomberman</h2>
         <button class="restart-btn" (click)="play()">Iniciar Jogo</button>
+        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
       </div>
       <div *ngSwitchCase="GamePhase.Victory">
         <h2 class="overlay-title">Vitória!</h2>
         <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
       </div>
       <div *ngSwitchCase="GamePhase.Defeat">
         <h2 class="overlay-title">Derrota</h2>
         <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
       </div>
     </ng-container>
   </div>

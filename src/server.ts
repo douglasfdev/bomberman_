@@ -118,8 +118,59 @@ export function app(): express.Express {
     })
   );
 
+  // Microsoft OAuth (optional) - requires `passport-microsoft` package and env vars
+  try {
+    // Dynamically require to avoid hard dependency errors in environments without the package
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
+
+    passport.use(
+      new MicrosoftStrategy(
+        {
+          clientID: process.env['MICROSOFT_CLIENT_ID'],
+          clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
+          callbackURL: process.env['APP_BASE_URL'] + '/api/auth/microsoft/callback',
+          scope: ['user.read', 'openid', 'profile', 'email'],
+        },
+        async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+          try {
+            const email = profile.emails && profile.emails[0] && profile.emails[0].value;
+            if (!email) return done(new Error('No email in Microsoft profile'));
+
+            // Upsert user by email and store microsoftId when available
+            const user = await prisma.user.upsert({
+              where: { email },
+              update: { name: profile.displayName || profile.username, microsoftId: profile.id },
+              create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
+            });
+
+            return done(null, user);
+          } catch (error) {
+            return done(error);
+          }
+        }
+      )
+    );
+
+    server.get('/api/auth/microsoft', passport.authenticate('microsoft'));
+    server.get(
+      '/api/auth/microsoft/callback',
+      passport.authenticate('microsoft', {
+        failureRedirect: '/',
+        successRedirect: '/',
+      })
+    );
+  } catch (err) {
+    console.warn('passport-microsoft not configured or not installed; skipping Microsoft OAuth routes');
+  }
+
+  // Informações do usuário atual (SSR-friendly)
   server.get('/api/user', (req, res) => {
-    res.json(req.user || null);
+    // Expose minimal info suitable for SSR; frontend can request this endpoint to render donor state and personalize UI
+    if (!req.user) return res.json(null);
+
+    const { id, email, name, isDonor } = req.user as any;
+    res.json({ id, email, name, isDonor: !!isDonor });
   });
 
   server.post('/api/auth/logout', (req, res, next) => {
@@ -131,19 +182,70 @@ export function app(): express.Express {
     });
   });
 
-  // Rota de Webhook (já existente)
-  server.post('/api/webhook/payment', async (req, res) => {
-    const { email, status } = req.body;
+  // Endpoint para retornar configuração de anúncios (AdSense) para o frontend SSR
+  server.get('/api/ads/config', (req, res) => {
+    const config = {
+      adSenseClient: process.env['ADSENSE_CLIENT_ID'] || null,
+      slots: {
+        layout: process.env['ADSENSE_SLOT_LAYOUT'] || null,
+        menu: process.env['ADSENSE_SLOT_MENU'] || null,
+        victory: process.env['ADSENSE_SLOT_VICTORY'] || null,
+        defeat: process.env['ADSENSE_SLOT_DEFEAT'] || null,
+      },
+      enabled: process.env['ADSENSE_ENABLED'] === '1' || false,
+    };
+    res.json(config);
+  });
 
-    if (status === 'paid') {
-      await prisma.user.update({
-        where: { email },
-        data: { isDonor: true },
-      });
-      io.to(email).emit('payment_approved', { isDonor: true });
+  // Endpoints para links de doação / informações (Ko-fi, BuyMeACoffee, PIX QR)
+  server.get('/api/donate/links', (req, res) => {
+    res.json({
+      koFi: process.env['KOFI_URL'] || null,
+      buyMeACoffee: process.env['BMC_URL'] || null,
+      pixQrUrl: process.env['PIX_QR_URL'] || null,
+      pixCode: process.env['PIX_CODE'] || null,
+    });
+  });
+
+  // Allow authenticated users to mark themselves as donors (useful for redirect-based flows)
+  server.post('/api/donate/mark-donor', async (req, res) => {
+    if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+    const user = req.user as any;
+
+    try {
+      await prisma.user.update({ where: { id: user.id }, data: { isDonor: true } });
+      io.to(user.email).emit('payment_approved', { isDonor: true });
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error marking donor:', error);
+      res.status(500).json({ error: 'internal_error' });
+    }
+  });
+
+  // Rota de Webhook estendida para diversos provedores de pagamento (BMC, Ko-fi, Stripe, etc.)
+  server.post('/api/webhook/payment', async (req, res) => {
+    const { email, status, provider } = req.body;
+
+    if (!email) return res.status(400).json({ error: 'missing_email' });
+
+    if (status === 'paid' || status === 'succeeded') {
+      try {
+        const update: any = { isDonor: true };
+        // if provider included a provider-specific id for the payer, persist it (e.g., buyme customer id)
+        if (req.body.providerCustomerId && provider === 'buyme') {
+          update.buymeId = req.body.providerCustomerId;
+        }
+
+        await prisma.user.update({ where: { email }, data: update });
+        io.to(email).emit('payment_approved', { isDonor: true, provider: provider || 'unknown' });
+        return res.sendStatus(200);
+      } catch (err) {
+        console.error('Webhook processing error:', err);
+        return res.sendStatus(500);
+      }
     }
 
-    res.sendStatus(200);
+    res.sendStatus(204);
   });
 
   // Servir arquivos estáticos

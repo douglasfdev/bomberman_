@@ -15,10 +15,12 @@ import { Direction } from '../core/models/direction.model';
 import { GamePhase } from '../core/models/game-state.model';
 import { SceneBuilderService } from '../render/scene-builder.service';
 import { ThreeEngineService } from '../render/three-engine.service';
+import { AdBannerComponent } from '../components/ad-banner.component';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-game',
-  imports: [CommonModule],
+  imports: [CommonModule, AdBannerComponent],
   templateUrl: './game.component.html',
   styleUrl: './game.component.scss',
 })
@@ -46,6 +48,9 @@ export class GameComponent implements AfterViewInit, OnDestroy {
 
   private readonly subscriptions: Subscription[] = [];
   private initialized = false;
+
+  // expose auth service to template so we can check donor state and hide ads
+  public authService = inject(AuthService);
 
   private cameraOrbitRadius = 22;
   private cameraAzimuth = 0;

@@ -11,8 +11,8 @@ import { isPlatformBrowser, NgIf } from '@angular/common';
       <ins *ngIf="isBrowser"
            class="adsbygoogle"
            style="display:block"
-           data-ad-client="ca-pub-SEU_PUBLISHER_ID"
-           data-ad-slot="SEU_AD_SLOT_ID"
+           data-ad-client=""
+           data-ad-slot=""
            data-ad-format="auto"
            data-full-width-responsive="true"></ins>
     </div>
@@ -26,16 +26,42 @@ export class AdBannerComponent implements AfterViewInit {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
 
-  ngAfterViewInit() {
-    if (this.isBrowser) {
-      // O setTimeout garante que o Angular renderizou o <ins> antes de o script do Google tentar encontrá-lo.
-      setTimeout(() => {
-        try {
-          ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
-        } catch (e) {
-          console.error('Erro ao inicializar anúncio do AdSense:', e);
-        }
-      }, 100);
+  async ngAfterViewInit() {
+    if (!this.isBrowser) return;
+
+    // Fetch ad configuration from the server and initialize the ad element if ads are enabled
+    try {
+      const res = await fetch('/api/ads/config');
+      const cfg = await res.json();
+
+      if (!cfg || !cfg.enabled) return;
+
+      const ins = document.querySelector('.ad-container ins.adsbygoogle') as HTMLElement | null;
+      if (!ins) return;
+
+      if (cfg.adSenseClient) ins.setAttribute('data-ad-client', cfg.adSenseClient);
+      // prefer slot named 'menu' but caller can use CSS to override specific slots
+      const slot = cfg.slots && (cfg.slots.menu || cfg.slots.layout) ? (cfg.slots.menu || cfg.slots.layout) : null;
+      if (slot) ins.setAttribute('data-ad-slot', slot);
+
+      // Ensure the AdSense global script is loaded
+      if (!(window as any).adsbygoogle) {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+        script.setAttribute('crossorigin', 'anonymous');
+        document.head.appendChild(script);
+        // allow script to load
+        await new Promise((r) => setTimeout(r, 250));
+      }
+
+      try {
+        ((window as any).adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('Erro ao inicializar anúncio do AdSense:', e);
+      }
+    } catch (err) {
+      console.warn('Ad config fetch failed', err);
     }
   }
 }
