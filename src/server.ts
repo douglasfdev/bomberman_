@@ -20,21 +20,17 @@ import 'dotenv/config';
 import { PrismaClient } from './generated/prisma/client';
 import { PrismaPg } from "@prisma/adapter-pg";
 
-
-const browserDistFolder = join(dirname(fileURLToPath(import.meta.url)), '../browser');
+const serverDir = dirname(fileURLToPath(import.meta.url));
+const browserDistFolder = resolve(serverDir, '../browser');
+const indexHtml = join(serverDir, 'index.server.html');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
+const prisma = new PrismaClient({ adapter });
 
-const prisma = new PrismaClient({
-  adapter,
-});
+let io: Server | null = null;
 
-const angularApp = new AngularNodeAppEngine();
 export function app(): express.Express {
   const server = express();
-  const serverDir = dirname(fileURLToPath(import.meta.url));
-  const browserDistFolder = resolve(serverDir, '../browser');
-  const indexHtml = join(serverDir, 'index.server.html');
   const commonEngine = new CommonEngine();
 
   server.set('view engine', 'html');
@@ -47,12 +43,12 @@ export function app(): express.Express {
   // Configuração da Sessão
   server.use(
     session({
-      secret: process.env['SESSION_SECRET'] || 'default-secret',
+      secret: process.env['SESSION_SECRET'] || 'default-secret-change-in-prod',
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: process.env['NODE_ENV'] === 'production', // Usar cookies seguros em produção
+        secure: process.env['NODE_ENV'] === 'production',
         maxAge: 24 * 60 * 60 * 1000, // 24 horas
       },
     })
@@ -73,17 +69,12 @@ export function app(): express.Express {
       },
       async (accessToken, refreshToken, profile, done) => {
         try {
+          const email = profile.emails?.[0]?.value;
+          if (!email) return done(new Error('No email provided'));
           const user = await prisma.user.upsert({
-            where: { email: profile.emails![0].value },
-            update: {
-              name: profile.displayName,
-              googleId: profile.id,
-            },
-            create: {
-              email: profile.emails![0].value,
-              name: profile.displayName,
-              googleId: profile.id,
-            },
+            where: { email },
+            update: { name: profile.displayName, googleId: profile.id },
+            create: { email, name: profile.displayName, googleId: profile.id },
           });
           return done(null, user);
         } catch (error) {
@@ -91,6 +82,50 @@ export function app(): express.Express {
         }
       }
     )
+  );
+
+  // Microsoft OAuth (optional)
+  try {
+    const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
+    passport.use(
+      new MicrosoftStrategy(
+        {
+          clientID: process.env['MICROSOFT_CLIENT_ID'],
+          clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
+          callbackURL: process.env['APP_BASE_URL'] + '/api/auth/microsoft/callback',
+          scope: ['user.read', 'openid', 'profile', 'email'],
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            const email = profile?.emails?.[0]?.value;
+            if (!email) return done(new Error('No email in Microsoft profile'));
+            const user = await prisma.user.upsert({
+              where: { email },
+              update: { name: profile.displayName || profile.username, microsoftId: profile.id },
+              create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
+            });
+            return done(null, user);
+          } catch (error) {
+            return done(error);
+          }
+        }
+      )
+    );
+
+    server.get('/api/auth/microsoft', passport.authenticate('microsoft'));
+    server.get(
+      '/api/auth/microsoft/callback',
+      passport.authenticate('microsoft', { failureRedirect: '/', successRedirect: '/' })
+    );
+  } catch (err) {
+    console.warn('passport-microsoft not configured or installed; skipping Microsoft OAuth routes');
+  }
+
+  // Rotas de Autenticação Google
+  server.get('/api/auth/google', passport.authenticate('google'));
+  server.get(
+    '/api/auth/google/callback',
+    passport.authenticate('google', { failureRedirect: '/', successRedirect: '/' })
   );
 
   // Serialização e Deserialização do Usuário para a sessão
@@ -107,77 +142,23 @@ export function app(): express.Express {
     }
   });
 
-  // Rotas de Autenticação
-  server.get('/api/auth/google', passport.authenticate('google'));
-
-  server.get(
-    '/api/auth/google/callback',
-    passport.authenticate('google', {
-      failureRedirect: '/',
-      successRedirect: '/',
-    })
-  );
-
-  // Microsoft OAuth (optional) - requires `passport-microsoft` package and env vars
-  try {
-    // Dynamically require to avoid hard dependency errors in environments without the package
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
-
-    passport.use(
-      new MicrosoftStrategy(
-        {
-          clientID: process.env['MICROSOFT_CLIENT_ID'],
-          clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
-          callbackURL: process.env['APP_BASE_URL'] + '/api/auth/microsoft/callback',
-          scope: ['user.read', 'openid', 'profile', 'email'],
-        },
-        async (accessToken: string, refreshToken: string, profile: any, done: any) => {
-          try {
-            const email = profile.emails && profile.emails[0] && profile.emails[0].value;
-            if (!email) return done(new Error('No email in Microsoft profile'));
-
-            // Upsert user by email and store microsoftId when available
-            const user = await prisma.user.upsert({
-              where: { email },
-              update: { name: profile.displayName || profile.username, microsoftId: profile.id },
-              create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
-            });
-
-            return done(null, user);
-          } catch (error) {
-            return done(error);
-          }
-        }
-      )
-    );
-
-    server.get('/api/auth/microsoft', passport.authenticate('microsoft'));
-    server.get(
-      '/api/auth/microsoft/callback',
-      passport.authenticate('microsoft', {
-        failureRedirect: '/',
-        successRedirect: '/',
-      })
-    );
-  } catch (err) {
-    console.warn('passport-microsoft not configured or not installed; skipping Microsoft OAuth routes');
-  }
-
   // Informações do usuário atual (SSR-friendly)
   server.get('/api/user', (req, res) => {
-    // Expose minimal info suitable for SSR; frontend can request this endpoint to render donor state and personalize UI
     if (!req.user) return res.json(null);
+    const user = req.user as any;
+    res.json({ id: user.id, email: user.email, name: user.name, isDonor: !!user.isDonor });
+  });
 
-    const { id, email, name, isDonor } = req.user as any;
-    res.json({ id, email, name, isDonor: !!isDonor });
+  // Endpoint dedicado para status de doador (leve e seguro para SSR)
+  server.get('/api/donor/status', (req, res) => {
+    if (!req.user) return res.json({ isDonor: false });
+    const user = req.user as any;
+    res.json({ isDonor: !!user.isDonor });
   });
 
   server.post('/api/auth/logout', (req, res, next) => {
     req.logout((err) => {
-      if (err) {
-        return next(err);
-      }
+      if (err) return next(err);
       res.redirect('/');
     });
   });
@@ -192,7 +173,7 @@ export function app(): express.Express {
         victory: process.env['ADSENSE_SLOT_VICTORY'] || null,
         defeat: process.env['ADSENSE_SLOT_DEFEAT'] || null,
       },
-      enabled: process.env['ADSENSE_ENABLED'] === '1' || false,
+      enabled: process.env['ADSENSE_ENABLED'] === '1',
     };
     res.json(config);
   });
@@ -214,7 +195,7 @@ export function app(): express.Express {
 
     try {
       await prisma.user.update({ where: { id: user.id }, data: { isDonor: true } });
-      io.to(user.email).emit('payment_approved', { isDonor: true });
+      io?.to(user.email).emit('payment_approved', { isDonor: true });
       res.json({ ok: true });
     } catch (error) {
       console.error('Error marking donor:', error);
@@ -222,7 +203,7 @@ export function app(): express.Express {
     }
   });
 
-  // Rota de Webhook estendida para diversos provedores de pagamento (BMC, Ko-fi, Stripe, etc.)
+  // Rota de Webhook estendida para diversos provedores de pagamento
   server.post('/api/webhook/payment', async (req, res) => {
     const { email, status, provider } = req.body;
 
@@ -231,13 +212,12 @@ export function app(): express.Express {
     if (status === 'paid' || status === 'succeeded') {
       try {
         const update: any = { isDonor: true };
-        // if provider included a provider-specific id for the payer, persist it (e.g., buyme customer id)
         if (req.body.providerCustomerId && provider === 'buyme') {
           update.buymeId = req.body.providerCustomerId;
         }
 
         await prisma.user.update({ where: { email }, data: update });
-        io.to(email).emit('payment_approved', { isDonor: true, provider: provider || 'unknown' });
+        io?.to(email).emit('payment_approved', { isDonor: true, provider: provider || 'unknown' });
         return res.sendStatus(200);
       } catch (err) {
         console.error('Webhook processing error:', err);
@@ -249,9 +229,7 @@ export function app(): express.Express {
   });
 
   // Servir arquivos estáticos
-  server.get('*.*', express.static(browserDistFolder, {
-    maxAge: '1y'
-  }));
+  server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
 
   // Rota principal do Angular SSR
   server.get('*', (req, res, next) => {
@@ -277,73 +255,10 @@ export function app(): express.Express {
   return server;
 }
 
-// O restante do seu código para iniciar o servidor...
+// Inicialização do servidor e Socket.io
 const port = process.env['PORT'] || 4000;
 const expressApp = app();
 const httpServer = createServer(expressApp);
-const io = new Server(httpServer, {
-  cors: { origin: '*' }
-});
+io = new Server(httpServer, { cors: { origin: '*' } });
 
-io.on('connection', (socket) => {
-  socket.on('join_room', (email: string) => {
-    socket.join(email);
-  });
-});
-
-httpServer.listen(port, () => {
-  console.log(`Node Express server listening on http://localhost:${port}`);
-});
-
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
-
-/**
- * Serve static files from /browser
- */
-app().use(
-  express.static(browserDistFolder, {
-    maxAge: '1y',
-    index: false,
-    redirect: false,
-  }),
-);
-
-/**
- * Handle all other requests by rendering the Angular application.
- */
-app().use((req, res, next) => {
-  angularApp
-    .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
-    .catch(next);
-});
-
-/**
- * Start the server if this module is the main entry point, or it is ran via PM2.
- * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
- */
-if (isMainModule(import.meta.url) || process.env['pm_id']) {
-  const port = process.env['PORT'] || 4000;
-  app().listen(port, (error) => {
-    if (error) {
-      throw error;
-    }
-
-    console.log(`Node Express server listening on http://localhost:${port}`);
-  });
-}
-
-/**
- * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
- */
-export const reqHandler = createNodeRequestHandler(app());
+io.on
