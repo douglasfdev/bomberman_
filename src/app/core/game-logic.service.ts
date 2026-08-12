@@ -275,6 +275,34 @@ export class GameLogicService {
       this.bombs.filter(b => b.planterId === enemy.id).length < 1 &&
       !this.bombs.some(b => samePosition(b.position, enemy.position));
 
+    const bestBombTarget = this.findBestBombPlantingTarget(enemy, dangerSet);
+    if (bestBombTarget) {
+      if (samePosition(enemy.position, bestBombTarget.plant)) {
+        if (canPlantBomb) {
+          const dangerWithNewBomb = this.getDangerMap(enemy.position);
+          const escapePath = this.findPathToSafety(enemy.position, dangerWithNewBomb);
+
+          if (escapePath) {
+            this.bombs.push({
+              id: Date.now() + enemy.id,
+              planterId: enemy.id,
+              position: { ...enemy.position },
+              range: 2,
+              pierce: false,
+              plantedAtMs: now,
+            });
+            enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
+            return escapePath;
+          }
+        }
+      } else {
+        const nextMove = this.findPathTo(enemy.position, bestBombTarget.plant, dangerSet);
+        if (nextMove) {
+          return nextMove;
+        }
+      }
+    }
+
     if (canPlantBomb && this.isPlayerInSights(enemy.position)) {
       const dangerWithNewBomb = this.getDangerMap(enemy.position);
       const escapePath = this.findPathToSafety(enemy.position, dangerWithNewBomb);
@@ -293,12 +321,12 @@ export class GameLogicService {
       }
     }
 
-    const pathToPlayer = this.findPathTowardsPlayer(enemy.position, dangerSet);
+    const pathToPlayer = this.findPathTo(enemy.position, this.player.position, dangerSet);
     if (pathToPlayer) {
       return pathToPlayer;
     }
 
-    if (canPlantBomb && this.canDestroyPathBoxFrom(enemy.position)) {
+    if (bestBombTarget && samePosition(enemy.position, bestBombTarget.plant) && canPlantBomb) {
       const dangerWithNewBomb = this.getDangerMap(enemy.position);
       const escapePath = this.findPathToSafety(enemy.position, dangerWithNewBomb);
 
@@ -316,31 +344,31 @@ export class GameLogicService {
       }
     }
 
-    const bombableApproach = this.findBombableApproachStep(enemy, dangerSet);
-    if (bombableApproach) {
-      return bombableApproach;
+    if (bestBombTarget) {
+      const nextMove = this.findPathTo(enemy.position, bestBombTarget.plant, dangerSet);
+      if (nextMove) {
+        return nextMove;
+      }
     }
 
-    return this.selectEnemyMove(enemy, validMoves, dangerSet);
-
-    return this.selectEnemyMove(enemy, validMoves, dangerSet);
+    return this.selectEnemyMove(enemy, validMoves, dangerSet, enemy.currentDirection);
   }
 
-  private findBombableApproachStep(enemy: EnemyState, dangerSet: Set<string>): GridPosition | null {
-    const queue: { pos: GridPosition; path: GridPosition[] }[] = [{ pos: enemy.position, path: [] }];
-    const visited = new Set<string>([keyOf(enemy.position)]);
+  private findPathTo(start: GridPosition, target: GridPosition, dangerSet: Set<string>): GridPosition | null {
+    if (samePosition(start, target)) return null;
+
+    const queue: { pos: GridPosition; path: GridPosition[] }[] = [{ pos: start, path: [] }];
+    const visited = new Set<string>([keyOf(start)]);
 
     while (queue.length > 0) {
       const { pos, path } = queue.shift()!;
-      if (path.length > 0 && this.canDestroyPathBoxFrom(pos)) {
-        return path[0];
+      if (samePosition(pos, target)) {
+        return path[0] || null;
       }
 
       for (const nextPos of this.getValidMoves(pos, dangerSet)) {
         const key = keyOf(nextPos);
-        if (visited.has(key)) {
-          continue;
-        }
+        if (visited.has(key)) continue;
         visited.add(key);
         queue.push({ pos: nextPos, path: [...path, nextPos] });
       }
@@ -349,30 +377,103 @@ export class GameLogicService {
     return null;
   }
 
-  private canDestroyPathBoxFrom(pos: GridPosition): boolean {
+  private findBestBombPlantingTarget(enemy: EnemyState, dangerSet: Set<string>): { plant: GridPosition; box: GridPosition } | null {
     const playerReachable = this.getPlayerReachableTiles();
+    const frontierBoxes = this.getFrontierBoxes(playerReachable);
+    if (frontierBoxes.length === 0) return null;
+
+    const plantingCandidates = new Map<string, { plant: GridPosition; box: GridPosition; priority: number }>();
+
+    for (const box of frontierBoxes) {
+      const boxDistanceToPlayer = manhattan(box, this.player.position);
+      for (const plant of this.getPlantingPositionsForBox(box)) {
+        const distanceToEnemy = manhattan(plant, enemy.position);
+        const priority = distanceToEnemy + boxDistanceToPlayer * 0.4 + (this.isNarrowCorridor(plant) ? -2 : 0);
+        const key = keyOf(plant);
+        const existing = plantingCandidates.get(key);
+        if (!existing || priority < existing.priority) {
+          plantingCandidates.set(key, { plant, box, priority });
+        }
+      }
+    }
+
+    const targetKeys = new Set(plantingCandidates.keys());
+    const queue: { pos: GridPosition; path: GridPosition[] }[] = [{ pos: enemy.position, path: [] }];
+    const visited = new Set<string>([keyOf(enemy.position)]);
+
+    while (queue.length > 0) {
+      const { pos, path } = queue.shift()!;
+      const key = keyOf(pos);
+      if (targetKeys.has(key)) {
+        return plantingCandidates.get(key)!;
+      }
+
+      for (const nextPos of this.getValidMoves(pos, dangerSet)) {
+        const nextKey = keyOf(nextPos);
+        if (visited.has(nextKey)) continue;
+        visited.add(nextKey);
+        queue.push({ pos: nextPos, path: [...path, nextPos] });
+      }
+    }
+
+    return null;
+  }
+
+  private getFrontierBoxes(playerReachable: Set<string>): GridPosition[] {
+    const frontier = new Set<string>();
+    const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+
+    for (const posKey of playerReachable) {
+      const [x, y] = posKey.split(',').map(Number);
+      const pos: GridPosition = { x, y };
+      for (const dir of dirs) {
+        const adjacent = { x: pos.x + directionDelta(dir).x, y: pos.y + directionDelta(dir).y };
+        if (!this.level.isInBounds(adjacent)) continue;
+        if (this.level.tileAt(adjacent).type === TileType.Box) {
+          frontier.add(keyOf(adjacent));
+        }
+      }
+    }
+
+    return Array.from(frontier, key => {
+      const [x, y] = key.split(',').map(Number);
+      return { x, y };
+    });
+  }
+
+  private getPlantingPositionsForBox(box: GridPosition): GridPosition[] {
+    const positions: GridPosition[] = [];
     const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
 
     for (const dir of dirs) {
       const delta = directionDelta(dir);
       for (let r = 1; r <= 2; r++) {
-        const target = { x: pos.x + delta.x * r, y: pos.y + delta.y * r };
-        if (!this.level.isInBounds(target)) {
-          break;
-        }
+        const plant = { x: box.x + delta.x * r, y: box.y + delta.y * r };
+        if (!this.level.isInBounds(plant) || !this.level.isWalkable(plant)) break;
 
-        const tile = this.level.tileAt(target);
-        if (tile.type === TileType.Wall) {
-          break;
-        }
+        if (this.bombs.some(b => samePosition(b.position, plant))) break;
+        if (this.isExplosionPathBlocked(plant, box)) break;
 
-        if (tile.type === TileType.Box) {
-          if (this.isUsefulBoxToPlayer(target, playerReachable)) {
-            return true;
-          }
-          break;
-        }
+        positions.push(plant);
       }
+    }
+
+    return positions;
+  }
+
+  private isExplosionPathBlocked(plant: GridPosition, box: GridPosition): boolean {
+    if (plant.x !== box.x && plant.y !== box.y) return true;
+
+    const dx = Math.sign(box.x - plant.x);
+    const dy = Math.sign(box.y - plant.y);
+    let current = { x: plant.x + dx, y: plant.y + dy };
+
+    while (!samePosition(current, box)) {
+      const tile = this.level.tileAt(current);
+      if (tile.type === TileType.Wall || tile.type === TileType.Box) {
+        return true;
+      }
+      current = { x: current.x + dx, y: current.y + dy };
     }
 
     return false;
@@ -393,7 +494,8 @@ export class GameLogicService {
         if (
           !reachable.has(key) &&
           this.level.isInBounds(nextPos) &&
-          (this.level.isWalkable(nextPos) || samePosition(nextPos, this.player.position))
+          this.level.isWalkable(nextPos) &&
+          !this.bombs.some(b => samePosition(b.position, nextPos))
         ) {
           reachable.add(key);
           queue.push(nextPos);
@@ -529,20 +631,37 @@ export class GameLogicService {
     return count;
   }
 
-  private selectEnemyMove(enemy: EnemyState & { nextMoveAtMs: number; nextBombAtMs: number }, validMoves: GridPosition[], dangerSet: Set<string>): GridPosition | null {
+  private selectEnemyMove(enemy: EnemyState & { nextMoveAtMs: number; nextBombAtMs: number }, validMoves: GridPosition[], dangerSet: Set<string>, currentDirection: Direction | null): GridPosition | null {
     if (validMoves.length === 0) {
       return null;
     }
 
     const currentDistance = manhattan(enemy.position, this.player.position);
-    const scoredMoves = validMoves.map(move => ({
-      move,
-      distance: manhattan(move, this.player.position),
-      forward: currentDistance - manhattan(move, this.player.position),
-      reachableArea: this.countSafeReachableArea(move, dangerSet),
-    }));
+    const scoredMoves = validMoves.map(move => {
+      const moveDirection = this.getDirection(enemy.position, move);
+      const forward = currentDistance - manhattan(move, this.player.position);
+      const sameDirectionBonus = currentDirection && moveDirection === currentDirection ? 10 : 0;
+      const directionChangePenalty = currentDirection && moveDirection !== currentDirection ? 1 : 0;
+
+      return {
+        move,
+        distance: manhattan(move, this.player.position),
+        forward,
+        sameDirectionBonus,
+        directionChangePenalty,
+        reachableArea: this.countSafeReachableArea(move, dangerSet),
+      };
+    });
 
     scoredMoves.sort((a, b) => {
+      if (b.sameDirectionBonus !== a.sameDirectionBonus) {
+        return b.sameDirectionBonus - a.sameDirectionBonus;
+      }
+
+      if (a.directionChangePenalty !== b.directionChangePenalty) {
+        return a.directionChangePenalty - b.directionChangePenalty;
+      }
+
       if (b.forward !== a.forward) {
         return b.forward - a.forward;
       }
