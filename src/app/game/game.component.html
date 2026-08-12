@@ -6,59 +6,45 @@
     <span>Inimigos: {{ enemiesRemaining() }}</span>
     <span>Bombas: {{ maxBombs() }}</span>
     <span>Alcance: {{ range() }}</span>
-    <span *ngIf="speed()">Vel +{{ speed() }}</span>
-    <span *ngIf="pierce()">Atravessa</span>
+    @if (speed()) { <span>Vel +{{ speed() }}</span> }
+    @if (pierce()) { <span>Atravessa</span> }
   </div>
 
-  <div class="controls" *ngIf="isTouch">
-    <div class="d-pad">
-      <button
-        class="d-btn up"
-        (pointerdown)="onDirection(Direction.Up)"
-        (pointerup)="onDirection(null)"
-        (pointerleave)="onDirection(null)"
-      >▲</button>
-      <button
-        class="d-btn left"
-        (pointerdown)="onDirection(Direction.Left)"
-        (pointerup)="onDirection(null)"
-        (pointerleave)="onDirection(null)"
-      >◀</button>
-      <button
-        class="d-btn right"
-        (pointerdown)="onDirection(Direction.Right)"
-        (pointerup)="onDirection(null)"
-        (pointerleave)="onDirection(null)"
-      >▶</button>
-      <button
-        class="d-btn down"
-        (pointerdown)="onDirection(Direction.Down)"
-        (pointerup)="onDirection(null)"
-        (pointerleave)="onDirection(null)"
-      >▼</button>
+  @if (isTouch) {
+    <div class="controls">
+      <div class="d-pad">
+        <button class="d-btn up" (pointerdown)="onDirection(Direction.Up)" (pointerup)="onDirection(null)" (pointerleave)="onDirection(null)">▲</button>
+        <button class="d-btn left" (pointerdown)="onDirection(Direction.Left)" (pointerup)="onDirection(null)" (pointerleave)="onDirection(null)">◀</button>
+        <button class="d-btn right" (pointerdown)="onDirection(Direction.Right)" (pointerup)="onDirection(null)" (pointerleave)="onDirection(null)">▶</button>
+        <button class="d-btn down" (pointerdown)="onDirection(Direction.Down)" (pointerup)="onDirection(null)" (pointerleave)="onDirection(null)">▼</button>
+      </div>
+      <button class="action-btn" (pointerdown)="onAction()">💣</button>
     </div>
-    <button class="action-btn" (pointerdown)="onAction()">💣</button>
-  </div>
+  }
 
-  <div class="overlay" *ngIf="gamePhase() !== GamePhase.Playing">
-    <ng-container [ngSwitch]="gamePhase()">
-      <div *ngSwitchCase="GamePhase.Ready">
-        <h2 class="overlay-title">Bomberman</h2>
-        <button class="restart-btn" (click)="play()">Iniciar Jogo</button>
-        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
-      </div>
-      <div *ngSwitchCase="GamePhase.Victory">
-        <h2 class="overlay-title">Vitória!</h2>
-        <button class="restart-btn" (click)="restart()">Jogar novamente</button>
-        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
-      </div>
-      <div *ngSwitchCase="GamePhase.Defeat">
-        <h2 class="overlay-title">Derrota</h2>
-        <button class="restart-btn" (click)="restart()">Jogar novamente</button>
-        <app-ad-banner *ngIf="(authService.user$ | async)?.isDonor !== true"></app-ad-banner>
-      </div>
-    </ng-container>
-  </div>
+  @if (gamePhase() !== GamePhase.Playing) {
+    <div class="overlay">
+      @switch (gamePhase()) {
+        @case (GamePhase.Ready) {
+          <h2 class="overlay-title">Bomberman</h2>
+          <button class="restart-btn" (click)="play()">Iniciar Jogo</button>
+          @if (!authService.isDonor()) { <app-ad-banner></app-ad-banner> }
+        }
+        @case (GamePhase.Victory) {
+          <h2 class="overlay-title">Vitória!</h2>
+          <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+          @if (!authService.isDonor()) { <app-ad-banner></app-ad-banner> }
+        }
+        @case (GamePhase.Defeat) {
+          <h2 class="overlay-title">Derrota</h2>
+          <button class="restart-btn" (click)="restart()">Jogar novamente</button>
+          @if (!authService.isDonor()) { <app-ad-banner></app-ad-banner> }
+        }
+      }
+    </div>
+  }
 
-  <div class="error" *ngIf="initError()">Seu navegador não suporta WebGL.</div>
+  @if (initError()) {
+    <div class="error">Seu navegador não suporta WebGL.</div>
+  }
 </div>

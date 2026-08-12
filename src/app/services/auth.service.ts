@@ -1,5 +1,4 @@
-// src/app/services/auth.service.ts
-import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -18,6 +17,8 @@ export interface User {
   providedIn: 'root',
 })
 export class AuthService {
+  readonly isDonor = signal(false);
+  readonly userEmail = signal<string | null>(null);
   private userSubject = new BehaviorSubject<User | null>(null);
   public user$ = this.userSubject.asObservable();
 

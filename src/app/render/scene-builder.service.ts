@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GameLogicService } from '../core/game-logic.service';
@@ -24,20 +25,23 @@ export class SceneBuilderService {
   private playerMesh?: THREE.Group;
   private ground?: THREE.Mesh;
 
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly gltfLoader = new GLTFLoader();
 
-  // O GLTFLoader faz requisições HTTP baseadas na URL do navegador, 
-  // portanto o caminho deve ser relativo à pasta pública mapeada pelo Angular (assets).
   private readonly enemyModels = [
-    'assets/kenney_blocky-characters_20/Models/GLB/character-g.glb',
-    'assets/kenney_blocky-characters_20/Models/GLB/character-h.glb',
-    'assets/kenney_blocky-characters_20/Models/GLB/character-l.glb',
-    'assets/kenney_blocky-characters_20/Models/GLB/character-o.glb',
-    'assets/kenney_blocky-characters_20/Models/GLB/character-p.glb',
-    'assets/kenney_blocky-characters_20/Models/GLB/character-r.glb'
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-g.glb',
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-h.glb',
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-l.glb',
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-o.glb',
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-p.glb',
+    '/assets/kenney_blocky-characters_20/Models/GLB/character-r.glb'
   ];
 
   init(scene: THREE.Scene): void {
+    if (!isPlatformBrowser(this.platformId) || !scene) {
+      return;
+    }
+
     this.scene = scene;
     const geometry = new THREE.PlaneGeometry(GRID_SIZE + 3, GRID_SIZE + 3);
     const material = new THREE.MeshStandardMaterial({ color: 0x2a3245, roughness: 0.9 });
@@ -50,9 +54,10 @@ export class SceneBuilderService {
   }
 
   sync(logic: GameLogicService, deltaMs: number): void {
-    if (!this.scene) {
+    if (!isPlatformBrowser(this.platformId) || !this.scene) {
       return;
     }
+
     const timeMs = 'getGameTimeMs' in logic ? (logic as any).getGameTimeMs() : performance.now();
     this.syncTiles(logic);
     this.syncPlayer(logic);
@@ -63,6 +68,10 @@ export class SceneBuilderService {
   }
 
   dispose(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
     this.tileMeshes.forEach((m) => this.disposeMesh(m));
     this.tileMeshes.clear();
     this.bombMeshes.forEach((m) => this.disposeMesh(m));
@@ -144,13 +153,12 @@ export class SceneBuilderService {
     if (!this.playerMesh) {
       this.playerMesh = new THREE.Group();
 
-      // Atualizando o path do jogador para o caminho mapeado corretamente
-      this.gltfLoader.load('assets/kenney_blocky-characters_20/Models/GLB/character-d.glb', (gltf: any) => {
+      this.gltfLoader.load('/assets/kenney_blocky-characters_20/Models/GLB/character-d.glb', (gltf: any) => {
         const model = gltf.scene;
         model.scale.setScalar(0.45);
-        model.position.y = 0.05;
+        model.position.set(0, 0.05, 0);
         model.traverse((child: THREE.Object3D) => {
-          if (child instanceof THREE.Mesh) {
+          if ((child as THREE.Mesh).isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
           }
@@ -192,9 +200,9 @@ export class SceneBuilderService {
     this.gltfLoader.load(randomModel, (gltf: any) => {
       const model = gltf.scene;
       model.scale.setScalar(0.45);
-      model.position.y = 0.05;
+      model.position.set(0, 0.05, 0);
       model.traverse((child: THREE.Object3D) => {
-        if (child instanceof THREE.Mesh) {
+        if ((child as THREE.Mesh).isMesh) {
           child.castShadow = true;
           child.receiveShadow = true;
         }

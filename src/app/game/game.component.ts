@@ -1,37 +1,35 @@
-import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild,
-  inject,
-  signal,
-} from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
 import { InputManagerService } from '../core/input-manager.service';
-import { Direction } from '../core/models/direction.model';
-import { GamePhase } from '../core/models/game-state.model';
 import { SceneBuilderService } from '../render/scene-builder.service';
 import { ThreeEngineService } from '../render/three-engine.service';
-import { AdBannerComponent } from '../components/ad-banner.component';
+import { Direction } from '../core/models/direction.model';
+import { GamePhase } from '../core/models/game-state.model';
 import { AuthService } from '../services/auth.service';
+import { AdBannerComponent } from '../components/ad-banner.component';
 
 @Component({
   selector: 'app-game',
-  imports: [CommonModule, AdBannerComponent],
   templateUrl: './game.component.html',
-  styleUrl: './game.component.scss',
+  styleUrls: ['./game.component.scss'],
+  standalone: true,
+  imports: [CommonModule, AdBannerComponent]
 })
-export class GameComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('gameCanvas', { static: true }) private readonly canvas!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('gameContainer', { static: true }) private readonly container!: ElementRef<HTMLDivElement>;
+export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
+  @ViewChild('gameCanvas', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
 
-  private readonly engine = inject(ThreeEngineService);
-  private readonly sceneBuilder = inject(SceneBuilderService);
-  private readonly logic = inject(GameLogicService);
-  private readonly input = inject(InputManagerService);
+  private readonly platformId = inject(PLATFORM_ID);
+  readonly logic = inject(GameLogicService);
+  readonly input = inject(InputManagerService);
+  readonly engine = inject(ThreeEngineService);
+  readonly sceneBuilder = inject(SceneBuilderService);
+  readonly authService = inject(AuthService);
+
+  readonly Direction = Direction;
+  readonly GamePhase = GamePhase;
 
   readonly score = this.logic.score;
   readonly enemiesRemaining = this.logic.enemiesRemaining;
@@ -40,119 +38,60 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   readonly speed = this.logic.speed;
   readonly pierce = this.logic.pierce;
   readonly gamePhase = this.logic.gamePhase;
-  readonly exitOpen = this.logic.exitOpen;
-  readonly isTouch = this.input.isTouchDevice();
-  readonly initError = signal(false);
-  readonly Direction = Direction;
-  readonly GamePhase = GamePhase;
 
-  private readonly subscriptions: Subscription[] = [];
-  private initialized = false;
+  isTouch = false;
+  initError = signal(false);
+  private actionSub?: Subscription;
 
-  // expose auth service to template so we can check donor state and hide ads
-  public authService = inject(AuthService);
-
-  private cameraOrbitRadius = 22;
-  private cameraAzimuth = 0;
-  private cameraElevation = 1.1;
-  private isDragging = false;
-  private previousPointerPosition = { x: 0, y: 0 };
-
-  private updateCameraPosition(): void {
-    const cam = this.engine.camera;
-    const x = this.cameraOrbitRadius * Math.sin(this.cameraAzimuth) * Math.cos(this.cameraElevation);
-    const z = this.cameraOrbitRadius * Math.cos(this.cameraAzimuth) * Math.cos(this.cameraElevation);
-    const y = this.cameraOrbitRadius * Math.sin(this.cameraElevation);
-    cam.position.set(x, y, z);
-    cam.lookAt(0, 0, 0);
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.input.attach();
+      this.isTouch = this.input.isTouchDevice();
+      this.actionSub = this.input.action$.subscribe(() => this.logic.plantBomb());
+    }
   }
 
   ngAfterViewInit(): void {
-    try {
-      this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
-    } catch {
-      this.initError.set(true);
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    this.initialized = true;
-    this.sceneBuilder.init(this.engine.scene);
-    this.logic.start();
-    this.updateCameraPosition();
 
-    this.engine.startLoop((deltaMs) => {
-      this.logic.tick(deltaMs);
-      this.sceneBuilder.sync(this.logic, deltaMs);
-    });
-
-    const canvas = this.canvas.nativeElement;
-    canvas.addEventListener('pointerdown', this.onPointerDown);
-    canvas.addEventListener('pointermove', this.onPointerMove);
-    canvas.addEventListener('pointerup', this.onPointerUp);
-    canvas.addEventListener('pointerleave', this.onPointerUp);
-
-    this.input.attach();
-    this.subscriptions.push(this.input.action$.subscribe(() => this.logic.plantBomb()));
+    try {
+      this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
+      this.sceneBuilder.init(this.engine.scene!);
+      
+      this.engine.startLoop((deltaMs: number) => {
+        this.logic.tick(deltaMs);
+        this.sceneBuilder.sync(this.logic, deltaMs);
+      });
+    } catch (e) {
+      this.initError.set(true);
+      console.error('WebGL init error:', e);
+    }
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach((s) => s.unsubscribe());
-    this.input.detach();
-    this.engine.stopLoop();
-
-    const canvas = this.canvas.nativeElement;
-    canvas.removeEventListener('pointerdown', this.onPointerDown);
-    canvas.removeEventListener('pointermove', this.onPointerMove);
-    canvas.removeEventListener('pointerup', this.onPointerUp);
-    canvas.removeEventListener('pointerleave', this.onPointerUp);
-
-    if (this.initialized) {
-      this.engine.dispose();
+    if (isPlatformBrowser(this.platformId)) {
+      this.actionSub?.unsubscribe();
+      this.input.detach();
       this.sceneBuilder.dispose();
+      this.engine.dispose();
     }
   }
 
-  private readonly onPointerDown = (event: PointerEvent) => {
-    this.isDragging = true;
-    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
-  };
-
-  private readonly onPointerMove = (event: PointerEvent) => {
-    if (!this.isDragging) return;
-
-    const deltaX = event.clientX - this.previousPointerPosition.x;
-    const deltaY = event.clientY - this.previousPointerPosition.y;
-
-    this.cameraAzimuth -= deltaX * 0.005;
-    this.cameraElevation += deltaY * 0.005;
-
-    this.cameraElevation = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, this.cameraElevation));
-
-    this.updateCameraPosition();
-
-    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
-  };
-
-  private readonly onPointerUp = () => {
-    this.isDragging = false;
-  };
-
-  onDirection(direction: Direction | null): void {
-    this.input.setDirection(direction);
+  onDirection(dir: Direction | null): void {
+    this.input.setDirection(dir);
   }
 
   onAction(): void {
-    this.input.pressAction();
-  }
-
-  restart(): void {
-    this.logic.restart();
+    this.logic.plantBomb();
   }
 
   play(): void {
     this.logic.play();
+  }
 
-    if (this.isTouch && document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => { });
-    }
+  restart(): void {
+    this.logic.restart();
   }
 }
