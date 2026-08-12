@@ -9,7 +9,6 @@ import {
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
-import bootstrap from './main.server';
 import { Server } from 'socket.io';
 import { createServer } from 'node:http';
 import session from 'express-session';
@@ -21,12 +20,15 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
-const indexHtml = join(serverDir, 'index.server.html');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 const prisma = new PrismaClient({ adapter });
 
+// Inicializa o motor SSR moderno do Angular
 const angularApp = new AngularNodeAppEngine();
+
+// Declarado no topo para que as rotas da API consigam enxergar o Socket.io
+let io: Server;
 
 export function app(): express.Express {
   const server = express();
@@ -56,7 +58,7 @@ export function app(): express.Express {
   server.use(passport.initialize());
   server.use(passport.session());
 
-  // Configuração da Estratégia Google do Passport
+  // Configuração da Estratégia Google
   passport.use(
     new GoogleStrategy(
       {
@@ -82,7 +84,7 @@ export function app(): express.Express {
     )
   );
 
-  // Microsoft OAuth (optional)
+  // Microsoft OAuth (opcional)
   try {
     const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
     passport.use(
@@ -116,7 +118,7 @@ export function app(): express.Express {
       passport.authenticate('microsoft', { failureRedirect: '/', successRedirect: '/' })
     );
   } catch (err) {
-    console.warn('passport-microsoft not configured or installed; skipping Microsoft OAuth routes');
+    console.warn('passport-microsoft not configured or installed; skipping routes');
   }
 
   // Rotas de Autenticação Google
@@ -126,7 +128,7 @@ export function app(): express.Express {
     passport.authenticate('google', { failureRedirect: '/', successRedirect: '/' })
   );
 
-  // Serialização e Deserialização do Usuário para a sessão
+  // Serialização do Usuário
   passport.serializeUser((user: any, done) => {
     done(null, user.id);
   });
@@ -140,14 +142,13 @@ export function app(): express.Express {
     }
   });
 
-  // Informações do usuário atual (SSR-friendly)
+  // Endpoints da API
   server.get('/api/user', (req: any, res: any) => {
     if (!req.user) return res.json(null);
     const user = req.user as any;
     res.json({ id: user.id, email: user.email, name: user.name, isDonor: !!user.isDonor });
   });
 
-  // Endpoint dedicado para status de doador (leve e seguro para SSR)
   server.get('/api/donor/status', (req: any, res: any) => {
     if (!req.user) return res.json({ isDonor: false });
     const user = req.user as any;
@@ -161,7 +162,6 @@ export function app(): express.Express {
     });
   });
 
-  // Endpoint para retornar configuração de anúncios (AdSense) para o frontend SSR
   server.get('/api/ads/config', (req, res) => {
     const config = {
       adSenseClient: process.env['ADSENSE_CLIENT_ID'] || null,
@@ -176,7 +176,6 @@ export function app(): express.Express {
     res.json(config);
   });
 
-  // Endpoints para links de doação / informações (Ko-fi, BuyMeACoffee, PIX QR)
   server.get('/api/donate/links', (req, res) => {
     res.json({
       koFi: process.env['KOFI_URL'] || null,
@@ -186,7 +185,6 @@ export function app(): express.Express {
     });
   });
 
-  // Allow authenticated users to mark themselves as donors (useful for redirect-based flows)
   server.post('/api/donate/mark-donor', async (req: any, res: any) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const user = req.user as any;
@@ -201,7 +199,6 @@ export function app(): express.Express {
     }
   });
 
-  // Rota de Webhook estendida para diversos provedores de pagamento
   server.post('/api/webhook/payment', async (req: any, res: any) => {
     const { email, status, provider } = req.body;
 
@@ -226,15 +223,19 @@ export function app(): express.Express {
     res.sendStatus(204);
   });
 
-  // Servir arquivos estáticos
-  server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
+  // SERVIR ARQUIVOS ESTÁTICOS CORRETAMENTE (resolve o erro Missing parameter)
+  server.use(
+    express.static(browserDistFolder, {
+      maxAge: '1y',
+      index: false,
+      redirect: false,
+    })
+  );
 
-  // Rota principal do Angular SSR
-  server.get('*', (req: any, res: any, next: any) => {
-    const { protocol, originalUrl, baseUrl, headers } = req;
-
-    // Pula o SSR para as rotas de API
-    if (originalUrl.startsWith('/api')) {
+  // ROTA PRINCIPAL DO ANGULAR SSR (Angular 17+)
+  server.use((req, res, next) => {
+    // Ignora o SSR se a rota for de API e não tiver sido atendida pelos middlewares acima
+    if (req.originalUrl.startsWith('/api')) {
       return next();
     }
 
@@ -247,12 +248,11 @@ export function app(): express.Express {
   return server;
 }
 
-
-// Inicialização do servidor e Socket.io
-const port = process.env['PORT'] || 4000;
+// INICIALIZAÇÃO UNIFICADA E GLOBAL (Isso resolve as múltiplas chamadas de app())
 const expressApp = app();
 const httpServer = createServer(expressApp);
-const io = new Server(httpServer, {
+
+io = new Server(httpServer, {
   cors: { origin: '*' }
 });
 
@@ -262,59 +262,13 @@ io.on('connection', (socket) => {
   });
 });
 
-httpServer.listen(port, () => {
-  console.log(`Node Express server listening on http://localhost:${port}`);
-});
-
-/**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
- */
-
-/**
- * Serve static files from /browser
- */
-app().use(
-  express.static(browserDistFolder, {
-    maxAge: '1y',
-    index: false,
-    redirect: false,
-  }),
-);
-
-/**
- * Handle all other requests by rendering the Angular application.
- */
-app().use((req, res, next) => {
-  angularApp
-    .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
-    .catch(next);
-});
-
-/**
- * Start the server if this module is the main entry point, or it is ran via PM2.
- * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
- */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
   const port = process.env['PORT'] || 4000;
-  app().listen(port, (error) => {
-    if (error) {
-      throw error;
-    }
 
+  httpServer.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }
 
-/**
- * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
- */
-export const reqHandler = createNodeRequestHandler(app());
+// Export para Serverless/Firebase (se aplicável)
+export const reqHandler = createNodeRequestHandler(expressApp);
