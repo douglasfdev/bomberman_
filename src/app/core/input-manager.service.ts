@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Direction } from './models/direction.model';
 
@@ -15,6 +16,8 @@ const KEY_DIRECTIONS: Record<string, Direction> = {
 
 @Injectable({ providedIn: 'root' })
 export class InputManagerService {
+  private readonly platformId = inject(PLATFORM_ID);
+
   private readonly directionSubject = new BehaviorSubject<Direction | null>(null);
   private readonly actionSubject = new Subject<void>();
   readonly direction$: Observable<Direction | null> = this.directionSubject.asObservable();
@@ -24,7 +27,7 @@ export class InputManagerService {
   private attached = false;
 
   attach(): void {
-    if (this.attached) {
+    if (this.attached || !isPlatformBrowser(this.platformId)) {
       return;
     }
     this.attached = true;
@@ -33,6 +36,9 @@ export class InputManagerService {
   }
 
   detach(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
     this.attached = false;
     this.pressedKeys.length = 0;
     this.directionSubject.next(null);
@@ -41,6 +47,9 @@ export class InputManagerService {
   }
 
   isTouchDevice(): boolean {
+    if (!isPlatformBrowser(this.platformId)) {
+      return false;
+    }
     return window.matchMedia?.('(pointer: coarse)').matches ?? false;
   }
 

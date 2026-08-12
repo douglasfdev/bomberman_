@@ -1739,7 +1739,7 @@ export class ThreeEngineService {
   camera!: THREE.OrthographicCamera;
   renderer!: THREE.WebGLRenderer;
 
-  private readonly clock = new THREE.Clock();
+  private readonly clock = new THREE.Timer();
   private container!: HTMLElement;
   private resizeObserver?: ResizeObserver;
   private running = false;

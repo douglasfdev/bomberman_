@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import * as THREE from 'three';
 import { GRID_SIZE } from '../core/models/game-config';
 
@@ -8,13 +9,19 @@ export class ThreeEngineService {
   camera!: THREE.OrthographicCamera;
   renderer!: THREE.WebGLRenderer;
 
-  private readonly clock = new THREE.Clock();
+  private readonly clock = new THREE.Timer();
   private container!: HTMLElement;
   private resizeObserver?: ResizeObserver;
   private running = false;
   private frame = 0;
 
+  // Injetamos o identificador de plataforma para saber se estamos no servidor ou no navegador
+  private readonly platformId = inject(PLATFORM_ID);
+
   init(container: HTMLElement, canvas: HTMLCanvasElement): void {
+    // 🛑 Bloqueia a execução se estiver rodando no SSR (Node.js)
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.container = container;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -48,6 +55,8 @@ export class ThreeEngineService {
   }
 
   startLoop(callback: (deltaMs: number) => void): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.running = true;
     const loop = (): void => {
       if (!this.running) {
@@ -62,14 +71,18 @@ export class ThreeEngineService {
   }
 
   stopLoop(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.running = false;
     cancelAnimationFrame(this.frame);
   }
 
   dispose(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.stopLoop();
     this.resizeObserver?.disconnect();
-    this.scene.traverse((obj) => {
+    this.scene?.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh) {
         return;
@@ -86,9 +99,10 @@ export class ThreeEngineService {
   }
 
   private resize(): void {
-    if (!this.container || !this.renderer || !this.camera) {
+    if (!isPlatformBrowser(this.platformId) || !this.container || !this.renderer || !this.camera) {
       return;
     }
+
     const width = this.container.clientWidth || 1;
     const height = this.container.clientHeight || 1;
     this.renderer.setSize(width, height, false);
