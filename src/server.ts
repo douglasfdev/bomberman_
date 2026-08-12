@@ -27,7 +27,7 @@ const indexHtml = join(serverDir, 'index.server.html');
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 const prisma = new PrismaClient({ adapter });
 
-let io: Server | null = null;
+const angularApp = new AngularNodeAppEngine();
 
 export function app(): express.Express {
   const server = express();
@@ -67,7 +67,7 @@ export function app(): express.Express {
         callbackURL: process.env['APP_BASE_URL'] + '/api/auth/google/callback',
         scope: ['profile', 'email'],
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
           const email = profile.emails?.[0]?.value;
           if (!email) return done(new Error('No email provided'));
@@ -95,7 +95,7 @@ export function app(): express.Express {
           callbackURL: process.env['APP_BASE_URL'] + '/api/auth/microsoft/callback',
           scope: ['user.read', 'openid', 'profile', 'email'],
         },
-        async (accessToken, refreshToken, profile, done) => {
+        async (accessToken: any, refreshToken: any, profile: any, done: any) => {
           try {
             const email = profile?.emails?.[0]?.value;
             if (!email) return done(new Error('No email in Microsoft profile'));
@@ -259,6 +259,69 @@ export function app(): express.Express {
 const port = process.env['PORT'] || 4000;
 const expressApp = app();
 const httpServer = createServer(expressApp);
-io = new Server(httpServer, { cors: { origin: '*' } });
+const io = new Server(httpServer, {
+  cors: { origin: '*' }
+});
 
-io.on
+io.on('connection', (socket) => {
+  socket.on('join_room', (email: string) => {
+    socket.join(email);
+  });
+});
+
+httpServer.listen(port, () => {
+  console.log(`Node Express server listening on http://localhost:${port}`);
+});
+
+/**
+ * Example Express Rest API endpoints can be defined here.
+ * Uncomment and define endpoints as necessary.
+ *
+ * Example:
+ * ```ts
+ * app.get('/api/{*splat}', (req, res) => {
+ *   // Handle API request
+ * });
+ * ```
+ */
+
+/**
+ * Serve static files from /browser
+ */
+app().use(
+  express.static(browserDistFolder, {
+    maxAge: '1y',
+    index: false,
+    redirect: false,
+  }),
+);
+
+/**
+ * Handle all other requests by rendering the Angular application.
+ */
+app().use((req, res, next) => {
+  angularApp
+    .handle(req)
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+    .catch(next);
+});
+
+/**
+ * Start the server if this module is the main entry point, or it is ran via PM2.
+ * The server listens on the port defined by the `PORT` environment variable, or defaults to 4000.
+ */
+if (isMainModule(import.meta.url) || process.env['pm_id']) {
+  const port = process.env['PORT'] || 4000;
+  app().listen(port, (error) => {
+    if (error) {
+      throw error;
+    }
+
+    console.log(`Node Express server listening on http://localhost:${port}`);
+  });
+}
+
+/**
+ * Request handler used by the Angular CLI (for dev-server and during build) or Firebase Cloud Functions.
+ */
+export const reqHandler = createNodeRequestHandler(app());
