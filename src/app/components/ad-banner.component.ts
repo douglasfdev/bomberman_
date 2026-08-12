@@ -1,4 +1,3 @@
-// src/app/components/ad-banner.component.ts
 import { Component, AfterViewInit, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, NgIf } from '@angular/common';
 
@@ -29,7 +28,6 @@ export class AdBannerComponent implements AfterViewInit {
   async ngAfterViewInit() {
     if (!this.isBrowser) return;
 
-    // Fetch ad configuration from the server and initialize the ad element if ads are enabled
     try {
       const res = await fetch('/api/ads/config');
       const cfg = await res.json();
@@ -40,18 +38,18 @@ export class AdBannerComponent implements AfterViewInit {
       if (!ins) return;
 
       if (cfg.adSenseClient) ins.setAttribute('data-ad-client', cfg.adSenseClient);
-      // prefer slot named 'menu' but caller can use CSS to override specific slots
+
       const slot = cfg.slots && (cfg.slots.menu || cfg.slots.layout) ? (cfg.slots.menu || cfg.slots.layout) : null;
       if (slot) ins.setAttribute('data-ad-slot', slot);
 
-      // Ensure the AdSense global script is loaded
+
       if (!(window as any).adsbygoogle) {
         const script = document.createElement('script');
         script.async = true;
         script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
         script.setAttribute('crossorigin', 'anonymous');
         document.head.appendChild(script);
-        // allow script to load
+
         await new Promise((r) => setTimeout(r, 250));
       }
 
