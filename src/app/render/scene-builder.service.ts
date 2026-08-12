@@ -22,6 +22,11 @@ export class SceneBuilderService {
   private readonly renderedExplosions = new Map<number, { group: THREE.Group; startedAt: number }>();
   private playerMesh?: THREE.Group;
   private ground?: THREE.Mesh;
+  
+  private textureLoader = new THREE.TextureLoader();
+  private characterTextures = new Map<string, THREE.Texture>();
+  private readonly enemyCharacterPool = ['character-g', 'character-h', 'character-l', 'character-o', 'character-p', 'character-r'];
+  private enemyTextureAssignments = new Map<number, string>();
 
   init(scene: THREE.Scene): void {
     this.scene = scene;
@@ -33,6 +38,28 @@ export class SceneBuilderService {
     ground.receiveShadow = true;
     this.ground = ground;
     this.scene.add(ground);
+    
+    // Load character textures
+    this.loadCharacterTextures();
+  }
+
+  private loadCharacterTextures(): void {
+    const charactersToLoad = ['character-d', ...this.enemyCharacterPool];
+    for (const character of charactersToLoad) {
+      const path = `assets/kenney_blocky-characters_20/${character}.png`;
+      this.textureLoader.load(
+        path,
+        (texture) => {
+          texture.magFilter = THREE.NearestFilter;
+          texture.minFilter = THREE.NearestFilter;
+          this.characterTextures.set(character, texture);
+        },
+        undefined,
+        (error) => {
+          console.warn(`Failed to load texture for ${character}:`, error);
+        }
+      );
+    }
   }
 
   sync(logic: GameLogicService, deltaMs: number): void {
@@ -55,6 +82,7 @@ export class SceneBuilderService {
     this.bombMeshes.clear();
     this.enemyMeshes.forEach((g) => this.disposeGroup(g));
     this.enemyMeshes.clear();
+    this.enemyTextureAssignments.clear();
     this.powerUpMeshes.forEach((g) => this.disposeGroup(g));
     this.powerUpMeshes.clear();
     this.renderedExplosions.forEach(({ group }) => this.disposeGroup(group));
@@ -68,6 +96,9 @@ export class SceneBuilderService {
       this.disposeMesh(this.ground);
       this.ground = undefined;
     }
+    // Dispose textures
+    this.characterTextures.forEach((texture) => texture.dispose());
+    this.characterTextures.clear();
   }
 
   private syncTiles(logic: GameLogicService): void {
@@ -128,20 +159,7 @@ export class SceneBuilderService {
   private syncPlayer(logic: GameLogicService): void {
     const view = logic.getPlayerView();
     if (!this.playerMesh) {
-      this.playerMesh = new THREE.Group();
-      const body = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.28, 0.55, 4, 12),
-        new THREE.MeshStandardMaterial({ color: 0x4aa3ff }),
-      );
-      body.position.y = 0.75;
-      body.castShadow = true;
-      this.playerMesh.add(body);
-      const eye = new THREE.Mesh(
-        new THREE.SphereGeometry(0.07),
-        new THREE.MeshStandardMaterial({ color: 0x111111 }),
-      );
-      eye.position.set(0.14, 0.98, 0.22);
-      this.playerMesh.add(eye);
+      this.playerMesh = this.createCharacterMesh('character-d');
       this.scene?.add(this.playerMesh);
     }
     this.applyView(this.playerMesh, view?.position!, view?.move!);
@@ -154,7 +172,9 @@ export class SceneBuilderService {
       seen.add(view.id);
       let group = this.enemyMeshes.get(view.id);
       if (!group) {
-        group = this.createEnemyMesh();
+        const characterName = this.getRandomEnemyCharacter();
+        this.enemyTextureAssignments.set(view.id, characterName);
+        group = this.createCharacterMesh(characterName);
         this.enemyMeshes.set(view.id, group);
         this.scene?.add(group);
       }
@@ -165,19 +185,46 @@ export class SceneBuilderService {
         this.scene?.remove(group);
         this.disposeGroup(group);
         this.enemyMeshes.delete(id);
+        this.enemyTextureAssignments.delete(id);
       }
     }
   }
 
-  private createEnemyMesh(): THREE.Group {
+  private getRandomEnemyCharacter(): string {
+    return this.enemyCharacterPool[Math.floor(Math.random() * this.enemyCharacterPool.length)];
+  }
+
+  private createCharacterMesh(characterName: string): THREE.Group {
     const group = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.28, 0.5, 4, 12),
-      new THREE.MeshStandardMaterial({ color: 0xff5252 }),
-    );
-    body.position.y = 0.72;
-    body.castShadow = true;
-    group.add(body);
+    const texture = this.characterTextures.get(characterName);
+    
+    if (texture) {
+      const material = new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.5,
+      });
+      const sprite = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1),
+        material
+      );
+      sprite.position.y = 0.5;
+      sprite.castShadow = true;
+      sprite.receiveShadow = false;
+      group.add(sprite);
+    } else {
+      // Fallback to colored capsule if texture fails to load
+      const body = new THREE.Mesh(
+        new THREE.CapsuleGeometry(0.28, 0.55, 4, 12),
+        new THREE.MeshStandardMaterial({ 
+          color: characterName === 'character-d' ? 0x4aa3ff : 0xff5252 
+        }),
+      );
+      body.position.y = 0.75;
+      body.castShadow = true;
+      group.add(body);
+    }
+    
     return group;
   }
 
