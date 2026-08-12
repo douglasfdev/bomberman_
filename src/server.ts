@@ -2,7 +2,6 @@ import 'zone.js/node';
 import { APP_BASE_HREF } from '@angular/common';
 import {
   AngularNodeAppEngine,
-  CommonEngine,
   createNodeRequestHandler,
   isMainModule,
   writeResponseToNodeResponse,
@@ -31,7 +30,6 @@ const angularApp = new AngularNodeAppEngine();
 
 export function app(): express.Express {
   const server = express();
-  const commonEngine = new CommonEngine();
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
@@ -143,21 +141,21 @@ export function app(): express.Express {
   });
 
   // Informações do usuário atual (SSR-friendly)
-  server.get('/api/user', (req, res) => {
+  server.get('/api/user', (req: any, res: any) => {
     if (!req.user) return res.json(null);
     const user = req.user as any;
     res.json({ id: user.id, email: user.email, name: user.name, isDonor: !!user.isDonor });
   });
 
   // Endpoint dedicado para status de doador (leve e seguro para SSR)
-  server.get('/api/donor/status', (req, res) => {
+  server.get('/api/donor/status', (req: any, res: any) => {
     if (!req.user) return res.json({ isDonor: false });
     const user = req.user as any;
     res.json({ isDonor: !!user.isDonor });
   });
 
-  server.post('/api/auth/logout', (req, res, next) => {
-    req.logout((err) => {
+  server.post('/api/auth/logout', (req: any, res: any, next: any) => {
+    req.logout((err: any) => {
       if (err) return next(err);
       res.redirect('/');
     });
@@ -189,7 +187,7 @@ export function app(): express.Express {
   });
 
   // Allow authenticated users to mark themselves as donors (useful for redirect-based flows)
-  server.post('/api/donate/mark-donor', async (req, res) => {
+  server.post('/api/donate/mark-donor', async (req: any, res: any) => {
     if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
     const user = req.user as any;
 
@@ -204,7 +202,7 @@ export function app(): express.Express {
   });
 
   // Rota de Webhook estendida para diversos provedores de pagamento
-  server.post('/api/webhook/payment', async (req, res) => {
+  server.post('/api/webhook/payment', async (req: any, res: any) => {
     const { email, status, provider } = req.body;
 
     if (!email) return res.status(400).json({ error: 'missing_email' });
@@ -232,7 +230,7 @@ export function app(): express.Express {
   server.get('*.*', express.static(browserDistFolder, { maxAge: '1y' }));
 
   // Rota principal do Angular SSR
-  server.get('*', (req, res, next) => {
+  server.get('*', (req: any, res: any, next: any) => {
     const { protocol, originalUrl, baseUrl, headers } = req;
 
     // Pula o SSR para as rotas de API
@@ -240,20 +238,15 @@ export function app(): express.Express {
       return next();
     }
 
-    commonEngine
-      .render({
-        bootstrap,
-        documentFilePath: indexHtml,
-        url: `${protocol}://${headers.host}${originalUrl}`,
-        publicPath: browserDistFolder,
-        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
-      })
-      .then((html) => res.send(html))
-      .catch((err) => next(err));
+    angularApp
+      .handle(req)
+      .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+      .catch(next);
   });
 
   return server;
 }
+
 
 // Inicialização do servidor e Socket.io
 const port = process.env['PORT'] || 4000;
