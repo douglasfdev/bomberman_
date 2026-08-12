@@ -50,11 +50,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private timerInterval: any;
 
   constructor() {
-    // Escuta as mudanças de fase do jogo para aplicar o Paywall
     effect(() => {
       const phase = this.gamePhase();
+      // O Angular agora rastreia automaticamente mudanças no isDonor!
+      const isDonor = this.authService.isDonor();
+
       if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
-        this.enforcePaywall();
+        this.enforcePaywall(isDonor);
       }
     });
   }
@@ -96,17 +98,17 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private enforcePaywall(): void {
+  private enforcePaywall(isDonor: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
     clearInterval(this.timerInterval);
 
-    if (this.authService.isDonor()) {
+    if (isDonor) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
     } else {
       this.canPlay.set(false);
-      this.waitTimer.set(10); // O jogador é obrigado a esperar 10 segundos
+      this.waitTimer.set(10);
 
       this.timerInterval = setInterval(() => {
         const current = this.waitTimer();

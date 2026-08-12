@@ -10,6 +10,13 @@
     @if (pierce()) { <span>Atravessa</span> }
   </div>
 
+  @if (authService.userEmail()) {
+    <div class="user-badge">
+      <span class="user-email">{{ authService.userEmail() }}</span>
+      <a href="/api/auth/logout" class="btn-logout">Sair</a>
+    </div>
+  }
+
   @if (isTouch) {
     <div class="controls">
       <div class="d-pad">
@@ -37,31 +44,30 @@
         }
       }
 
-      <div class="monetization-panel">
-        @if (!authService.isDonor()) {
-          <div class="paywall-info">
-            <p class="paywall-text">Apoie o jogo para remover os anúncios e o tempo de espera!</p>
-            
-            <div class="donor-actions">
-              <!-- Botão Google -->
-              <a href="/api/auth/google" class="btn-social btn-google">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" class="social-icon">
-                <span>Login com Google</span>
-              </a>
-              
-              <!-- Botão PIX -->
-              <button class="btn-social btn-pix" onclick="alert('Após o login, escaneie o PIX na página de perfil!')">
-                <img style="max-width: 44px;" src="/assets/pix_logo.png" alt="Pix Logo" class="social-icon">
-                <span> Fazer um Pix</span>
-              </button>
-            </div>
-            
-            <app-ad-banner></app-ad-banner>
-          </div>
-        } @else {
-          <p class="donor-thanks">Obrigado por apoiar o jogo! 💖</p>
+      <!-- Painel só aparece se NÃO for doador -->
+      @if (!authService.isDonor()) {
+        <div class="monetization-panel">
+          <p class="paywall-text">Apoie o jogo para remover os anúncios e o tempo de espera!</p>
+          
+          <div class="donor-actions">
+  
+        <!-- Verifica se NÃO tem e-mail na sessão para mostrar o botão do Google -->
+        @if (!authService.userEmail()) {
+          <a href="/api/auth/google" class="btn-social btn-google">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" class="social-icon">
+            <span>Login com Google</span>
+          </a>
         }
+        
+        <button class="btn-social btn-pix" onclick="alert('Após o login, escaneie o PIX na página de perfil!')">
+          <img src="/assets/pix_logo.png" alt="Pix Logo" class="social-icon">
+          <span>Fazer um Pix</span>
+        </button>
       </div>
+          
+          <app-ad-banner></app-ad-banner>
+        </div>
+      }
 
       <button 
         class="restart-btn" 

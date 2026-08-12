@@ -7,7 +7,11 @@
     "build": "npx ng build",
     "watch": "npx ng build --watch --configuration development",
     "test": "npx ng test",
-    "serve:ssr:bomberman": "node dist/bomberman/server/server.mjs"
+    "serve:ssr:bomberman": "node dist/bomberman/server/server.mjs",
+    "migrate:dev": "npx prisma migrate dev",
+    "migrate": "npx prisma migrate deploy",
+    "generate": "npx prisma generate",
+    "dev:ssr": "npx ng serve --configuration development"
   },
   "private": true,
   "packageManager": "npm@11.6.2",

@@ -13,9 +13,7 @@ export interface User {
   googleId?: string;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly isDonor = signal(false);
   readonly userEmail = signal<string | null>(null);
@@ -30,17 +28,24 @@ export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
 
   constructor() {
+    // Só faz a requisição se estiver rodando no navegador do cliente
     if (isPlatformBrowser(this.platformId)) {
-      this.http.get<{ email: string; isDonor: boolean }>('/api/user').subscribe({
-        next: (user) => {
-          if (user) {
-            this.userEmail.set(user.email);
-            this.isDonor.set(user.isDonor);
-          }
-        },
-        error: () => { }
-      });
+      this.checkSession();
     }
+  }
+
+  private checkSession(): void {
+    this.http.get<{ email: string; isDonor: boolean }>('/api/user').subscribe({
+      next: (user) => {
+        if (user && user.email) {
+          this.userEmail.set(user.email);
+          this.isDonor.set(user.isDonor);
+        }
+      },
+      error: (err) => {
+        console.warn('Sessão não encontrada ou usuário não logado.', err);
+      }
+    });
   }
 
   fetchUser(): Observable<User | null> {
