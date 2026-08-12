@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GameLogicService } from '../core/game-logic.service';
 import { EXPLOSION_MS, GRID_SIZE } from '../core/models/game-config';
 import { EnemyView, Explosion, InterpolatedMove } from '../core/models/game-state.model';
@@ -22,11 +23,19 @@ export class SceneBuilderService {
   private readonly renderedExplosions = new Map<number, { group: THREE.Group; startedAt: number }>();
   private playerMesh?: THREE.Group;
   private ground?: THREE.Mesh;
-  
-  private textureLoader = new THREE.TextureLoader();
-  private characterTextures = new Map<string, THREE.Texture>();
-  private readonly enemyCharacterPool = ['character-g', 'character-h', 'character-l', 'character-o', 'character-p', 'character-r'];
-  private enemyTextureAssignments = new Map<number, string>();
+
+  private readonly gltfLoader = new GLTFLoader();
+
+  // O GLTFLoader faz requisições HTTP baseadas na URL do navegador, 
+  // portanto o caminho deve ser relativo à pasta pública mapeada pelo Angular (assets).
+  private readonly enemyModels = [
+    'assets/kenney_blocky-characters_20/Models/GLB/character-g.glb',
+    'assets/kenney_blocky-characters_20/Models/GLB/character-h.glb',
+    'assets/kenney_blocky-characters_20/Models/GLB/character-l.glb',
+    'assets/kenney_blocky-characters_20/Models/GLB/character-o.glb',
+    'assets/kenney_blocky-characters_20/Models/GLB/character-p.glb',
+    'assets/kenney_blocky-characters_20/Models/GLB/character-r.glb'
+  ];
 
   init(scene: THREE.Scene): void {
     this.scene = scene;
@@ -38,28 +47,6 @@ export class SceneBuilderService {
     ground.receiveShadow = true;
     this.ground = ground;
     this.scene.add(ground);
-    
-    // Load character textures
-    this.loadCharacterTextures();
-  }
-
-  private loadCharacterTextures(): void {
-    const charactersToLoad = ['character-d', ...this.enemyCharacterPool];
-    for (const character of charactersToLoad) {
-      const path = `assets/kenney_blocky-characters_20/${character}.png`;
-      this.textureLoader.load(
-        path,
-        (texture) => {
-          texture.magFilter = THREE.NearestFilter;
-          texture.minFilter = THREE.NearestFilter;
-          this.characterTextures.set(character, texture);
-        },
-        undefined,
-        (error) => {
-          console.warn(`Failed to load texture for ${character}:`, error);
-        }
-      );
-    }
   }
 
   sync(logic: GameLogicService, deltaMs: number): void {
@@ -82,7 +69,6 @@ export class SceneBuilderService {
     this.bombMeshes.clear();
     this.enemyMeshes.forEach((g) => this.disposeGroup(g));
     this.enemyMeshes.clear();
-    this.enemyTextureAssignments.clear();
     this.powerUpMeshes.forEach((g) => this.disposeGroup(g));
     this.powerUpMeshes.clear();
     this.renderedExplosions.forEach(({ group }) => this.disposeGroup(group));
@@ -96,9 +82,6 @@ export class SceneBuilderService {
       this.disposeMesh(this.ground);
       this.ground = undefined;
     }
-    // Dispose textures
-    this.characterTextures.forEach((texture) => texture.dispose());
-    this.characterTextures.clear();
   }
 
   private syncTiles(logic: GameLogicService): void {
@@ -159,7 +142,22 @@ export class SceneBuilderService {
   private syncPlayer(logic: GameLogicService): void {
     const view = logic.getPlayerView();
     if (!this.playerMesh) {
-      this.playerMesh = this.createCharacterMesh('character-d');
+      this.playerMesh = new THREE.Group();
+
+      // Atualizando o path do jogador para o caminho mapeado corretamente
+      this.gltfLoader.load('assets/kenney_blocky-characters_20/Models/GLB/character-d.glb', (gltf: any) => {
+        const model = gltf.scene;
+        model.scale.setScalar(0.45);
+        model.position.y = 0.05;
+        model.traverse((child: THREE.Object3D) => {
+          if (child instanceof THREE.Mesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        this.playerMesh!.add(model);
+      });
+
       this.scene?.add(this.playerMesh);
     }
     this.applyView(this.playerMesh, view?.position!, view?.move!);
@@ -172,9 +170,7 @@ export class SceneBuilderService {
       seen.add(view.id);
       let group = this.enemyMeshes.get(view.id);
       if (!group) {
-        const characterName = this.getRandomEnemyCharacter();
-        this.enemyTextureAssignments.set(view.id, characterName);
-        group = this.createCharacterMesh(characterName);
+        group = this.createEnemyMesh();
         this.enemyMeshes.set(view.id, group);
         this.scene?.add(group);
       }
@@ -185,46 +181,27 @@ export class SceneBuilderService {
         this.scene?.remove(group);
         this.disposeGroup(group);
         this.enemyMeshes.delete(id);
-        this.enemyTextureAssignments.delete(id);
       }
     }
   }
 
-  private getRandomEnemyCharacter(): string {
-    return this.enemyCharacterPool[Math.floor(Math.random() * this.enemyCharacterPool.length)];
-  }
-
-  private createCharacterMesh(characterName: string): THREE.Group {
+  private createEnemyMesh(): THREE.Group {
     const group = new THREE.Group();
-    const texture = this.characterTextures.get(characterName);
-    
-    if (texture) {
-      const material = new THREE.MeshBasicMaterial({
-        map: texture,
-        transparent: true,
-        alphaTest: 0.5,
+    const randomModel = this.enemyModels[Math.floor(Math.random() * this.enemyModels.length)];
+
+    this.gltfLoader.load(randomModel, (gltf: any) => {
+      const model = gltf.scene;
+      model.scale.setScalar(0.45);
+      model.position.y = 0.05;
+      model.traverse((child: THREE.Object3D) => {
+        if (child instanceof THREE.Mesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
       });
-      const sprite = new THREE.Mesh(
-        new THREE.PlaneGeometry(1, 1),
-        material
-      );
-      sprite.position.y = 0.5;
-      sprite.castShadow = true;
-      sprite.receiveShadow = false;
-      group.add(sprite);
-    } else {
-      // Fallback to colored capsule if texture fails to load
-      const body = new THREE.Mesh(
-        new THREE.CapsuleGeometry(0.28, 0.55, 4, 12),
-        new THREE.MeshStandardMaterial({ 
-          color: characterName === 'character-d' ? 0x4aa3ff : 0xff5252 
-        }),
-      );
-      body.position.y = 0.75;
-      body.castShadow = true;
-      group.add(body);
-    }
-    
+      group.add(model);
+    });
+
     return group;
   }
 
@@ -357,6 +334,11 @@ export class SceneBuilderService {
       const t = move.progress;
       x = from.x + (to.x - from.x) * t;
       z = from.z + (to.z - from.z) * t;
+
+      if (to.x > from.x) mesh.rotation.y = Math.PI / 2;
+      else if (to.x < from.x) mesh.rotation.y = -Math.PI / 2;
+      else if (to.z > from.z) mesh.rotation.y = 0;
+      else if (to.z < from.z) mesh.rotation.y = Math.PI;
     } else {
       const w = tileToWorld(position);
       x = w.x;
@@ -366,12 +348,14 @@ export class SceneBuilderService {
   }
 
   private disposeMesh(mesh: THREE.Mesh): void {
-    mesh.geometry.dispose();
-    const material = mesh.material as THREE.Material | THREE.Material[];
-    if (Array.isArray(material)) {
-      material.forEach((m) => m.dispose());
-    } else {
-      material.dispose();
+    if (mesh.geometry) mesh.geometry.dispose();
+    if (mesh.material) {
+      const material = mesh.material as THREE.Material | THREE.Material[];
+      if (Array.isArray(material)) {
+        material.forEach((m) => m.dispose());
+      } else {
+        material.dispose();
+      }
     }
   }
 
