@@ -1,5 +1,5 @@
 import { isPlatformBrowser, CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, effect } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
 import { InputManagerService } from '../core/input-manager.service';
@@ -41,7 +41,23 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isTouch = false;
   initError = signal(false);
+
+  // Controle de Monetização
+  canPlay = signal(false);
+  waitTimer = signal(0);
+
   private actionSub?: Subscription;
+  private timerInterval: any;
+
+  constructor() {
+    // Escuta as mudanças de fase do jogo para aplicar o Paywall
+    effect(() => {
+      const phase = this.gamePhase();
+      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
+        this.enforcePaywall();
+      }
+    });
+  }
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
@@ -72,10 +88,36 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
+      clearInterval(this.timerInterval);
       this.actionSub?.unsubscribe();
       this.input.detach();
       this.sceneBuilder.dispose();
       this.engine.dispose();
+    }
+  }
+
+  private enforcePaywall(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    clearInterval(this.timerInterval);
+
+    if (this.authService.isDonor()) {
+      this.canPlay.set(true);
+      this.waitTimer.set(0);
+    } else {
+      this.canPlay.set(false);
+      this.waitTimer.set(10); // O jogador é obrigado a esperar 10 segundos
+
+      this.timerInterval = setInterval(() => {
+        const current = this.waitTimer();
+        if (current > 1) {
+          this.waitTimer.set(current - 1);
+        } else {
+          this.waitTimer.set(0);
+          this.canPlay.set(true);
+          clearInterval(this.timerInterval);
+        }
+      }, 1000);
     }
   }
 
@@ -88,10 +130,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   play(): void {
+    if (!this.canPlay()) return;
     this.logic.play();
   }
 
   restart(): void {
+    if (!this.canPlay()) return;
     this.logic.restart();
   }
 }

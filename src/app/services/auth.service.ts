@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, Inject, signal } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
@@ -19,22 +19,27 @@ export interface User {
 export class AuthService {
   readonly isDonor = signal(false);
   readonly userEmail = signal<string | null>(null);
+
   private userSubject = new BehaviorSubject<User | null>(null);
   public user$ = this.userSubject.asObservable();
 
   private isLoggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.isLoggedInSubject.asObservable();
 
-  private isBrowser: boolean;
+  private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
 
-  constructor(
-    private http: HttpClient,
-    @Inject(PLATFORM_ID) platformId: object
-  ) {
-    this.isBrowser = isPlatformBrowser(platformId);
-    // Apenas busca o usuário se estiver no navegador
-    if (this.isBrowser) {
-      this.fetchUser().subscribe();
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.http.get<{ email: string; isDonor: boolean }>('/api/user').subscribe({
+        next: (user) => {
+          if (user) {
+            this.userEmail.set(user.email);
+            this.isDonor.set(user.isDonor);
+          }
+        },
+        error: () => { }
+      });
     }
   }
 
@@ -48,9 +53,7 @@ export class AuthService {
   }
 
   logout() {
-    // Apenas faz logout se estiver no navegador
-    if (this.isBrowser) {
-      // Limpa o estado localmente e redireciona para a rota de logout do backend
+    if (isPlatformBrowser(this.platformId)) {
       this.userSubject.next(null);
       this.isLoggedInSubject.next(false);
       window.location.href = '/api/auth/logout';
