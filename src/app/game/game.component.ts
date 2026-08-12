@@ -52,11 +52,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const phase = this.gamePhase();
-      // O Angular agora rastreia automaticamente mudanças no isDonor!
       const isDonor = this.authService.isDonor();
+      // Rastreia o sinal de email para detectar login/logout e re-executar o efeito
+      const isLoggedIn = !!this.authService.userEmail();
 
       if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
-        this.enforcePaywall(isDonor);
+        this.enforcePaywall(isDonor, isLoggedIn);
       }
     });
   }
@@ -98,12 +99,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private enforcePaywall(isDonor: boolean): void {
+  // Atualizado para aceitar e verificar o estado de login
+  private enforcePaywall(isDonor: boolean, isLoggedIn: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
     clearInterval(this.timerInterval);
 
-    if (isDonor) {
+    // Libera o jogo imediatamente se for doador OU estiver logado
+    if (isDonor || isLoggedIn) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
     } else {
