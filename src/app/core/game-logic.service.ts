@@ -115,7 +115,7 @@ export class GameLogicService {
       moveDurationMs: BASE_MOVE_DURATION_MS,
       pierce: false
     };
- 
+
     this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
       id: i + 1,
       position: { ...this.level.enemySpawns[i] },
@@ -146,7 +146,7 @@ export class GameLogicService {
       moveDurationMs: BASE_MOVE_DURATION_MS,
       pierce: this.pierce()
     };
- 
+
     this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
       id: i + 1,
       position: { ...this.level.enemySpawns[i] },
@@ -273,8 +273,7 @@ export class GameLogicService {
 
     const canPlantBomb = now >= enemy.nextBombAtMs &&
       this.bombs.filter(b => b.planterId === enemy.id).length < 1 &&
-      !this.bombs.some(b => samePosition(b.position, enemy.position)) &&
-      Math.random() < ENEMY_BOMB_CHANCE;
+      !this.bombs.some(b => samePosition(b.position, enemy.position));
 
     if (canPlantBomb && this.isPlayerInSights(enemy.position)) {
       const dangerWithNewBomb = this.getDangerMap(enemy.position);
@@ -299,61 +298,124 @@ export class GameLogicService {
       return pathToPlayer;
     }
 
-    if (canPlantBomb) {
-      const bombTarget = this.findStrategicBombTarget(enemy, dangerSet);
-      if (bombTarget) {
-        const dangerWithNewBomb = this.getDangerMap(enemy.position);
-        const escapePath = this.findPathToSafety(enemy.position, dangerWithNewBomb);
+    if (canPlantBomb && this.canDestroyPathBoxFrom(enemy.position)) {
+      const dangerWithNewBomb = this.getDangerMap(enemy.position);
+      const escapePath = this.findPathToSafety(enemy.position, dangerWithNewBomb);
 
-        if (escapePath) {
-          this.bombs.push({
-            id: Date.now() + enemy.id,
-            planterId: enemy.id,
-            position: { ...enemy.position },
-            range: 2,
-            pierce: false,
-            plantedAtMs: now,
-          });
-          enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
-          return escapePath;
-        }
+      if (escapePath) {
+        this.bombs.push({
+          id: Date.now() + enemy.id,
+          planterId: enemy.id,
+          position: { ...enemy.position },
+          range: 2,
+          pierce: false,
+          plantedAtMs: now,
+        });
+        enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
+        return escapePath;
       }
     }
+
+    const bombableApproach = this.findBombableApproachStep(enemy, dangerSet);
+    if (bombableApproach) {
+      return bombableApproach;
+    }
+
+    return this.selectEnemyMove(enemy, validMoves, dangerSet);
 
     return this.selectEnemyMove(enemy, validMoves, dangerSet);
   }
 
-  private findStrategicBombTarget(enemy: EnemyState, dangerSet: Set<string>): GridPosition | null {
-    const candidates: { box: GridPosition; score: number }[] = [];
-    const currentDistance = manhattan(enemy.position, this.player.position);
+  private findBombableApproachStep(enemy: EnemyState, dangerSet: Set<string>): GridPosition | null {
+    const queue: { pos: GridPosition; path: GridPosition[] }[] = [{ pos: enemy.position, path: [] }];
+    const visited = new Set<string>([keyOf(enemy.position)]);
+
+    while (queue.length > 0) {
+      const { pos, path } = queue.shift()!;
+      if (path.length > 0 && this.canDestroyPathBoxFrom(pos)) {
+        return path[0];
+      }
+
+      for (const nextPos of this.getValidMoves(pos, dangerSet)) {
+        const key = keyOf(nextPos);
+        if (visited.has(key)) {
+          continue;
+        }
+        visited.add(key);
+        queue.push({ pos: nextPos, path: [...path, nextPos] });
+      }
+    }
+
+    return null;
+  }
+
+  private canDestroyPathBoxFrom(pos: GridPosition): boolean {
+    const playerReachable = this.getPlayerReachableTiles();
     const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
 
     for (const dir of dirs) {
       const delta = directionDelta(dir);
       for (let r = 1; r <= 2; r++) {
-        const pos = { x: enemy.position.x + delta.x * r, y: enemy.position.y + delta.y * r };
-        if (!this.level.isInBounds(pos)) break;
+        const target = { x: pos.x + delta.x * r, y: pos.y + delta.y * r };
+        if (!this.level.isInBounds(target)) {
+          break;
+        }
 
-        const tile = this.level.tileAt(pos);
+        const tile = this.level.tileAt(target);
         if (tile.type === TileType.Wall) {
           break;
         }
 
         if (tile.type === TileType.Box) {
-          const firstStep = this.findPathToPlayerWithRemovedBox(enemy.position, pos);
-          if (firstStep) {
-            const pathScore = currentDistance - manhattan(pos, this.player.position);
-            const corridorBonus = this.isNarrowCorridor(pos) ? 2 : 0;
-            const lineBonus = this.isInLineWithPlayer(enemy.position, pos) ? 3 : 0;
-            candidates.push({ box: pos, score: pathScore + corridorBonus + lineBonus });
+          if (this.isUsefulBoxToPlayer(target, playerReachable)) {
+            return true;
           }
           break;
         }
       }
     }
 
-    candidates.sort((a, b) => b.score - a.score);
-    return candidates.length > 0 ? candidates[0].box : null;
+    return false;
+  }
+
+  private getPlayerReachableTiles(): Set<string> {
+    const queue: GridPosition[] = [{ ...this.player.position }];
+    const reachable = new Set<string>([keyOf(this.player.position)]);
+    const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+
+    while (queue.length > 0) {
+      const pos = queue.shift()!;
+      for (const dir of dirs) {
+        const delta = directionDelta(dir);
+        const nextPos = { x: pos.x + delta.x, y: pos.y + delta.y };
+        const key = keyOf(nextPos);
+
+        if (
+          !reachable.has(key) &&
+          this.level.isInBounds(nextPos) &&
+          (this.level.isWalkable(nextPos) || samePosition(nextPos, this.player.position))
+        ) {
+          reachable.add(key);
+          queue.push(nextPos);
+        }
+      }
+    }
+
+    return reachable;
+  }
+
+  private isUsefulBoxToPlayer(box: GridPosition, playerReachable: Set<string>): boolean {
+    const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+    for (const dir of dirs) {
+      const adjacent = { x: box.x + directionDelta(dir).x, y: box.y + directionDelta(dir).y };
+      if (
+        this.level.isInBounds(adjacent) &&
+        playerReachable.has(keyOf(adjacent))
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private isInLineWithPlayer(start: GridPosition, target: GridPosition): boolean {
@@ -478,7 +540,6 @@ export class GameLogicService {
       distance: manhattan(move, this.player.position),
       forward: currentDistance - manhattan(move, this.player.position),
       reachableArea: this.countSafeReachableArea(move, dangerSet),
-      narrow: this.isNarrowCorridor(move),
     }));
 
     scoredMoves.sort((a, b) => {
@@ -486,15 +547,11 @@ export class GameLogicService {
         return b.forward - a.forward;
       }
 
-      if (a.narrow !== b.narrow) {
-        return a.narrow ? -1 : 1;
+      if (a.distance !== b.distance) {
+        return a.distance - b.distance;
       }
 
-      if (b.reachableArea !== a.reachableArea) {
-        return b.reachableArea - a.reachableArea;
-      }
-
-      return a.distance - b.distance;
+      return b.reachableArea - a.reachableArea;
     });
 
     return scoredMoves[0].move;
