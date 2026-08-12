@@ -1,6 +1,7 @@
 import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GRID_SIZE } from '../core/models/game-config';
 
 @Injectable({ providedIn: 'root' })
@@ -8,6 +9,7 @@ export class ThreeEngineService {
   scene!: THREE.Scene;
   camera!: THREE.OrthographicCamera;
   renderer!: THREE.WebGLRenderer;
+  controls!: OrbitControls;
 
   private readonly clock = new THREE.Timer();
   private container!: HTMLElement;
@@ -15,11 +17,9 @@ export class ThreeEngineService {
   private running = false;
   private frame = 0;
 
-  // Injetamos o identificador de plataforma para saber se estamos no servidor ou no navegador
   private readonly platformId = inject(PLATFORM_ID);
 
   init(container: HTMLElement, canvas: HTMLCanvasElement): void {
-    // 🛑 Bloqueia a execução se estiver rodando no SSR (Node.js)
     if (!isPlatformBrowser(this.platformId)) return;
 
     this.container = container;
@@ -33,20 +33,28 @@ export class ThreeEngineService {
 
     const extent = GRID_SIZE * 0.8;
     this.camera = new THREE.OrthographicCamera(-extent, extent, extent, -extent, 0.1, 100);
-    this.camera.position.set(10, 14, 10);
+
+    this.camera.position.set(0, 16, 8);
+    this.camera.up.set(0, 1, 0);
     this.camera.lookAt(0, 0, 0);
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.enableRotate = true;
+    this.controls.enableZoom = true;
+    this.controls.enablePan = true;
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.7);
     this.scene.add(ambient);
 
     const sun = new THREE.DirectionalLight(0xffffff, 1.1);
-    sun.position.set(8, 14, 6);
+    sun.position.set(8, 20, 6);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -12;
-    sun.shadow.camera.right = 12;
-    sun.shadow.camera.top = 12;
-    sun.shadow.camera.bottom = -12;
+    sun.shadow.camera.left = -15;
+    sun.shadow.camera.right = 15;
+    sun.shadow.camera.top = 15;
+    sun.shadow.camera.bottom = -15;
     this.scene.add(sun);
 
     this.resize();
@@ -64,6 +72,11 @@ export class ThreeEngineService {
       }
       this.frame = requestAnimationFrame(loop);
       const deltaMs = Math.min(this.clock.getDelta() * 1000, 50);
+
+      if (this.controls) {
+        this.controls.update();
+      }
+
       callback(deltaMs);
       this.renderer.render(this.scene, this.camera);
     };
@@ -82,6 +95,11 @@ export class ThreeEngineService {
 
     this.stopLoop();
     this.resizeObserver?.disconnect();
+
+    if (this.controls) {
+      this.controls.dispose();
+    }
+
     this.scene?.traverse((obj) => {
       const mesh = obj as THREE.Mesh;
       if (!mesh.isMesh) {

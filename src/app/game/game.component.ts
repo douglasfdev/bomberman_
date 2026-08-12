@@ -59,7 +59,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
       this.sceneBuilder.init(this.engine.scene!);
-      
+
       this.engine.startLoop((deltaMs: number) => {
         this.logic.tick(deltaMs);
         this.sceneBuilder.sync(this.logic, deltaMs);
