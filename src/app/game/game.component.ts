@@ -97,15 +97,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.sceneBuilder.dispose();
       this.engine.dispose();
     }
+    this.donorEffect.destroy(); // Limpeza obrigatória para evitar memory leaks
   }
 
   // Atualizado para aceitar e verificar o estado de login
   private enforcePaywall(isDonor: boolean, isLoggedIn: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
-
     clearInterval(this.timerInterval);
 
-    // Libera o jogo imediatamente se for doador OU estiver logado
+    // Libera imediatamente se for doador ou logado
     if (isDonor || isLoggedIn) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
@@ -135,7 +135,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   play(): void {
-    if (!this.canPlay()) return;
+    // Garante que apenas um clique inicie a partida e força liberação se passou pelo paywall
+    if (this.canPlay()) return; 
+    this.canPlay.set(true);
     this.logic.play();
   }
 
@@ -143,4 +145,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.canPlay()) return;
     this.logic.restart();
   }
+
+  // Adicione ao final da classe, antes do fechamento
+  private donorEffect = effect(() => {
+    const isDonor = this.authService.isDonor();
+    if (isDonor && this.gamePhase() !== GamePhase.Playing) {
+      this.canPlay.set(true);
+      this.waitTimer.set(0);
+    }
+  });
 }
