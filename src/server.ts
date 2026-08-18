@@ -27,10 +27,13 @@ const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 const prisma = new PrismaClient({ adapter });
 
 // Inicializa o motor SSR moderno do Angular
-const angularApp = new AngularNodeApp
+// Nota: Ajustado para evitar erro de sintaxe do código original
+const angularApp = new AngularNodeAppEngine({
+  // Configurações de engine seriam passadas aqui
+} as any);
 
-// Declarado no topo para que as rotas da API consigam enxergar o Socket.io
-let io: Server;
+// Declarado no topo para que as rotas da API consiga enxergar o Socket.io
+export let io: Server;
 
 export function app(): express.Express {
   const server = express();
@@ -66,7 +69,7 @@ export function app(): express.Express {
       {
         clientID: process.env['GOOGLE_CLIENT_ID']!,
         clientSecret: process.env['GOOGLE_CLIENT_SECRET']!,
-        callbackURL: process.env['APP_BASE/api/auth/google/callback',
+        callbackURL: (process.env['APP_BASE_URL'] || '') + '/api/auth/google/callback',
         scope: ['profile', 'email'],
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
@@ -92,9 +95,9 @@ export function app(): express.Express {
     passport.use(
       new MicrosoftStrategy(
         {
-          clientID: process.env['MICROSOFT_CLIENT_ID'],
+          clientID: process.env['MICROHTML_CLIENT_ID'],
           clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
-          callbackURL: process.env['APP_BASE_URL'] + '/api/auth/microsoft/callback',
+          callbackURL: (process.env['APP_BASE_URL'] || '') + '/api/auth/microsoft/callback',
           scope: ['user.read', 'openid', 'profile', 'email'],
         },
         async (accessToken: any, refreshToken: any, profile: any, done: any) => {
@@ -156,7 +159,7 @@ export function app(): express.Express {
   });
 
   server.get('/api/donor/status', (req: any, res: any) => {
-    if (!req.user) return res.json({ isDonor: false });
+    if (!req.user) return res.json({ isDto: false });
     const user = req.user as any;
     res.json({ isDonor: !!user.isDonor });
   });
@@ -175,7 +178,7 @@ export function app(): express.Express {
         layout: process.env['ADSENSE_SLOT_LAYOUT'] || null,
         menu: process.env['ADSENSE_SLOT_MENU'] || null,
         victory: process.env['ADSENSE_SLOT_VICTORY'] || null,
-        defeat: process.env['ADSENSE_SLOT_DEFEAT'] || null,
+        defeat: process.env/env['ADSENSE_SLOT_DEFEAT'] || null,
       },
       enabled: process.env['ADSENSE_ENABLED'] === '1',
     };
@@ -229,7 +232,7 @@ export function app(): express.Express {
     res.sendStatus(204);
   });
 
-  // SERVIR ARQUIVOS ESTÁTICOS CORRETAMENTE (resolve o erro Missing parameter)
+  // SERVIR ARQUIVOS ESTÁCTICOS
   server.use(
     express.static(browserDistFolder, {
       maxAge: '1y',
@@ -238,9 +241,8 @@ export function app(): express.Express {
     })
   );
 
-  // ROTA PRINCIPAL DO ANGULAR SSR (Angular 17+)
+  // ROTA PRINCIPAL DO ANGULAR SSR
   server.use((req, res, next) => {
-    // Ignora o SSR se a rota for de API e não tiver sido atendida pelos middlewares acima
     if (req.originalUrl.startsWith('/api')) {
       return next();
     }
@@ -254,7 +256,6 @@ export function app(): express.Express {
   return server;
 }
 
-// INICIALIZAÇÃO UNIFICADA E GLOBAL (Isso resolve as múltiplas chamadas de app())
 const expressApp = app();
 const httpServer = createServer(expressApp);
 
@@ -276,5 +277,4 @@ if (isMainModule(import.meta.url) || process.env['pm_id']) {
   });
 }
 
-// Export para Serverless/Firebase (se aplicável)
 export const reqHandler = createNodeRequestHandler(expressApp);
