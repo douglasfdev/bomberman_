@@ -1,5 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// learn to use it in the docs: https://pris.ly/d/prisma-schema
 
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
@@ -13,12 +13,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(ulid())
-  email     String   @unique
-  name      String?
-  googleId  String?  @unique
-  microsoftId String? @unique
-  buymeId   String?  @unique
-  isDonor   Boolean  @default(false)
-  donorAvatars Int    @default(0)
+  id           String   @id @default(ulid())
+  email        String   @unique
+  identification String?  @unique
+  name         String?
+  googleId     String?  @unique
+  microsoftId  String?  @unique
+  buymeId      String?  @unique
+  isDonor      Boolean  @default(false)
+  donorAvatars Int      @default(0)
+}
+
+model Transaction {
+  id            String   @id @default(ulid())
+  createdAt     DateTime @default(now())
+  userId        String
+  encryptedData String   // Armazena o dado cifrado (ex: CPF ou info do webhook)
+  metadata      Json?    // Metadados adicionais (ex: correlationID, amount)
 }
