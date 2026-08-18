@@ -5,7 +5,7 @@ import {
   createNodeRequestHandler,
   isMainModule,
   writeResponseToNodeResponse,
-} from '@angular/ssr/node';
+} from '@api/angular/ssr/node';
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -17,6 +17,8 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import 'dotenv/config';
 import { PrismaClient } from './generated/prisma/client';
 import { PrismaPg } from "@prisma/adapter-pg";
+import paymentRoutes from './routes/paymentRoutes';
+import webhookRoutes from './routes/webhookRoutes';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
@@ -25,7 +27,7 @@ const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 const prisma = new PrismaClient({ adapter });
 
 // Inicializa o motor SSR moderno do Angular
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeApp
 
 // Declarado no topo para que as rotas da API consigam enxergar o Socket.io
 let io: Server;
@@ -64,7 +66,7 @@ export function app(): express.Express {
       {
         clientID: process.env['GOOGLE_CLIENT_ID']!,
         clientSecret: process.env['GOOGLE_CLIENT_SECRET']!,
-        callbackURL: process.env['APP_BASE_URL'] + '/api/auth/google/callback',
+        callbackURL: process.env['APP_BASE/api/auth/google/callback',
         scope: ['profile', 'email'],
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
@@ -141,6 +143,10 @@ export function app(): express.Express {
       done(error);
     }
   });
+
+  // Rotas de Pagamento (Woovi/Pix)
+  server.use('/api/payments', paymentRoutes);
+  server.use('/api/webhooks', webhookRoutes);
 
   // Endpoints da API
   server.get('/api/user', (req: any, res: any) => {
