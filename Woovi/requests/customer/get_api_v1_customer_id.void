@@ -1,0 +1,75 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.848Z
+---
+
+# Get one customer
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 0fe4afd0-1a20-4904-b23f-cee510b58fc8
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: c9ae1ccf-7168-4ee3-ad63-9ee2b918fa3d
+content:
+  - type: method
+    attrs:
+      uid: 28c1c01a-5b3f-4489-bca5-42974f5fbcf4
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 920beae1-53be-438e-b9a2-7f737b91b1db
+    content: https://api.woovi.com/api/v1/customer/{id}
+---
+```
+
+
+
+```json
+{
+  "customer": {
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "string"
+    },
+    "correlationID": "string",
+    "address": {
+      "zipcode": "string",
+      "street": "string",
+      "number": "string",
+      "neighborhood": "string",
+      "city": "string",
+      "state": "string",
+      "complement": "string",
+      "country": "string"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

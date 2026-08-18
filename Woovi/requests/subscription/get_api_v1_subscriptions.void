@@ -1,0 +1,117 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.124Z
+---
+
+# Get a list of subscriptions
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 39e86e53-0ee5-4d57-b1a5-5cf2a8241cfa
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 5b8223eb-ad45-459c-9791-df295f5c1352
+content:
+  - type: method
+    attrs:
+      uid: f0546423-8b13-4793-a25a-220ebea711e3
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 87699cd1-bdd1-4a68-9854-4675046ef3cd
+    content: https://api.woovi.com/api/v1/subscriptions
+---
+```
+
+
+
+```json
+{
+  "subscriptions": [
+    {
+      "globalID": "string",
+      "value": 0,
+      "name": "string",
+      "customer": {
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "string"
+        },
+        "correlationID": "string",
+        "address": {
+          "zipcode": "string",
+          "street": "string",
+          "number": "string",
+          "neighborhood": "string",
+          "city": "string",
+          "state": "string",
+          "complement": "string",
+          "country": "string"
+        }
+      },
+      "dayGenerateCharge": 0,
+      "type": "PIX_RECURRING",
+      "frequency": "WEEKLY",
+      "installmentsCount": null,
+      "isActive": false,
+      "status": "ACTIVE",
+      "correlationID": "string",
+      "paymentLinkUrl": "string",
+      "addtionalInfo": [
+        {
+          "key": "string",
+          "value": "string"
+        }
+      ],
+      "pixRecurringOptions": {
+        "emv": "string",
+        "status": "CREATED",
+        "retryPolicy": "NON_PERMITED",
+        "journey": "PAYMENT_ON_APPROVAL"
+      }
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

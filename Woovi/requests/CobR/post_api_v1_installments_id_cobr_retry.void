@@ -1,0 +1,68 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.840Z
+---
+
+# Create a new Retry Manually
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 1759ad8b-0f39-47f3-8171-1789e3789201
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 2fb842ea-0add-4711-9dfd-f9020688b2e5
+content:
+  - type: method
+    attrs:
+      uid: 8a47984b-acda-4a93-aa7b-cade47cdf957
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 74726d0f-b90e-4596-a856-431710a6a807
+    content: https://api.woovi.com/api/v1/installments/{id}/cobr/retry
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 92af9d5c-9b79-46e3-ad6f-c17d38442282
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0
+    }
+---
+```
+
+
+
+```json
+{}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

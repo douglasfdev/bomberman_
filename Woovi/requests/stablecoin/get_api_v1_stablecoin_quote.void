@@ -1,0 +1,100 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.047Z
+---
+
+# Get a stablecoin quote without creating a deposit
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 3d024030-ec2b-4231-8f28-ae6b22871f7b
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 344fa115-2ddc-4fe6-8f90-64d84e17effc
+content:
+  - type: method
+    attrs:
+      uid: 9e4fc7f8-9d25-440a-b812-3a14d0b1f2d8
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: e9509b3d-2968-41e7-a4dc-6fc93f3da552
+    content: https://api.woovi.com/api/v1/stablecoin/quote
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: bad9adce-b2b3-4e80-8adf-48bc56ece45f
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "quote": {
+    "basePrice": null,
+    "inputAmount": null,
+    "inputCurrency": "string",
+    "outputAmount": null,
+    "outputCurrency": "string",
+    "appliedFees": [
+      {
+        "type": "string",
+        "amount": null,
+        "currency": "string"
+      }
+    ],
+    "pairName": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string"
+}
+```
+

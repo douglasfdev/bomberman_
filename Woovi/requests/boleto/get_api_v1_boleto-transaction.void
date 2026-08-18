@@ -1,0 +1,118 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.784Z
+---
+
+# List boleto transactions
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6613276d-6f37-4a6d-a662-0d6176f37dbf
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: d7b2af3d-a9ed-42f3-b16c-a6831cc96399
+content:
+  - type: method
+    attrs:
+      uid: 752ff961-b2e9-42da-a6a8-3bb97dc65d02
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 8040d1e6-5d49-4312-bff3-0eb045166e97
+    content: https://api.woovi.com/api/v1/boleto-transaction
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 22e430f8-3369-4bba-8008-a00535f117cf
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "pageInfo": {
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  },
+  "boletoTransactions": [
+    {
+      "boletoTransactionID": "string",
+      "type": "BOLETO_IN",
+      "status": "CREATED",
+      "value": 0,
+      "fee": 0,
+      "createdAt": "2026-08-18T13:39:57.784Z",
+      "settledAt": "2026-08-18T13:39:57.784Z",
+      "finesValue": 0,
+      "interestsValue": 0,
+      "discountValue": 0,
+      "charge": {
+        "value": 0,
+        "status": "string",
+        "boletoBarcode": "string",
+        "boletoDigitable": "string"
+      }
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,64 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.056Z
+---
+
+# List a company's stablecoin subaccounts
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 76b65067-0892-4f11-8559-0daffc217824
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 01664bff-aeb4-459e-bc93-0fc8b63cf215
+content:
+  - type: method
+    attrs:
+      uid: 89bf6f0c-11a6-49dc-ab0d-c6c23515907f
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 8530f967-8c9c-461f-8680-39a845fd01e9
+    content: https://api.woovi.com/api/v1/stablecoin/subaccount
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "subAccounts": [
+    {
+      "id": "string",
+      "subAccountId": "string",
+      "account": "string",
+      "createdAt": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

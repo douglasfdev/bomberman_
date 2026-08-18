@@ -1,0 +1,87 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.001Z
+---
+
+# Create a new Pix QrCode Static
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 3486e6ab-5ca8-4b7f-843f-4e39db48446f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 35995d72-78ae-4a77-bc1d-9b0b90198351
+content:
+  - type: method
+    attrs:
+      uid: ac15b476-db61-44ba-aa47-706149454b89
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: b4917a50-4863-42bc-a166-567bf782d6a5
+    content: https://api.woovi.com/api/v1/qrcode-static
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: d5ceaee6-e818-4e56-8598-add58e6e44ac
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "name": "my-qr-code",
+      "correlationID": "9134e286-6f71-427a-bf00-241681624586",
+      "value": 100,
+      "comment": "good"
+    }
+---
+```
+
+
+
+```json
+{
+  "pixQrCode": {
+    "name": "string",
+    "value": "string",
+    "comment": "string",
+    "brCode": "string",
+    "correlationID": "string",
+    "paymentLinkID": "string",
+    "paymentLinkUrl": null,
+    "pixKey": "string",
+    "qrCodeImage": null,
+    "createdAt": "string",
+    "updatedAt": "string"
+  },
+  "correlationID": "string",
+  "brCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,96 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.873Z
+---
+
+# Get a list of disputes
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f6697ebf-e975-482c-a04e-e9eeecf63c15
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f8e8ee9f-e621-46b0-b276-02ddcab9de6f
+content:
+  - type: method
+    attrs:
+      uid: 81bab398-02dc-4ccc-9816-4dbbc7d03a3e
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: dc012815-8e32-4e72-a7c6-3b03438dae79
+    content: https://api.woovi.com/api/v1/dispute
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 831c9ef6-c2c9-49e5-8d16-e8ac2d90a22b
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "disputes": [
+    {
+      "status": "IN_REVIEW",
+      "name": "string",
+      "email": "string",
+      "phoneNumber": "string",
+      "value": 0,
+      "disputeReason": "string",
+      "endToEndId": "string",
+      "createdAt": "2026-08-18T13:39:57.873Z",
+      "updatedAt": "2026-08-18T13:39:57.873Z",
+      "type": "MED"
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

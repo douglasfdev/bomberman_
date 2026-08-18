@@ -7,7 +7,7 @@ interface WooviCustomer {
   taxID?: string;
 }
 
-interface CreateChargePayload {
+export interface CreateChargePayload {
   correlationID: string;
   value: number; // Em centavos
   type: 'DYNAMIC' | 'FIXED';
@@ -16,7 +16,7 @@ interface CreateChargePayload {
 }
 
 export class WooviService {
-  private readonly apiKey = process.env.WOOVI_API_KEY;
+  private readonly apiKey = process.env['WOOVI_API_KEY'] || '';
   private readonly baseUrl = 'https://api.woovi.com/api/v1/charge?return_existing=true';
 
   async createCharge(payload: CreateChargePayload) {

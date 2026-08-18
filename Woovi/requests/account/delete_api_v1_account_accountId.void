@@ -1,0 +1,81 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.712Z
+---
+
+# Close an Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 7397a001-81ed-46f7-9ea1-1eeb29c64cef
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 1dbfcdab-386b-42a0-8d32-0726fb75aa2b
+content:
+  - type: method
+    attrs:
+      uid: 642009e3-b52a-4e09-a8ee-182c3bcf7393
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: 42e18641-8185-48c9-999d-a98b0bd9764f
+    content: https://api.woovi.com/api/v1/account/{accountId}
+---
+```
+
+
+
+```json
+{
+  "status": "OK",
+  "accountId": "6290ccfd42831958a405debc"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "This feature is not enabled for your company"
+}
+```
+
+
+
+```json
+{
+  "error": "Account not found"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

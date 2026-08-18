@@ -1,0 +1,102 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.940Z
+---
+
+# Get every preregistration that is managed by you.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 1b158c52-374d-485c-8c5f-20ba17eba40a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: c8ce6979-65d5-4d1e-8e7a-4a903b339eb7
+content:
+  - type: method
+    attrs:
+      uid: 821f15d1-628c-46d6-87da-3de502daadd6
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 37d418e2-305e-41b5-8ef8-452e92a3d86e
+    content: https://api.woovi.com/api/v1/partner/company
+---
+```
+
+
+
+```json
+{
+  "preRegistrations": [
+    {
+      "preRegistration": {
+        "name": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "BR:CNPJ"
+        }
+      },
+      "user": {
+        "firstName": "string",
+        "lastName": "string",
+        "email": "string",
+        "phone": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "BR:CNPJ"
+        }
+      },
+      "company": {
+        "id": "string",
+        "name": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "BR:CNPJ"
+        }
+      },
+      "account": {
+        "clientId": "string"
+      }
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

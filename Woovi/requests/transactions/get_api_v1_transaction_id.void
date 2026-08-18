@@ -1,0 +1,133 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.133Z
+---
+
+# Get a Transaction
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: fcd7d106-b0fb-4b71-9574-d78652854f11
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 68b7e0d7-5580-40d4-9a19-c62ff95f29a8
+content:
+  - type: method
+    attrs:
+      uid: 196b8ad6-d253-444d-9b37-5bee35f8932d
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 2523ff8f-ad21-402a-980f-ca8dc3ba3407
+    content: https://api.woovi.com/api/v1/transaction/{id}
+---
+```
+
+
+
+```json
+{
+  "transaction": {
+    "customer": {
+      "name": "Dan",
+      "email": "email0@example.com",
+      "phone": "5511999999999",
+      "taxID": {
+        "taxID": "31324227036",
+        "type": "BR:CPF"
+      },
+      "correlationID": "9134e286-6f71-427a-bf00-241681624586"
+    },
+    "payer": {
+      "name": "Dan",
+      "email": "email0@example.com",
+      "phone": "5511999999999",
+      "taxID": {
+        "taxID": "31324227036",
+        "type": "BR:CPF"
+      },
+      "correlationID": "9134e286-6f71-427a-bf00-241681624586"
+    },
+    "charge": {
+      "status": "ACTIVE",
+      "customer": "603f81fcc6bccc24326ffb43",
+      "correlationID": "9134e286-6f71-427a-bf00-241681624586",
+      "createdAt": "2021-03-03T12:33:00.546Z",
+      "updatedAt": "2021-03-03T12:33:00.546Z"
+    },
+    "withdraw": {
+      "value": 100,
+      "time": "2021-03-03T12:33:00.536Z",
+      "infoPagador": "payer info 1",
+      "endToEndId": "E18236120202012032010s01345689XBY",
+      "createdAt": "2021-03-03T12:33:00.546Z"
+    },
+    "infoPagador": "payer info 0",
+    "value": 100,
+    "time": "2021-03-03T12:33:00.536Z",
+    "transactionID": "transactionID",
+    "type": "PAYMENT",
+    "endToEndId": "E18236120202012032010s0133872GZA",
+    "globalID": "UGl4VHJhbnNhY3Rpb246NzE5MWYxYjAyMDQ2YmY1ZjUzZGNmYTBi",
+    "creditParty": {
+      "account": {
+        "account": "00000000000005469660",
+        "accountType": "CACC",
+        "branch": "8615"
+      },
+      "holder": {
+        "name": "CREDIT PARTY NAME",
+        "nameFriendly": "CREDIT PARTY NAME FRIENDLY",
+        "taxID": {
+          "taxID": "28613271892",
+          "type": "BR:CPF"
+        }
+      },
+      "psp": {
+        "id": "00000001",
+        "name": "BCO DO BRASIL S.A."
+      }
+    },
+    "debitParty": {
+      "account": {
+        "account": "1235678",
+        "accountType": "TRAN",
+        "branch": "1"
+      },
+      "holder": {
+        "name": "Awesome Company 1",
+        "nameFriendly": "Call me Awesome"
+      },
+      "psp": {
+        "code": "54811417",
+        "id": "FROZEN-ID",
+        "name": "WOOVI IP LTDA"
+      }
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,133 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.951Z
+---
+
+# Get one Payment
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e0822e33-57e5-4fdf-af99-a9e19cac8c1f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 10c50dae-0edf-41c7-8437-a6c036244b3c
+content:
+  - type: method
+    attrs:
+      uid: 37348cb9-684b-487e-b13b-e7f945dd3208
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: bc54b129-4929-4c39-b78a-02bdb75d335e
+    content: https://api.woovi.com/api/v1/payment/{id}
+---
+```
+
+
+
+```json
+{
+  "payment": {
+    "type": "PIX_KEY",
+    "value": 0,
+    "destinationAlias": "string",
+    "destinationAliasType": "CPF",
+    "qrCode": "string",
+    "correlationID": "string",
+    "comment": "string",
+    "sourceAccountId": "string",
+    "status": "CREATED",
+    "boleto": {
+      "barcode": "string",
+      "expiresDate": "string",
+      "totalValue": 0,
+      "issuingEntity": {
+        "code": "string",
+        "name": "string"
+      },
+      "finalBeneficiary": {
+        "name": "string",
+        "taxID": "string"
+      }
+    }
+  },
+  "transaction": {
+    "value": 0,
+    "endToEndId": "string",
+    "time": "string",
+    "providerRejectedReason": "string",
+    "debitParty": {
+      "account": {
+        "branch": "string",
+        "account": "string",
+        "accountType": "string"
+      },
+      "psp": {
+        "id": "string",
+        "name": "string",
+        "code": "string"
+      },
+      "holder": {
+        "name": "string",
+        "nameFriendly": "string"
+      },
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      }
+    },
+    "creditParty": {
+      "account": {
+        "branch": "string",
+        "account": "string",
+        "accountType": "string"
+      },
+      "psp": {
+        "id": "string",
+        "name": "string",
+        "code": "string"
+      },
+      "holder": {
+        "name": "string",
+        "nameFriendly": "string"
+      },
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      }
+    }
+  },
+  "destination": {
+    "name": "string",
+    "taxID": "string",
+    "pixKey": "string",
+    "bank": "string",
+    "branch": "string",
+    "account": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,102 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.877Z
+---
+
+# Cancel a funds recovery (MED)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 394f7878-ea03-46c4-8a3d-8e7d8971c97f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: d1a3a58d-0fb0-4fd3-afd3-fb586a137dfd
+content:
+  - type: method
+    attrs:
+      uid: fe002623-496e-4e53-a08e-b82697ac87d3
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: ba06a4b0-6413-4d44-9b2c-d2616a6a3250
+    content: https://api.woovi.com/api/v1/funds-recovery/{id}/cancel
+---
+```
+
+
+
+```json
+{
+  "rootTransactionId": "E31680151202606101530AbCdEf12345",
+  "situationType": "SCAM",
+  "reportDetails": "Payment made to a fake seller. After the payment, the seller stopped responding and never delivered the product.",
+  "dictId": "3e760cd5-39b2-45da-8ab6-b212cf205568",
+  "status": "CANCELLED",
+  "direction": "SENT",
+  "reporterParticipant": "31680151",
+  "creationTime": "2026-06-11T00:30:00.000Z",
+  "lastModified": "2026-06-11T01:10:00.000Z",
+  "createdAt": "2026-06-11T00:30:00.000Z",
+  "updatedAt": "2026-06-11T01:10:00.000Z"
+}
+```
+
+
+
+```json
+{
+  "error": {
+    "id": [
+      "Invalid UUID"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Invalid appID"
+}
+```
+
+
+
+```json
+{
+  "error": "Your account does not have the permission to use this endpoint"
+}
+```
+
+
+
+```json
+{
+  "error": "Funds recovery not found"
+}
+```
+
+
+
+```json
+{
+  "error": "Cannot cancel: FundsRecovery is already in terminal status COMPLETED"
+}
+```
+

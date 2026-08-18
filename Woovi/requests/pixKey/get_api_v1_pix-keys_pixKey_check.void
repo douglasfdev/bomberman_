@@ -1,0 +1,102 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.961Z
+---
+
+# Check data from a Pix key
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: b301167b-6e25-42a0-af8d-f69ab788fa76
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 512214a6-b69d-41fa-bc69-1b6cb2b7deae
+content:
+  - type: method
+    attrs:
+      uid: bf41cf3f-d0bd-4047-81d9-2570a017ce6a
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: a9b8ff6b-1722-444b-9012-5df86e36733d
+    content: https://api.woovi.com/api/v1/pix-keys/{pixKey}/check
+---
+```
+
+
+
+```json
+{
+  "pixKey": "string",
+  "type": "CPF",
+  "pixKeyEndToEndId": "string",
+  "owner": {
+    "account": "string",
+    "branch": "string",
+    "psp": "string",
+    "name": "string",
+    "taxID": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+

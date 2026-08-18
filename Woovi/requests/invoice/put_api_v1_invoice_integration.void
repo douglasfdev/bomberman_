@@ -1,0 +1,86 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.910Z
+---
+
+# Update the tax fields of the invoice integration
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 09f33159-e672-45a8-a9dc-ab2efa02180a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 9099cbf6-49a7-4cba-8b81-7198bd1a85bc
+content:
+  - type: method
+    attrs:
+      uid: e8ccf892-8a66-475e-969b-97690ca4a356
+      method: PUT
+      importedFrom: ""
+      visible: true
+    content: PUT
+  - type: url
+    attrs:
+      uid: 6329da1a-eabd-4bc2-8958-5c0ae1a49567
+    content: https://api.woovi.com/api/v1/invoice/integration
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 91bf45a3-c7a9-40eb-80a0-63ec44b27954
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "cityServiceCode": "string",
+      "municipalSubscription": "string",
+      "rpsNumber": "string",
+      "specialTax": "string",
+      "taxRegime": "string",
+      "legalNature": "string",
+      "federalTaxDetermination": "string",
+      "municipalTaxDetermination": "string",
+      "isPortalNacional": false
+    }
+---
+```
+
+
+
+```json
+{
+  "integration": {}
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

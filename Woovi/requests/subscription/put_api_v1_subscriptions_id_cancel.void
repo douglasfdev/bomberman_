@@ -1,0 +1,54 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.114Z
+---
+
+# Cancel an Subscription
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 34c88d3d-d99e-43d0-8b1e-22d249d7e437
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 26831c76-fd24-4c75-8502-8cf86ae419cb
+content:
+  - type: method
+    attrs:
+      uid: 8b74791e-ee7e-4a7b-975d-3445c97e822b
+      method: PUT
+      importedFrom: ""
+      visible: true
+    content: PUT
+  - type: url
+    attrs:
+      uid: 47097dcc-ffa5-4702-a52d-e2098e0469dd
+    content: https://api.woovi.com/api/v1/subscriptions/{id}/cancel
+---
+```
+
+
+
+```json
+{}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

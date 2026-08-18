@@ -1,0 +1,114 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.934Z
+---
+
+# Create a new application to some of your preregistration's company.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 29d36f2f-40e7-4d2c-b28c-3f317ad5dcfe
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: d6d01fe1-08e1-42de-8c07-b64cfadd4451
+content:
+  - type: method
+    attrs:
+      uid: e6c653d5-df28-4f78-b138-0faf8dee5b6c
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 38eae524-b124-4d49-8db6-c0c6770d2d61
+    content: https://api.woovi.com/api/v1/partner/application
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 1728bc3f-beb5-44cd-9493-e3789ddd4136
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "application": {
+        "name": "string",
+        "type": "API",
+        "scopes": [
+          "string"
+        ]
+      },
+      "taxID": {
+        "taxID": "string",
+        "type": "BR:CNPJ"
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "application": {
+    "name": "string",
+    "isActive": false,
+    "type": "API",
+    "clientId": "string",
+    "clientSecret": "string",
+    "scopes": [
+      "string"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "application": {
+    "name": "string",
+    "isActive": false,
+    "type": "API",
+    "clientId": "string",
+    "clientSecret": "string",
+    "scopes": [
+      "string"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

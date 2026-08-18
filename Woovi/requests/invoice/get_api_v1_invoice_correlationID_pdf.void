@@ -1,0 +1,70 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.918Z
+---
+
+# Get invoice PDF document
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 290442b5-30db-4e38-85de-09d10d92f094
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: fff5a278-8b98-4856-919c-a8ed51a3b4ea
+content:
+  - type: method
+    attrs:
+      uid: c2e96312-cf06-49a7-aa09-1f1dc9f9d070
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: f5616abc-a18e-4139-b24e-81d8da8c1e67
+    content: https://api.woovi.com/api/v1/invoice/{correlationID}/pdf
+---
+```
+
+
+
+```json
+string
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

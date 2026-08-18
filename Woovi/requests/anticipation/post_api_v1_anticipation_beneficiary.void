@@ -1,0 +1,136 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.768Z
+---
+
+# Register a beneficiary
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6ff56aea-8a4d-4932-8c3e-0bad048d4c8c
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 865e41cd-0cdd-4070-8d6f-92e29fe9a3e5
+content:
+  - type: method
+    attrs:
+      uid: b33da9f3-fdd9-4b8b-957b-f6341d8fa481
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 9a334156-4e88-44a8-8905-006730e46680
+    content: https://api.woovi.com/api/v1/anticipation/beneficiary
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: c148a2c6-70e8-4231-bc00-53d9f6e70b9c
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 9349d5d2-58bf-48c9-8f61-356630bb9a31
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "name": "string",
+      "taxID": "string",
+      "cpf": null,
+      "notifyEmail": null,
+      "notifyPhone": null,
+      "availableAmount": null,
+      "maxAdvanceableAmount": null,
+      "autoApprove": null,
+      "feeDestinationAccountId": null,
+      "paymentDaysOverride": null,
+      "frequencyOverride": null,
+      "correlationID": null
+    }
+---
+```
+
+
+
+```json
+{
+  "beneficiary": {
+    "name": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CPF"
+    },
+    "isActive": false,
+    "availableAmount": null,
+    "maxAdvanceableAmount": 0,
+    "notifyEmail": null,
+    "notifyPhone": null,
+    "verified": false,
+    "createdAt": null
+  },
+  "correlationID": null
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

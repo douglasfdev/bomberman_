@@ -1,0 +1,68 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.835Z
+---
+
+# Create a new Cobr Manually
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: c2b1c4f7-14b1-4eda-9e79-cf76f3f0f657
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 64660b95-a3b2-4a37-a5c7-71218bda4362
+content:
+  - type: method
+    attrs:
+      uid: 2881dfb9-b53b-4267-b94d-dafa208339f7
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: a6a6327a-e849-4d6e-875e-ab957ada0dae
+    content: https://api.woovi.com/api/v1/installments/{id}/cobr
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 32e92fe6-9d7a-426c-a75b-160792086ce1
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0
+    }
+---
+```
+
+
+
+```json
+{}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,84 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.101Z
+---
+
+# Get Sub Account statement
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: db757591-4996-46d7-8c81-9b31766cbacf
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: e88d2692-f775-4d04-b96d-6b99e420c8c3
+content:
+  - type: method
+    attrs:
+      uid: 77a8030b-ce06-408b-9e38-e5cec17d82bf
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 73355808-f888-4654-8c31-155cf5e39090
+    content: https://api.woovi.com/api/v1/subaccount/{id}/statement
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 950c4186-b2fd-487f-a7bc-de0f2fbd2727
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+[
+  {
+    "id": "string",
+    "time": "2026-08-18T13:39:58.101Z",
+    "description": "string",
+    "balance": 0,
+    "value": 0,
+    "type": "CREDIT",
+    "operationType": "CREDIT"
+  }
+]
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "This feature is not enabled for your company"
+}
+```
+

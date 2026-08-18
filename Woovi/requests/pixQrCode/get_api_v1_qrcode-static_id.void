@@ -1,0 +1,68 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.993Z
+---
+
+# Get one Pix QrCode
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 27c3ccc9-7dec-4b42-9f74-58a93c61b662
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 99860377-4e5f-4985-be82-d75e7a551c5a
+content:
+  - type: method
+    attrs:
+      uid: a74edabe-36c0-4c6b-b4d2-87e6b6a3bc44
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 8fa48803-a216-4def-b5bf-ed645de920ab
+    content: https://api.woovi.com/api/v1/qrcode-static/{id}
+---
+```
+
+
+
+```json
+{
+  "pixQrCode": {
+    "name": "string",
+    "value": "string",
+    "comment": "string",
+    "brCode": "string",
+    "correlationID": "string",
+    "paymentLinkID": "string",
+    "paymentLinkUrl": null,
+    "pixKey": "string",
+    "qrCodeImage": null,
+    "createdAt": "string",
+    "updatedAt": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

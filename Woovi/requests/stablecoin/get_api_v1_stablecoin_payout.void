@@ -1,0 +1,52 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.038Z
+---
+
+# Get the current status of a payout by correlationId
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 26ef8041-ef75-43d3-bc27-0eafa08d896c
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 46b05a37-e7d5-4c28-9f85-5ceaca17c149
+content:
+  - type: method
+    attrs:
+      uid: 9a9e6e90-b4b6-4131-94ce-70b34891f7a0
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 3928b63f-af43-4b8f-98a6-98fa57db9ebf
+    content: https://api.woovi.com/api/v1/stablecoin/payout
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 1b0850fb-b7e2-44e0-b58c-473d41d299d4
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+

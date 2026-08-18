@@ -1,0 +1,106 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.760Z
+---
+
+# Bulk-sync beneficiary balances
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: eae95da3-46ee-4261-bb80-7013869d1305
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 321b0da8-4191-4c27-8b00-88bb20dc8c23
+content:
+  - type: method
+    attrs:
+      uid: 9402357e-b862-4389-9fd2-de2ffe63939e
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: a2107474-55cc-44ff-8010-e51063caafd0
+    content: https://api.woovi.com/api/v1/anticipation/balance/batch
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: a51d4549-e26e-4a7a-a2ab-f6b520be2778
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "items": [
+        {
+          "taxID": "string",
+          "availableAmount": 0,
+          "maxAdvanceableAmount": 0
+        }
+      ]
+    }
+---
+```
+
+
+
+```json
+{
+  "processed": 0,
+  "succeeded": 0,
+  "failed": 0,
+  "results": [
+    {
+      "taxID": "string",
+      "ok": false,
+      "error": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

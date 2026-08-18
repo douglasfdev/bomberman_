@@ -1,0 +1,57 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.814Z
+---
+
+# Delete a charge
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: b3c5cbc8-d487-47ef-b6ee-b65017c18851
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 97e10da2-8de5-41a1-8313-2ff2fe0b9bed
+content:
+  - type: method
+    attrs:
+      uid: 7e5bc609-780d-4d9f-876b-ecac7a957299
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: 9d3a87c5-2b3d-40a1-8154-c9cfe3609af8
+    content: https://api.woovi.com/api/v1/charge/{id}
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "id": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

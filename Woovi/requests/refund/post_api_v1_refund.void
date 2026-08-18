@@ -1,0 +1,80 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.025Z
+---
+
+# Create a new refund
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 1f50cb37-ef0c-41bb-907b-3f8b57d3f106
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 879dbdda-7a09-4f82-bdfc-c3c400f64e81
+content:
+  - type: method
+    attrs:
+      uid: e7631077-b472-4233-a64c-0e5d563e3b03
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 40e9d83f-236e-43a3-ae80-43c94f82d6f9
+    content: https://api.woovi.com/api/v1/refund
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 724d4d54-1749-4cd2-be1c-2ad552fa8d7c
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "transactionEndToEndId": "9134e286-6f71-427a-bf00-241681624586",
+      "correlationID": "9134e286-6f71-427a-bf00-241681624586",
+      "value": 100,
+      "comment": "Comentário do reembolso"
+    }
+---
+```
+
+
+
+```json
+{
+  "refund": {
+    "value": 0,
+    "status": "IN_PROCESSING",
+    "correlationID": "string",
+    "refundId": "string",
+    "time": "string",
+    "comment": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

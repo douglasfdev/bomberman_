@@ -1,0 +1,92 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.068Z
+---
+
+# Get statement by company
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: cf7d8cd5-31ee-4abc-a5b9-ac15a0592dc5
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 6e5ba36a-496d-4aeb-be8b-f0b0caf3a8bf
+content:
+  - type: method
+    attrs:
+      uid: cc8de010-c4c2-4c85-8fcf-9e5cfeeed8af
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 9851f88e-3d5c-4aaa-8617-e98d35b24b01
+    content: https://api.woovi.com/api/v1/statement
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 6d61c5c8-ac21-4d7d-8b2e-696ecebfe4f7
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+[
+  {
+    "id": "string",
+    "time": "2026-08-18T13:39:58.068Z",
+    "description": "string",
+    "balance": 0,
+    "value": 0,
+    "type": "string",
+    "transactionId": "string"
+  }
+]
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

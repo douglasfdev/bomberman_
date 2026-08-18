@@ -1,0 +1,114 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.895Z
+---
+
+# Create a new invoice
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 00f62564-43dd-4d3b-ad65-9ed0c9fe87c4
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 569342d1-44dc-4b02-96c3-288631bf284c
+content:
+  - type: method
+    attrs:
+      uid: c7b03720-e999-476b-ab07-3daf548df1dd
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 24dd0047-b677-4b4c-943f-85af510280bf
+    content: https://api.woovi.com/api/v1/invoice
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 1071a527-67df-4042-a7a1-04c65753b3b3
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "description": "string",
+      "billingDate": "2026-08-18T13:39:57.895Z",
+      "correlationID": "string",
+      "charge": "string",
+      "value": 0,
+      "customerId": "string",
+      "customer": {
+        "taxID": "string",
+        "name": "string",
+        "email": "user@example.com",
+        "phone": "string",
+        "address": {
+          "country": "string",
+          "zipcode": "string",
+          "street": "string",
+          "number": "string",
+          "state": "string"
+        }
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "invoice": {
+    "id": "string",
+    "value": 0,
+    "date": "2026-08-18T13:39:57.895Z",
+    "billingDate": "2026-08-18T13:39:57.895Z",
+    "status": "string",
+    "statusRaw": null,
+    "customer": {
+      "correlationID": "string",
+      "name": "string"
+    },
+    "charge": {
+      "correlationID": "string",
+      "value": 0,
+      "status": "string",
+      "paidAt": "2026-08-18T13:39:57.895Z",
+      "date": "2026-08-18T13:39:57.895Z"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,57 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.798Z
+---
+
+# Get the exclusive cashback amount an user still has to receive by taxID.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 0986ed15-9eb3-41d1-96de-f415f3077ca0
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 9a5857d4-4eb3-4cdf-a0a9-e54f16b08c71
+content:
+  - type: method
+    attrs:
+      uid: c14c856b-cfbc-4b4f-a789-afa074d72cd3
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 1687fc3e-7d5d-4fd9-8a62-c2e3884f45be
+    content: https://api.woovi.com/api/v1/cashback-fidelity/balance/{taxID}
+---
+```
+
+
+
+```json
+{
+  "balance": 0,
+  "status": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

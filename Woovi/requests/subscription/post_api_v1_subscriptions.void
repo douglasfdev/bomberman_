@@ -1,0 +1,150 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.127Z
+---
+
+# Create a new Subscription
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 13ded63f-2e55-4022-bc97-a938fb56e4c7
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: adfd8b2c-6565-4be7-8807-9f9d3db2a1fc
+content:
+  - type: method
+    attrs:
+      uid: 39ce8940-a9ae-422b-ac90-f89d8a73b9e4
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 67ac5e4e-a11e-4def-ae8d-5ce0db8f5acb
+    content: https://api.woovi.com/api/v1/subscriptions
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: d0380a0f-52e4-40f2-9159-d7b022a8a0a0
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "customer": {
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "taxID": "string",
+        "address": {
+          "zipcode": "string",
+          "street": "string",
+          "number": "string",
+          "neighborhood": "string",
+          "city": "string",
+          "state": "string",
+          "complement": "string",
+          "country": "string"
+        }
+      },
+      "value": 0,
+      "name": "string",
+      "comment": "string",
+      "dayGenerateCharge": 5,
+      "frequency": "WEEKLY",
+      "type": "PIX_RECURRING",
+      "dayDue": 7,
+      "installmentCount": 0,
+      "correlationID": "string",
+      "additionalInfo": [
+        {
+          "key": "string",
+          "value": "string"
+        }
+      ],
+      "pixRecurringOptions": {
+        "retryPolicy": "NON_PERMITED",
+        "journey": "PAYMENT_ON_APPROVAL",
+        "minimumValue": 0
+      },
+      "chargeType": "DYNAMIC"
+    }
+---
+```
+
+
+
+```json
+{
+  "subscription": {
+    "globalID": "string",
+    "value": 0,
+    "name": "string",
+    "customer": {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      },
+      "correlationID": "string",
+      "address": {
+        "zipcode": "string",
+        "street": "string",
+        "number": "string",
+        "neighborhood": "string",
+        "city": "string",
+        "state": "string",
+        "complement": "string",
+        "country": "string"
+      }
+    },
+    "dayGenerateCharge": 0,
+    "type": "PIX_RECURRING",
+    "frequency": "WEEKLY",
+    "installmentsCount": null,
+    "isActive": false,
+    "status": "ACTIVE",
+    "correlationID": "string",
+    "paymentLinkUrl": "string",
+    "addtionalInfo": [
+      {
+        "key": "string",
+        "value": "string"
+      }
+    ],
+    "pixRecurringOptions": {
+      "emv": "string",
+      "status": "CREATED",
+      "retryPolicy": "NON_PERMITED",
+      "journey": "PAYMENT_ON_APPROVAL"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,100 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.118Z
+---
+
+# Get one subscription
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 61e4323d-26de-4bb6-8d52-62041b52cc4f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 837ac143-b0a6-4115-8dbb-cf4713ef6a84
+content:
+  - type: method
+    attrs:
+      uid: cfd1b8d4-750c-4397-973e-6127f5045d34
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: a152caa0-dd15-4fa1-a3ad-d3ae154e5b19
+    content: https://api.woovi.com/api/v1/subscriptions/{id}
+---
+```
+
+
+
+```json
+{
+  "subscription": {
+    "globalID": "string",
+    "value": 0,
+    "name": "string",
+    "customer": {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      },
+      "correlationID": "string",
+      "address": {
+        "zipcode": "string",
+        "street": "string",
+        "number": "string",
+        "neighborhood": "string",
+        "city": "string",
+        "state": "string",
+        "complement": "string",
+        "country": "string"
+      }
+    },
+    "dayGenerateCharge": 0,
+    "type": "PIX_RECURRING",
+    "frequency": "WEEKLY",
+    "installmentsCount": null,
+    "isActive": false,
+    "status": "ACTIVE",
+    "correlationID": "string",
+    "paymentLinkUrl": "string",
+    "addtionalInfo": [
+      {
+        "key": "string",
+        "value": "string"
+      }
+    ],
+    "pixRecurringOptions": {
+      "emv": "string",
+      "status": "CREATED",
+      "retryPolicy": "NON_PERMITED",
+      "journey": "PAYMENT_ON_APPROVAL"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

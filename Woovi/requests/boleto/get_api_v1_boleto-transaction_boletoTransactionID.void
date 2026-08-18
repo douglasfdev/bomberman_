@@ -1,0 +1,73 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.790Z
+---
+
+# Get a boleto transaction
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6dd2353a-b70b-4615-b46f-50cf77bc13aa
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: a08d09d6-cfee-432a-a69a-ab5186df2ecf
+content:
+  - type: method
+    attrs:
+      uid: 4bf98213-9739-429f-b44b-5e7576a5e83a
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 8b0a9011-81f6-4262-8b62-10b404b65fec
+    content: https://api.woovi.com/api/v1/boleto-transaction/{boletoTransactionID}
+---
+```
+
+
+
+```json
+{
+  "boletoTransaction": {
+    "boletoTransactionID": "string",
+    "type": "BOLETO_IN",
+    "status": "CREATED",
+    "value": 0,
+    "fee": 0,
+    "createdAt": "2026-08-18T13:39:57.790Z",
+    "settledAt": "2026-08-18T13:39:57.790Z",
+    "finesValue": 0,
+    "interestsValue": 0,
+    "discountValue": 0,
+    "charge": {
+      "value": 0,
+      "status": "string",
+      "boletoBarcode": "string",
+      "boletoDigitable": "string"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

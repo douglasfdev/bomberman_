@@ -1,0 +1,110 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.781Z
+---
+
+# Create a new application
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 3554021e-69d1-487c-81b3-713d0392759e
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 338777c9-c4d3-44bd-a86b-3a020efb7b27
+content:
+  - type: method
+    attrs:
+      uid: 2c9f81e3-f884-4d78-99b2-0dba48b10367
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 17a7791e-a9f8-4c4d-9e2d-e7d2a35c3b19
+    content: https://api.woovi.com/api/v1/application
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 57bbacf4-9b32-46c3-b1b3-4ec5d166d53a
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "accountId": "string",
+      "application": {
+        "name": "string",
+        "type": "API",
+        "scopes": [
+          "string"
+        ]
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "application": {
+    "name": "string",
+    "isActive": false,
+    "type": "API",
+    "clientId": "string",
+    "clientSecret": "string",
+    "appID": "string",
+    "companyBankAccount": "string",
+    "scopes": [
+      "string"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "details": [
+    {
+      "field": "string",
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "You need feature BAAS to access this endpoint"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
