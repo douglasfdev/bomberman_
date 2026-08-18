@@ -5,7 +5,7 @@ import {
   createNodeRequestHandler,
   isMainModule,
   writeResponseToNodeResponse,
-} from '@api/angular/ssr/node';
+} from '@angular/ssr/node'
 import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
@@ -28,9 +28,7 @@ const prisma = new PrismaClient({ adapter });
 
 // Inicializa o motor SSR moderno do Angular
 // Nota: Ajustado para evitar erro de sintaxe do código original
-const angularApp = new AngularNodeAppEngine({
-  // Configurações de engine seriam passadas aqui
-} as any);
+const angularApp = new AngularNodeAppEngine();
 
 // Declarado no topo para que as rotas da API consiga enxergar o Socket.io
 export let io: Server;
@@ -178,7 +176,7 @@ export function app(): express.Express {
         layout: process.env['ADSENSE_SLOT_LAYOUT'] || null,
         menu: process.env['ADSENSE_SLOT_MENU'] || null,
         victory: process.env['ADSENSE_SLOT_VICTORY'] || null,
-        defeat: process.env/env['ADSENSE_SLOT_DEFEAT'] || null,
+        defeat: process.env['ADSENSE_SLOT_DEFEAT'] || null,
       },
       enabled: process.env['ADSENSE_ENABLED'] === '1',
     };
