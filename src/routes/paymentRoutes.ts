@@ -9,7 +9,7 @@ const wooviService = new WooviService();
 const userService = new UserService();
 const prisma = prismaClient;
 
-router.post('/generate-payment', async (req, res) => {
+router.post('/generate-payment', async (req : any, res : any) => {
   const { amount, customerName, customerEmail } = req.body;
 
   // Validação básica dos dados de entrada
@@ -42,7 +42,8 @@ router.post('/generate-payment', async (req, res) => {
       customer: {
         name: customerName,
         email: customerEmail,
-      }
+      },
+      type: 'DYNAMIC'
     };
 
     const charge = await wooviService.createCharge(wooviPayload);

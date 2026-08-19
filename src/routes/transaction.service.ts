@@ -26,7 +26,7 @@ export class TransactionService {
    * @param payload Os dados do pagamento confirmado.
    */
   async recordSuccessfulPayment(payload: SuccessfulPaymentPayload): Promise<void> {
-    const { correlationId, ...data } = payload;
+    const { correlationId, value, provider, encryptedEmail, encryptedTaxId, customerName } = payload;
 
     await this.prisma.payment.upsert({
       where: {
@@ -34,12 +34,26 @@ export class TransactionService {
       },
       update: {
         status: 'COMPLETED',
-        ...data,
+        value: value,
+        provider: provider,
       },
       create: {
         correlationId: correlationId,
         status: 'COMPLETED',
-        ...data,
+        value: value,
+        provider: provider,
+        user: {
+          connectOrCreate: {
+            create: {
+              name: customerName,
+              email: encryptedEmail,
+              identification: encryptedTaxId,
+            },
+            where: {
+              email: encryptedEmail,
+            },
+          },
+        }
       },
     });
   }
@@ -52,12 +66,16 @@ export class TransactionService {
   ): Promise<void> {
     const encryptedData = encryptFn(dataToEncrypt);
 
-    await this.prisma.transaction.create({
-      data: {
-        userId,
-        encryptedData,
-        metadata,
-      },
-    });
+    // TODO: The 'Transaction' model does not exist in 'prisma/schema.prisma'.
+    // This method needs to be reviewed. The original code was:
+    // await this.prisma.transaction.create({
+    //   data: {
+    //     userId,
+    //     encryptedData,
+    //     metadata,
+    //   },
+    // });
+    console.log(`Secure transaction data for user ${userId}: ${encryptedData}`, metadata);
+    return Promise.resolve();
   }
 }

@@ -7,7 +7,7 @@ const router = Router();
 const userService = new UserService();
 const prisma = prismaClient;
 
-router.post('/woovi-webhook', async (req, res) => {
+router.post('/woovi-webhook', async (req: any, res: any) => {
   const event = req.body;
 
   // Foco exclusivo no evento que confirma o pagamento
