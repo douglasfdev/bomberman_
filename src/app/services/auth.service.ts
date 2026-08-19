@@ -34,7 +34,7 @@ export class AuthService {
     }
   }
 
-  private checkSession(): void {
+  public checkSession(): void {
     this.http.get<{ email: string; isDonor: boolean }>('/api/user').subscribe({
       next: (user) => {
         if (user && user.email) {

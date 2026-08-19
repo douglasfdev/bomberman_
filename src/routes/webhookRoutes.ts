@@ -2,10 +2,12 @@ import { Router } from 'express';
 import { io } from '../server'; // Importando o io exportado do server.ts
 import { EncryptionService } from '../utils/encryption.util';
 import { TransactionService } from './transaction.service';
+import { UserService } from '../services/userService'; // 1. Importar o UserService
 
 const router = Router();
 const transactionService = new TransactionService();
-const encryptionService = new EncryptionService(
+const userService = new UserService(); // 2. Instanciar o serviço
+const encryptionService = new EncryptionService( // (Mantido como está)
   process.env['ENCRYPTION_MASTER_PASSWORD'] || 'default_password',
   process.env['ENCRYPTION_SALT'] || 'default_salt'
 );
@@ -24,7 +26,7 @@ router.post('/woovi-webhook', async (req, res) => {
       console.log(`✅ Pagamento confirmado para: ${customer.email} (ID: ${charge.correlationID})`);
 
       try {
-        // 1. Criptografar os dados sensíveis usando o serviço de criptografia
+        // Passo 1: Criptografar e registrar a transação (lógica atual)
         const encryptedEmail = encryptionService.encrypt(customer.email);
         const encryptedTaxID = encryptionService.encrypt(customer.taxID);
 
@@ -40,7 +42,11 @@ router.post('/woovi-webhook', async (req, res) => {
           customerName: customer.name,
         });
 
-        // 3. Notificar o frontend via Socket.io que o pagamento foi aprovado
+        // Passo 2: Encontrar o usuário pelo e-mail e marcá-lo como doador
+        await userService.findOrCreateAndMarkAsDonor(customer.email, customer.name);
+        console.log(`👤 Usuário ${customer.email} marcado como doador no banco de dados.`);
+
+        // Passo 3: Notificar o frontend via Socket.io que o pagamento foi aprovado
         io?.to(customer.email).emit('payment_approved', {
           isDonor: true,
           provider: 'woovi'

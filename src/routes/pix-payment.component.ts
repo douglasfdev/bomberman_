@@ -5,21 +5,22 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { PaymentService, PixChargeResponse } from './payment.service';
 import { SocketService } from './socket.service';
+import { AuthService } from '../app/services/auth.service'; // 1. Importar o AuthService
 
 @Component({
   selector: 'app-pix-payment',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pix-payment.component.html',
-  styleUrls: ['./pix-payment.component.scss']
+  styleUrls: ['./pix-payment.component.scss'],
 })
 export class PixPaymentComponent implements OnInit, OnDestroy {
-  // Em um app real, estes dados viriam de um formulário ou serviço de usuário
+  // Dados do pagamento, agora preenchidos pelo AuthService
   paymentData = {
-    amount: 10, // Exemplo: R$0,10 (valor em centavos)
-    customerName: 'Comprador Anônimo',
-    customerEmail: 'comprador.' + Date.now() + '@example.com', // Email único para o socket
-    identification: '12345678900' // CPF/CNPJ
+    amount: 10, // Valor fixo da doação
+    customerName: '',
+    customerEmail: '',
+    identification: '12345678900', // Manter um CPF genérico ou pedir ao usuário
   };
 
   pixCharge: PixChargeResponse | null = null;
@@ -34,20 +35,29 @@ export class PixPaymentComponent implements OnInit, OnDestroy {
   constructor(
     private paymentService: PaymentService,
     private socketService: SocketService,
+    private authService: AuthService, // 3. Injetar o AuthService
     private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: Object
   ) { }
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.socketService.joinRoom(this.paymentData.customerEmail);
+      // 4. Preencher dados do usuário e entrar na sala do socket
+      this.authService.user$.subscribe(user => {
+        if (user) {
+          this.paymentData.customerName = user.name;
+          this.paymentData.customerEmail = user.email;
+          this.socketService.joinRoom(user.email);
+        }
+      });
 
       this.socketSub = this.socketService.listen('payment_approved').subscribe((data) => {
         console.log('✅ Pagamento aprovado recebido via socket!', data);
         if (data.isDonor) {
           this.paymentApproved = true;
           this.pixCharge = null;
-          // Lógica para desbloquear o jogo aqui!
+          // 5. Atualizar o estado global para refletir o novo status de doador
+          this.authService.checkSession();
         }
       });
     }
@@ -75,6 +85,11 @@ export class PixPaymentComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  public isDonor(): boolean {
+    return this.authService.isDonor();
+  }
+
 
   copyPixCode(): void {
     if (isPlatformBrowser(this.platformId) && this.pixCharge?.chargeData.brCode) {
