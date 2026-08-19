@@ -1,13 +1,13 @@
 import { Router } from 'express';
 import { io } from '../server'; // Importando o io exportado do server.ts
 import { EncryptionService } from '../utils/encryption.util';
-import { TransactionService } from '../services/transaction.service';
+import { TransactionService } from './transaction.service';
 
 const router = Router();
 const transactionService = new TransactionService();
 const encryptionService = new EncryptionService(
-  process.env.ENCRYPTION_MASTER_PASSWORD || 'default_password',
-  process.env.ENCRYPTION_SALT || 'default_salt'
+  process.env['ENCRYPTION_MASTER_PASSWORD'] || 'default_password',
+  process.env['ENCRYPTION_SALT'] || 'default_salt'
 );
 
 router.post('/woovi-webhook', async (req, res) => {
@@ -16,34 +16,41 @@ router.post('/woovi-webhook', async (req, res) => {
   console.log('🔔 Webhook Woovi recebido:', event.event);
 
   if (event.event === 'OPENPIX:CHARGE_COMPLETED') {
-    const userEmail = event.data?.customer?.email; 
-    
-    if (userEmail) {
-      console.log(`✅ Pagamento confirmado para: ${userEmail}`);
-      
-      // --- LÓGICA DE PERSISTÊNCIA CIFRADA ---
-      // Registramos o evento do webhook de forma segura para auditoria
-      try {
-        await transactionService.createSecureTransaction(
-          userEmail,
-          'WEBHOOK_EVENT_LOG', // Identificador do tipo de dado
-          (data) => encryptionService.encrypt(data),
-          { 
-            event: event.event, 
-            provider: 'woovi',
-            payload: event.data // O payload completo do evento fica guardado no metadata (não cifrado)
-          }
-        );
-      } catch (err) {
-        console.error('Erro ao salvar log de transação no webhook:', err);
-      }
-      // ---------------------------------------
+    const customer = event.data?.customer;
+    const charge = event.data?.charge;
 
-      // Notifica o frontend via Socket.io
-      io?.to(userEmail).emit('payment_approved', { 
-        isDonor: true, 
-        provider: 'woovi' 
-      });
+    // Garante que temos os dados essenciais para registrar o pagamento
+    if (customer?.email && customer?.taxID && charge?.correlationID) {
+      console.log(`✅ Pagamento confirmado para: ${customer.email} (ID: ${charge.correlationID})`);
+
+      try {
+        // 1. Criptografar os dados sensíveis usando o serviço de criptografia
+        const encryptedEmail = encryptionService.encrypt(customer.email);
+        const encryptedTaxID = encryptionService.encrypt(customer.taxID);
+
+        // 2. Chamar o serviço de transação para persistir os dados de forma idempotente.
+        //    Este método deve ser implementado no seu `transaction.service.ts`
+        //    para interagir com o Prisma e salvar/atualizar a transação.
+        await transactionService.recordSuccessfulPayment({
+          correlationId: charge.correlationID,
+          value: charge.value,
+          provider: 'woovi',
+          encryptedEmail: encryptedEmail,
+          encryptedTaxId: encryptedTaxID,
+          customerName: customer.name,
+        });
+
+        // 3. Notificar o frontend via Socket.io que o pagamento foi aprovado
+        io?.to(customer.email).emit('payment_approved', {
+          isDonor: true,
+          provider: 'woovi'
+        });
+
+      } catch (err) {
+        console.error('Erro ao processar webhook de pagamento confirmado:', err);
+        // Dependendo da sua estratégia, você pode querer retornar um status 500
+        // para que a Woovi tente reenviar o webhook.
+      }
     }
   }
 

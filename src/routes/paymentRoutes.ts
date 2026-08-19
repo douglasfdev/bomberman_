@@ -2,15 +2,15 @@ import { Router } from 'express';
 import { CreateChargePayload, WooviService } from '../services/wooviService';
 import { randomUUIDv7 } from 'node:crypto';
 import { EncryptionService } from '../utils/encryption.util';
-import { TransactionService } from '../services/transaction.service';
+import { TransactionService } from './transaction.service';
 
 const router = Router();
 const wooviService = new WooviService();
 
 // Instâncias de serviço (Em um app real, use Injeção de Dependência ou um Singleton)
 const encryptionService = new EncryptionService(
-  process.env.ENCRYPTION_MASTER_PASSWORD || 'default_password',
-  process.env.ENCRYPTION_SALT || 'default_salt'
+  process.env['ENCRYPTION_MASTER_PASSWORD'] || 'default_password',
+  process.env['ENCRYPTION_SALT'] || 'default_salt'
 );
 const transactionService = new TransactionService();
 
@@ -39,11 +39,11 @@ router.post('/generate-payment', async (req, res) => {
         user.id,
         identification,
         (data) => encryptionService.encrypt(data),
-        { 
-          correlationID, 
-          amount, 
-          customerEmail, 
-          customerName 
+        {
+          correlationID,
+          amount,
+          customerEmail,
+          customerName
         }
       );
     }

@@ -36,6 +36,7 @@
     "passport-google-oauth20": "^2.0.0",
     "rxjs": "~7.8.0",
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "three": "^0.185.1",
     "tslib": "^2.3.0",
     "zone.js": "^0.16.2"

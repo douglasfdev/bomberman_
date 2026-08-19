@@ -24,7 +24,7 @@ const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
-const prisma = new PrismaClient({ adapter });
+export const prismaClient = new PrismaClient({ adapter });
 
 // Inicializa o motor SSR moderno do Angular
 // Nota: Ajustado para evitar erro de sintaxe do código original
@@ -74,7 +74,7 @@ export function app(): express.Express {
         try {
           const email = profile.emails?.[0]?.value;
           if (!email) return done(new Error('No email provided'));
-          const user = await prisma.user.upsert({
+          const user = await prismaClient.user.upsert({
             where: { email },
             update: { name: profile.displayName, googleId: profile.id },
             create: { email, name: profile.displayName, googleId: profile.id },
@@ -102,7 +102,7 @@ export function app(): express.Express {
           try {
             const email = profile?.emails?.[0]?.value;
             if (!email) return done(new Error('No email in Microsoft profile'));
-            const user = await prisma.user.upsert({
+            const user = await prismaClient.user.upsert({
               where: { email },
               update: { name: profile.displayName || profile.username, microsoftId: profile.id },
               create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
@@ -138,7 +138,7 @@ export function app(): express.Express {
 
   passport.deserializeUser(async (id: string, done) => {
     try {
-      const user = await prisma.user.findUnique({ where: { id } });
+      const user = await prismaClient.user.findUnique({ where: { id } });
       done(null, user);
     } catch (error) {
       done(error);
@@ -197,7 +197,7 @@ export function app(): express.Express {
     const user = req.user as any;
 
     try {
-      await prisma.user.update({ where: { id: user.id }, data: { isDonor: true } });
+      await prismaClient.user.update({ where: { id: user.id }, data: { isDonor: true } });
       io?.to(user.email).emit('payment_approved', { isDonor: true });
       res.json({ ok: true });
     } catch (error) {
@@ -218,7 +218,7 @@ export function app(): express.Express {
           update.buymeId = req.body.providerCustomerId;
         }
 
-        await prisma.user.update({ where: { email }, data: update });
+        await prismaClient.user.update({ where: { email }, data: update });
         io?.to(email).emit('payment_approved', { isDonor: true, provider: provider || 'unknown' });
         return res.sendStatus(200);
       } catch (err) {

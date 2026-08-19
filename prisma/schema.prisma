@@ -31,3 +31,16 @@ model Transaction {
   encryptedData String   // Armazena o dado cifrado (ex: CPF ou info do webhook)
   metadata      Json?    // Metadados adicionais (ex: correlationID, amount)
 }
+
+model Payment {
+  id             String   @id @default(cuid())
+  correlationId  String   @unique
+  value          Int
+  provider       String
+  encryptedEmail String
+  encryptedTaxId String
+  customerName   String?
+  status         String   @default("COMPLETED")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
