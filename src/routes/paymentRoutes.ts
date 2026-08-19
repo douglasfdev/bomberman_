@@ -1,62 +1,64 @@
 import { Router } from 'express';
 import { CreateChargePayload, WooviService } from '../services/wooviService';
-import { randomUUIDv7 } from 'node:crypto';
-import { EncryptionService } from '../utils/encryption.util';
-import { TransactionService } from './transaction.service';
+import { randomUUID } from 'node:crypto'; // Usar randomUUID padrão
+import { UserService } from '../services/userService';
+import { prismaClient } from '../server';
 
 const router = Router();
 const wooviService = new WooviService();
-
-// Instâncias de serviço (Em um app real, use Injeção de Dependência ou um Singleton)
-const encryptionService = new EncryptionService(
-  process.env['ENCRYPTION_MASTER_PASSWORD'] || 'default_password',
-  process.env['ENCRYPTION_SALT'] || 'default_salt'
-);
-const transactionService = new TransactionService();
+const userService = new UserService();
+const prisma = prismaClient;
 
 router.post('/generate-payment', async (req, res) => {
-  const { amount, customerName, customerEmail, identification } = req.body;
-  const user = (req as any).user; // Obtido via Passport middleware
+  const { amount, customerName, customerEmail } = req.body;
+
+  // Validação básica dos dados de entrada
+  if (!amount || !customerName || !customerEmail) {
+    return res.status(400).json({ success: false, error: 'Dados do cliente e valor são obrigatórios.' });
+  }
 
   try {
-    const correlationID = randomUUIDv7();
-    const payload = {
+    // 1. Encontra ou cria o usuário de forma segura
+    const user = await userService.findOrCreateUserByEmail(customerEmail, customerName);
+
+    // 2. Gera um ID de correlação único para a transação
+    const correlationID = randomUUID();
+
+    // 3. Cria um registro de pagamento PENDENTE no nosso banco de dados
+    //    Este registro conecta o usuário à transação antes mesmo de ela ser paga.
+    await prisma.payment.create({
+      data: {
+        correlationId: correlationID,
+        value: amount, // Assumindo que 'amount' já está em centavos
+        status: 'PENDING',
+        userId: user.id,
+      }
+    });
+
+    // 4. Prepara e envia a cobrança para a Woovi com os dados em texto puro
+    const wooviPayload: CreateChargePayload = {
       correlationID: correlationID,
       value: amount,
-      type: 'DYNAMIC' as const,
       customer: {
         name: customerName,
         email: customerEmail,
-        taxID: identification
-      },
-      comment: 'Pagamento de item do jogo'
-    } satisfies CreateChargePayload;
+      }
+    };
 
-    // --- LÓGICA DE PERSISTÊNCIA CIFRADA ---
-    // Se houver um usuário logado e uma identificação (CPF) fornecida, salvamos de forma segura
-    if (user && identification) {
-      await transactionService.createSecureTransaction(
-        user.id,
-        identification,
-        (data) => encryptionService.encrypt(data),
-        {
-          correlationID,
-          amount,
-          customerEmail,
-          customerName
-        }
-      );
-    }
-    // ---------------------------------------
+    const charge = await wooviService.createCharge(wooviPayload);
 
-    const charge = await wooviService.createCharge(payload);
-
+    // 5. Retorna os dados da cobrança para o frontend renderizar o QR Code
     res.status(201).json({
       success: true,
-      correlationID: payload.correlationID,
-      chargeData: charge
+      correlationID: correlationID,
+      chargeData: {
+        brCode: charge.brCode,
+        qrCodeImage: charge.qrCodeImage,
+      }
     });
+
   } catch (error: any) {
+    console.error('Erro ao gerar pagamento:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
