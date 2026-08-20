@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader, GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { GameLogicService } from '../core/game-logic.service';
 import { EXPLOSION_MS, GRID_SIZE } from '../core/models/game-config';
 import { EnemyView, Explosion, InterpolatedMove } from '../core/models/game-state.model';
@@ -14,6 +14,9 @@ function tileToWorld(p: GridPosition): { x: number; z: number } {
   return { x: p.x - offset, z: p.y - offset };
 }
 
+const ASSETS_BASE = '/assets/kenney_blocky-characters_20/Models/GLB';
+const DEFAULT_PLAYER_MODEL = 'character-d';
+
 @Injectable({ providedIn: 'root' })
 export class SceneBuilderService {
   private scene?: THREE.Scene;
@@ -25,17 +28,56 @@ export class SceneBuilderService {
   private playerMesh?: THREE.Group;
   private ground?: THREE.Mesh;
 
+  /** Cache de GLTFs carregados para evitar recarregar ao trocar skins */
+  private readonly modelCache = new Map<string, GLTF>();
+
+  /** Model ID da skin atual do jogador (ex.: "character-a") */
+  private currentPlayerModelId = DEFAULT_PLAYER_MODEL;
+
+  /** Flag para evitar carregamentos simultâneos */
+  private playerModelLoading = false;
+
   private readonly platformId = inject(PLATFORM_ID);
   private readonly gltfLoader = new GLTFLoader();
 
   private readonly enemyModels = [
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-g.glb',
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-h.glb',
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-l.glb',
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-o.glb',
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-p.glb',
-    '/assets/kenney_blocky-characters_20/Models/GLB/character-r.glb'
+    'character-g',
+    'character-h',
+    'character-l',
+    'character-o',
+    'character-p',
+    'character-r',
   ];
+
+  private getModelPath(modelId: string): string {
+    return `${ASSETS_BASE}/${modelId}.glb`;
+  }
+
+  /** Troca a skin do player em tempo real */
+  setPlayerSkin(modelId: string): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (modelId === this.currentPlayerModelId) return;
+
+    this.currentPlayerModelId = modelId;
+
+    // Se o playerMesh já existe na cena, recarrega o modelo dentro dele
+    if (this.playerMesh) {
+      this.loadModelIntoGroup(this.playerMesh, modelId);
+    }
+    // Se o playerMesh ainda não foi criado, o próximo syncPlayer vai usar currentPlayerModelId
+  }
+
+  /** Pré-carrega um modelo GLB no cache sem exibir na cena */
+  async preloadSkin(modelId: string): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.modelCache.has(modelId)) return;
+    try {
+      const gltf = await this.gltfLoader.loadAsync(this.getModelPath(modelId));
+      this.modelCache.set(modelId, gltf);
+    } catch (e) {
+      console.warn(`Falha ao pré-carregar modelo: ${modelId}`, e);
+    }
+  }
 
   init(scene: THREE.Scene): void {
     if (!isPlatformBrowser(this.platformId) || !scene) {
@@ -91,7 +133,57 @@ export class SceneBuilderService {
       this.disposeMesh(this.ground);
       this.ground = undefined;
     }
+    // Libera o cache de modelos
+    this.modelCache.clear();
   }
+
+  // ─── Helpers de carregamento ───────────────────────────────────────────────
+
+  /**
+   * Carrega um GLB (do cache ou pela rede) e popula o group com o modelo.
+   * Remove qualquer modelo filho existente antes de adicionar o novo.
+   */
+  private loadModelIntoGroup(group: THREE.Group, modelId: string): void {
+    const cached = this.modelCache.get(modelId);
+
+    const applyModel = (gltf: GLTF) => {
+      // Remove modelos anteriores do group
+      while (group.children.length > 0) {
+        const child = group.children[0];
+        group.remove(child);
+        if ((child as THREE.Group).isGroup || (child as THREE.Mesh).isMesh) {
+          this.disposeGroup(child as THREE.Group);
+        }
+      }
+
+      const model = gltf.scene.clone(true);
+      model.scale.setScalar(0.45);
+      model.position.set(0, 0.05, 0);
+      model.traverse((child: THREE.Object3D) => {
+        if ((child as THREE.Mesh).isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      group.add(model);
+    };
+
+    if (cached) {
+      applyModel(cached);
+    } else {
+      this.gltfLoader.load(
+        this.getModelPath(modelId),
+        (gltf: GLTF) => {
+          this.modelCache.set(modelId, gltf);
+          applyModel(gltf);
+        },
+        undefined,
+        (err) => console.warn(`Erro ao carregar modelo ${modelId}:`, err)
+      );
+    }
+  }
+
+  // ─── Sync methods ──────────────────────────────────────────────────────────
 
   private syncTiles(logic: GameLogicService): void {
     const grid = logic.getGrid();
@@ -152,20 +244,8 @@ export class SceneBuilderService {
     const view = logic.getPlayerView();
     if (!this.playerMesh) {
       this.playerMesh = new THREE.Group();
-
-      this.gltfLoader.load('/assets/kenney_blocky-characters_20/Models/GLB/character-d.glb', (gltf: any) => {
-        const model = gltf.scene;
-        model.scale.setScalar(0.45);
-        model.position.set(0, 0.05, 0);
-        model.traverse((child: THREE.Object3D) => {
-          if ((child as THREE.Mesh).isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        this.playerMesh!.add(model);
-      });
-
+      // Carrega o modelo atual (pode ter sido definido via setPlayerSkin antes do init)
+      this.loadModelIntoGroup(this.playerMesh, this.currentPlayerModelId);
       this.scene?.add(this.playerMesh);
     }
     this.applyView(this.playerMesh, view?.position!, view?.move!);
@@ -195,21 +275,8 @@ export class SceneBuilderService {
 
   private createEnemyMesh(): THREE.Group {
     const group = new THREE.Group();
-    const randomModel = this.enemyModels[Math.floor(Math.random() * this.enemyModels.length)];
-
-    this.gltfLoader.load(randomModel, (gltf: any) => {
-      const model = gltf.scene;
-      model.scale.setScalar(0.45);
-      model.position.set(0, 0.05, 0);
-      model.traverse((child: THREE.Object3D) => {
-        if ((child as THREE.Mesh).isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-      group.add(model);
-    });
-
+    const randomModelId = this.enemyModels[Math.floor(Math.random() * this.enemyModels.length)];
+    this.loadModelIntoGroup(group, randomModelId);
     return group;
   }
 

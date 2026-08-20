@@ -1,4 +1,4 @@
-import { prismaClient } from 'src/server';
+import { prismaClient } from '../services/prisma';
 
 // Interface para o payload do nosso novo método
 interface SuccessfulPaymentPayload {

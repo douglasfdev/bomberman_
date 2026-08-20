@@ -1,5 +1,6 @@
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, effect } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
 import { InputManagerService } from '../core/input-manager.service';
@@ -8,6 +9,7 @@ import { ThreeEngineService } from '../render/three-engine.service';
 import { Direction } from '../core/models/direction.model';
 import { GamePhase } from '../core/models/game-state.model';
 import { AuthService } from '../services/auth.service';
+import { SkinService } from '../services/skin.service';
 import { AdBannerComponent } from '../components/ad-banner.component';
 
 @Component({
@@ -27,6 +29,8 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly engine = inject(ThreeEngineService);
   readonly sceneBuilder = inject(SceneBuilderService);
   readonly authService = inject(AuthService);
+  readonly skinService = inject(SkinService);
+  private readonly router = inject(Router);
 
   readonly Direction = Direction;
   readonly GamePhase = GamePhase;
@@ -60,6 +64,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.enforcePaywall(isDonor, isLoggedIn);
       }
     });
+
+    // Quando a skin selecionada mudar, atualiza o SceneBuilder
+    effect(() => {
+      const skin = this.authService.selectedSkin();
+      if (skin && isPlatformBrowser(this.platformId)) {
+        this.sceneBuilder.setPlayerSkin(skin);
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -78,6 +90,21 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     try {
       this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
       this.sceneBuilder.init(this.engine.scene!);
+
+      // Aplica a skin do usuário assim que a cena inicializa
+      const currentSkin = this.authService.selectedSkin();
+      if (currentSkin) {
+        this.sceneBuilder.setPlayerSkin(currentSkin);
+      }
+
+      // Carrega catálogo e skins do usuário se estiver logado
+      if (this.authService.userEmail()) {
+        this.skinService.loadMySkins().subscribe({
+          next: (data) => {
+            this.sceneBuilder.setPlayerSkin(data.selectedSkin);
+          },
+        });
+      }
 
       this.engine.startLoop((deltaMs: number) => {
         this.logic.tick(deltaMs);
@@ -98,6 +125,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.engine.dispose();
     }
     this.donorEffect.destroy();
+  }
+
+  /** Navega para a loja de skins */
+  openSkinShop(): void {
+    this.router.navigate(['/skins']);
   }
 
   // Atualizado para aceitar e verificar o estado de login

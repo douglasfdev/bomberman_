@@ -1,4 +1,4 @@
-import { prismaClient } from '../server';
+import { prismaClient } from '../services/prisma';
 import { EncryptionService } from '../utils/encryption.util';
 type User = Awaited<ReturnType<typeof prismaClient.user.upsert>>;
 

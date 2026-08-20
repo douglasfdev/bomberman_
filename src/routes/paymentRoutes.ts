@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import { CreateChargePayload, WooviService } from '../services/wooviService';
-import { randomUUID } from 'node:crypto'; // Usar randomUUID padrão
+import { randomUUIDv7 } from 'node:crypto'; // Usar randomUUID padrão
 import { UserService } from '../services/userService';
-import { prismaClient } from '../server';
+import { prismaClient } from '../services/prisma';
 
 const router = Router();
 const wooviService = new WooviService();
 const userService = new UserService();
 const prisma = prismaClient;
 
-router.post('/generate-payment', async (req : any, res : any) => {
+router.post('/generate-payment', async (req: any, res: any) => {
   const { amount, customerName, customerEmail } = req.body;
 
   // Validação básica dos dados de entrada
@@ -22,7 +22,7 @@ router.post('/generate-payment', async (req : any, res : any) => {
     const user = await userService.findOrCreateUserByEmail(customerEmail, customerName);
 
     // 2. Gera um ID de correlação único para a transação
-    const correlationID = randomUUID();
+    const correlationID = randomUUIDv7();
 
     // 3. Cria um registro de pagamento PENDENTE no nosso banco de dados
     //    Este registro conecta o usuário à transação antes mesmo de ela ser paga.

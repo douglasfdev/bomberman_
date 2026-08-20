@@ -17,7 +17,7 @@ export interface CreateChargePayload {
 
 export class WooviService {
   private readonly apiKey = process.env['WOOVI_API_KEY'] || '';
-  private readonly baseUrl = 'https://api.woovi.com/api/v1/charge?return_existing=true';
+  private readonly baseUrl = `${process.env['WOOVI_API_BASE_URL'] || 'https://api.woovi.com'}/api/v1/charge`;
 
   async createCharge(payload: CreateChargePayload) {
     try {

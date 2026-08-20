@@ -15,16 +15,16 @@ import session from 'express-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import 'dotenv/config';
-import { PrismaClient } from './generated/prisma/client';
+import { prismaClient } from './services/prisma';
 import { PrismaPg } from "@prisma/adapter-pg";
 import paymentRoutes from './routes/paymentRoutes';
 import webhookRoutes from './routes/webhookRoutes';
+import skinRoutes from './routes/skinRoutes';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
-export const prismaClient = new PrismaClient({ adapter });
 
 // Inicializa o motor SSR moderno do Angular
 // Nota: Ajustado para evitar erro de sintaxe do código original
@@ -125,11 +125,22 @@ export function app(): express.Express {
   }
 
   // Rotas de Autenticação Google
-  server.get('/api/auth/google', passport.authenticate('google'));
-  server.get(
-    '/api/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/', successRedirect: '/' })
-  );
+  server.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+  server.get('/api/auth/google/callback', (req, res, next) => {
+    passport.authenticate('google', (err: any, user: any) => {
+      if (err) {
+        console.error('--- ERRO OAUTH GOOGLE (completo) ---');
+        console.error(require('util').inspect(err, { depth: null, colors: true }));
+        console.error('Chaves do erro:', Object.keys(err));
+        return res.status(500).send('Erro no login, veja o console');
+      }
+      if (!user) return res.redirect('/');
+      req.logIn(user, (loginErr) => {
+        if (loginErr) return next(loginErr);
+        res.redirect('/');
+      });
+    })(req, res, next);
+  });
 
   // Serialização do Usuário
   passport.serializeUser((user: any, done) => {
@@ -148,12 +159,13 @@ export function app(): express.Express {
   // Rotas de Pagamento (Woovi/Pix)
   server.use('/api/payments', paymentRoutes);
   server.use('/api/webhooks', webhookRoutes);
+  server.use('/api/skins', skinRoutes);
 
   // Endpoints da API
   server.get('/api/user', (req: any, res: any) => {
     if (!req.user) return res.json(null);
     const user = req.user as any;
-    res.json({ id: user.id, email: user.email, name: user.name, isDonor: !!user.isDonor });
+    res.json({ id: user.id, email: user.email, name: user.name, isDonor: !!user.isDonor, skinTier: user.skinTier, selectedSkin: user.selectedSkin });
   });
 
   server.get('/api/donor/status', (req: any, res: any) => {

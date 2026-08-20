@@ -74,7 +74,12 @@
               "buildTarget": "bomberman:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "allowedHosts": [
+              ".trycloudflare.com"
+            ]
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"
