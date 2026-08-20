@@ -1,0 +1,73 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.870Z
+---
+
+# Get one dispute
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 3aa49250-ce53-421d-aa3a-148918e87c72
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: b12cca6c-108f-42b0-86a1-76b04bc7226d
+content:
+  - type: method
+    attrs:
+      uid: e85917cc-caea-4b3b-b24e-152d75f6bd10
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: d0808adc-27fe-437b-849e-9ebc72a80fe2
+    content: https://api.woovi.com/api/v1/dispute/{id}
+---
+```
+
+
+
+```json
+{
+  "dispute": {
+    "status": "ACCEPTED",
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phoneNumber": "+5511999999999",
+    "value": 10000,
+    "disputeReason": "Product not received",
+    "endToEndId": "Ea9c291526ae54b4cb41d9909bdf6d792",
+    "type": "MED"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Dispute not found"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error occurred"
+}
+```
+

@@ -1,0 +1,153 @@
+<div class="shop-container">
+  <!-- Header -->
+  <header class="shop-header">
+    <div class="header-left">
+      <h1 class="shop-title">🎭 Loja de Skins</h1>
+    </div>
+    <div class="header-right">
+      <button class="btn-back" (click)="goBack()">
+        ← Voltar ao Jogo
+      </button>
+    </div>
+  </header>
+
+  <!-- Status do usuário -->
+  @if (isLoggedIn()) {
+    <div class="user-status">
+      <span class="status-tier">
+        Seu Tier: <strong>{{ getTierLabel(currentTier()) }}</strong>
+      </span>
+      @if (selectedSkin()) {
+        <span class="status-skin">
+          Skin Atual:
+          <strong>{{ getSkinName(selectedSkin()) }}</strong>
+        </span>
+      }
+    </div>
+  } @else {
+    <div class="user-status not-logged">
+      <span>⚠️ Faça login para comprar e selecionar skins</span>
+      <a href="/api/auth/google" class="btn-login">Login com Google</a>
+    </div>
+  }
+
+  <!-- Erro de seleção -->
+  @if (selectError()) {
+    <div class="alert-error">
+      {{ selectError() }}
+    </div>
+  }
+
+  <!-- Loading -->
+  @if (loading()) {
+    <div class="loading-grid">
+      <div class="spinner"></div>
+      <span>Carregando skins...</span>
+    </div>
+  }
+
+  <!-- Grid de Skins -->
+  @if (!loading() && catalog().length > 0) {
+    <div class="skins-grid">
+      @for (skin of catalog(); track skin.id) {
+        <div
+          class="skin-card"
+          [class.unlocked]="skinService.isSkinUnlocked(skin.model)"
+          [class.selected]="selectedSkin() === skin.model"
+          [class.locked]="!skinService.isSkinUnlocked(skin.model)"
+          [class.selecting]="selectingId() === skin.model"
+          (click)="onSkinClick(skin)"
+          [title]="skin.name"
+        >
+          <!-- Preview image -->
+          <div class="skin-preview">
+            <img
+              [src]="skin.previewImage"
+              [alt]="skin.name"
+              loading="lazy"
+              class="skin-img"
+            />
+            <!-- Overlay de bloqueado -->
+            @if (!skinService.isSkinUnlocked(skin.model)) {
+              <div class="locked-overlay">
+                <span class="lock-icon">🔒</span>
+                <span class="lock-tier">{{ getSkinBadge(skin) }}</span>
+              </div>
+            }
+            <!-- Badge de selecionada -->
+            @if (selectedSkin() === skin.model) {
+              <div class="selected-badge">✅</div>
+            }
+            <!-- Spinner de selecionando -->
+            @if (selectingId() === skin.model) {
+              <div class="selecting-overlay">
+                <div class="spinner-small"></div>
+              </div>
+            }
+          </div>
+
+          <!-- Nome da skin -->
+          <div class="skin-info">
+            <span class="skin-name">{{ skin.name }}</span>
+            <span class="skin-tier-badge" [class]="'tier-' + skin.requiredTier.toLowerCase()">
+              {{ getSkinBadge(skin) }}
+              @if (skin.requiredTier === 'FREE') {
+                Free
+              } @else if (skin.requiredTier === 'BASIC') {
+                Básico
+              } @else {
+                Premium
+              }
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Botões de compra de tier -->
+  <div class="purchase-section">
+    <h2 class="purchase-title">Adquirir Tier</h2>
+    <div class="purchase-buttons">
+
+      <!-- Tier Básico -->
+      <button
+        class="btn-purchase btn-basic"
+        [disabled]="hasTier('BASIC')"
+        [class.owned]="hasTier('BASIC')"
+        (click)="openPurchaseModal('BASIC', $event)"
+      >
+        @if (hasTier('BASIC')) {
+          ✅ Básico — Já adquirido
+        } @else {
+          🟡 Tier Básico — {{ formatPrice(tierInfo().BASIC.price) }}
+          <small>{{ tierInfo().BASIC.skinCount }} skins desbloqueadas</small>
+        }
+      </button>
+
+      <!-- Tier Premium -->
+      <button
+        class="btn-purchase btn-premium"
+        [disabled]="hasTier('PREMIUM')"
+        [class.owned]="hasTier('PREMIUM')"
+        (click)="openPurchaseModal('PREMIUM', $event)"
+      >
+        @if (hasTier('PREMIUM')) {
+          ✅ Premium — Já adquirido
+        } @else {
+          🟢 Tier Premium — {{ formatPrice(tierInfo().PREMIUM.price) }}
+          <small>Todas as {{ tierInfo().PREMIUM.skinCount }} skins desbloqueadas</small>
+        }
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Compra -->
+@if (showPurchaseModal()) {
+  <app-skin-purchase-modal
+    [tier]="purchaseModalTier()"
+    (closed)="onModalClose()"
+    (tierUpgraded)="onTierUpgraded($event)"
+  />
+}

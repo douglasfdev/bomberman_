@@ -1,35 +1,39 @@
-import { CommonModule } from '@angular/common';
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  OnDestroy,
-  ViewChild,
-  inject,
-  signal,
-} from '@angular/core';
+import { isPlatformBrowser, CommonModule } from '@angular/common';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, effect } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
 import { InputManagerService } from '../core/input-manager.service';
-import { Direction } from '../core/models/direction.model';
-import { GamePhase } from '../core/models/game-state.model';
 import { SceneBuilderService } from '../render/scene-builder.service';
 import { ThreeEngineService } from '../render/three-engine.service';
+import { Direction } from '../core/models/direction.model';
+import { GamePhase } from '../core/models/game-state.model';
+import { AuthService } from '../services/auth.service';
+import { SkinService } from '../services/skin.service';
+import { AdBannerComponent } from '../components/ad-banner.component';
 
 @Component({
   selector: 'app-game',
-  imports: [CommonModule],
   templateUrl: './game.component.html',
-  styleUrl: './game.component.scss',
+  styleUrls: ['./game.component.scss'],
+  standalone: true,
+  imports: [CommonModule, AdBannerComponent]
 })
-export class GameComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('gameCanvas', { static: true }) private readonly canvas!: ElementRef<HTMLCanvasElement>;
-  @ViewChild('gameContainer', { static: true }) private readonly container!: ElementRef<HTMLDivElement>;
+export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
+  @ViewChild('gameCanvas', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
 
-  private readonly engine = inject(ThreeEngineService);
-  private readonly sceneBuilder = inject(SceneBuilderService);
-  private readonly logic = inject(GameLogicService);
-  private readonly input = inject(InputManagerService);
+  private readonly platformId = inject(PLATFORM_ID);
+  readonly logic = inject(GameLogicService);
+  readonly input = inject(InputManagerService);
+  readonly engine = inject(ThreeEngineService);
+  readonly sceneBuilder = inject(SceneBuilderService);
+  readonly authService = inject(AuthService);
+  readonly skinService = inject(SkinService);
+  private readonly router = inject(Router);
+
+  readonly Direction = Direction;
+  readonly GamePhase = GamePhase;
 
   readonly score = this.logic.score;
   readonly enemiesRemaining = this.logic.enemiesRemaining;
@@ -38,116 +42,147 @@ export class GameComponent implements AfterViewInit, OnDestroy {
   readonly speed = this.logic.speed;
   readonly pierce = this.logic.pierce;
   readonly gamePhase = this.logic.gamePhase;
-  readonly exitOpen = this.logic.exitOpen;
-  readonly isTouch = this.input.isTouchDevice();
-  readonly initError = signal(false);
-  readonly Direction = Direction;
-  readonly GamePhase = GamePhase;
 
-  private readonly subscriptions: Subscription[] = [];
-  private initialized = false;
+  isTouch = false;
+  initError = signal(false);
 
-  private cameraOrbitRadius = 22;
-  private cameraAzimuth = 0;
-  private cameraElevation = 1.1;
-  private isDragging = false;
-  private previousPointerPosition = { x: 0, y: 0 };
+  // Controle de Monetização
+  canPlay = signal(false);
+  waitTimer = signal(0);
 
-  private updateCameraPosition(): void {
-    const cam = this.engine.camera;
-    const x = this.cameraOrbitRadius * Math.sin(this.cameraAzimuth) * Math.cos(this.cameraElevation);
-    const z = this.cameraOrbitRadius * Math.cos(this.cameraAzimuth) * Math.cos(this.cameraElevation);
-    const y = this.cameraOrbitRadius * Math.sin(this.cameraElevation);
-    cam.position.set(x, y, z);
-    cam.lookAt(0, 0, 0);
+  private actionSub?: Subscription;
+  private timerInterval: any;
+
+  constructor() {
+    effect(() => {
+      const phase = this.gamePhase();
+      const isDonor = this.authService.isDonor();
+      // Rastreia o sinal de email para detectar login/logout e re-executar o efeito
+      const isLoggedIn = !!this.authService.userEmail();
+
+      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
+        this.enforcePaywall(isDonor, isLoggedIn);
+      }
+    });
+
+    // Quando a skin selecionada mudar, atualiza o SceneBuilder
+    effect(() => {
+      const skin = this.authService.selectedSkin();
+      if (skin && isPlatformBrowser(this.platformId)) {
+        this.sceneBuilder.setPlayerSkin(skin);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      this.input.attach();
+      this.isTouch = this.input.isTouchDevice();
+      this.actionSub = this.input.action$.subscribe(() => this.logic.plantBomb());
+    }
   }
 
   ngAfterViewInit(): void {
-    try {
-      this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
-    } catch {
-      this.initError.set(true);
+    if (!isPlatformBrowser(this.platformId)) {
       return;
     }
-    this.initialized = true;
-    this.sceneBuilder.init(this.engine.scene);
-    this.logic.start();
-    this.updateCameraPosition();
 
-    this.engine.startLoop((deltaMs) => {
-      this.logic.tick(deltaMs);
-      this.sceneBuilder.sync(this.logic, deltaMs);
-    });
+    try {
+      this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
+      this.sceneBuilder.init(this.engine.scene!);
 
-    const canvas = this.canvas.nativeElement;
-    canvas.addEventListener('pointerdown', this.onPointerDown);
-    canvas.addEventListener('pointermove', this.onPointerMove);
-    canvas.addEventListener('pointerup', this.onPointerUp);
-    canvas.addEventListener('pointerleave', this.onPointerUp);
+      // Aplica a skin do usuário assim que a cena inicializa
+      const currentSkin = this.authService.selectedSkin();
+      if (currentSkin) {
+        this.sceneBuilder.setPlayerSkin(currentSkin);
+      }
 
-    this.input.attach();
-    this.subscriptions.push(this.input.action$.subscribe(() => this.logic.plantBomb()));
+      // Carrega catálogo e skins do usuário se estiver logado
+      if (this.authService.userEmail()) {
+        this.skinService.loadMySkins().subscribe({
+          next: (data) => {
+            this.sceneBuilder.setPlayerSkin(data.selectedSkin);
+          },
+        });
+      }
+
+      this.engine.startLoop((deltaMs: number) => {
+        this.logic.tick(deltaMs);
+        this.sceneBuilder.sync(this.logic, deltaMs);
+      });
+    } catch (e) {
+      this.initError.set(true);
+      console.error('WebGL init error:', e);
+    }
   }
 
   ngOnDestroy(): void {
-    this.subscriptions.forEach((s) => s.unsubscribe());
-    this.input.detach();
-    this.engine.stopLoop();
-
-    const canvas = this.canvas.nativeElement;
-    canvas.removeEventListener('pointerdown', this.onPointerDown);
-    canvas.removeEventListener('pointermove', this.onPointerMove);
-    canvas.removeEventListener('pointerup', this.onPointerUp);
-    canvas.removeEventListener('pointerleave', this.onPointerUp);
-
-    if (this.initialized) {
-      this.engine.dispose();
+    if (isPlatformBrowser(this.platformId)) {
+      clearInterval(this.timerInterval);
+      this.actionSub?.unsubscribe();
+      this.input.detach();
       this.sceneBuilder.dispose();
+      this.engine.dispose();
+    }
+    this.donorEffect.destroy();
+  }
+
+  /** Navega para a loja de skins */
+  openSkinShop(): void {
+    this.router.navigate(['/skins']);
+  }
+
+  // Atualizado para aceitar e verificar o estado de login
+  private enforcePaywall(isDonor: boolean, isLoggedIn: boolean): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    clearInterval(this.timerInterval);
+
+    if (isDonor || isLoggedIn) {
+      this.canPlay.set(true);
+      this.waitTimer.set(0);
+    } else {
+      this.canPlay.set(false);
+      this.waitTimer.set(10);
+
+      this.timerInterval = setInterval(() => {
+        const current = this.waitTimer();
+        if (current > 1) {
+          this.waitTimer.set(current - 1);
+        } else {
+          this.waitTimer.set(0);
+          this.canPlay.set(true);
+          clearInterval(this.timerInterval);
+        }
+      }, 1000);
     }
   }
 
-  private readonly onPointerDown = (event: PointerEvent) => {
-    this.isDragging = true;
-    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
-  };
-
-  private readonly onPointerMove = (event: PointerEvent) => {
-    if (!this.isDragging) return;
-
-    const deltaX = event.clientX - this.previousPointerPosition.x;
-    const deltaY = event.clientY - this.previousPointerPosition.y;
-
-    this.cameraAzimuth -= deltaX * 0.005;
-    this.cameraElevation += deltaY * 0.005;
-
-    this.cameraElevation = Math.max(0.1, Math.min(Math.PI / 2 - 0.1, this.cameraElevation));
-
-    this.updateCameraPosition();
-
-    this.previousPointerPosition = { x: event.clientX, y: event.clientY };
-  };
-
-  private readonly onPointerUp = () => {
-    this.isDragging = false;
-  };
-
-  onDirection(direction: Direction | null): void {
-    this.input.setDirection(direction);
+  onDirection(dir: Direction | null): void {
+    this.input.setDirection(dir);
   }
 
   onAction(): void {
-    this.input.pressAction();
-  }
-
-  restart(): void {
-    this.logic.restart();
+    this.logic.plantBomb();
   }
 
   play(): void {
+    // Garante que apenas um clique inicie a partida e força liberação se passou pelo paywall
+    if (!this.canPlay()) return;
+    this.canPlay.set(true);
     this.logic.play();
-
-    if (this.isTouch && document.documentElement.requestFullscreen) {
-      document.documentElement.requestFullscreen().catch(() => { });
-    }
   }
+
+  restart(): void {
+    if (!this.canPlay()) return;
+    this.logic.restart();
+  }
+
+  // Adicione ao final da classe, antes do fechamento
+  private donorEffect = effect(() => {
+    const isDonor = this.authService.isDonor();
+    if (isDonor && this.gamePhase() !== GamePhase.Playing) {
+      this.canPlay.set(true);
+      this.waitTimer.set(0);
+    }
+  });
 }

@@ -1,0 +1,79 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.811Z
+---
+
+# Get a base64 encoded QR Code image from a Charge
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: dee3bad4-8c06-42fb-9c5e-bc62c1281317
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 4de9e2d0-142b-45f7-a411-7559cf7a2b62
+content:
+  - type: method
+    attrs:
+      uid: 2258c9c3-83c0-439c-96be-58f147a4207d
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 5dec4e2d-f455-43f6-8ede-5367f7dede8d
+    content: https://api.woovi.com/api/image/qrcode/base64/{id}
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: ea754120-a4e4-40a6-b416-b2b62222a323
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "success": false,
+  "imageBase64": "string"
+}
+```
+
+
+
+```json
+{
+  "success": false,
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "success": false,
+  "error": "string"
+}
+```
+

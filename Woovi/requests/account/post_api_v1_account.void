@@ -1,0 +1,72 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.737Z
+---
+
+# Duplicates the Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: ce682816-2ea1-4b1a-a458-0d5cc33d9359
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: af9e78d2-82a2-4889-bcbe-36960bf4af10
+content:
+  - type: method
+    attrs:
+      uid: 341e4d29-012a-4e4f-b522-5b31c0af4368
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: bfcda37e-b57a-4739-b199-499892e4fb14
+    content: https://api.woovi.com/api/v1/account
+---
+```
+
+
+
+```json
+{
+  "account": {
+    "accountId": "6290ccfd42831958a405debc",
+    "isDefault": true,
+    "balance": {
+      "total": 129430,
+      "blocked": 0,
+      "available": 129430
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Bank account feature is not enabled"
+}
+```
+
+
+
+```json
+{
+  "error": "Wrong API type"
+}
+```
+

@@ -1,0 +1,78 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.050Z
+---
+
+# Read the INTERNAL balances of a subaccount's float
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: d6bd78cf-eb98-4673-9168-0ac99565e93d
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: a8c5d0e7-319c-4d51-9fb5-07e636b8e270
+content:
+  - type: method
+    attrs:
+      uid: 036ea5b7-55a0-4882-bf6f-96ece2c0b00c
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 73343a6a-12e9-481a-9d32-d0df00c9b686
+    content: https://api.woovi.com/api/v1/stablecoin/subaccount/{subAccountId}/balances
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "subAccountId": "string",
+  "balances": {}
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string",
+  "errorCode": "string"
+}
+```
+

@@ -1,0 +1,100 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.794Z
+---
+
+# Validate a boleto by barcode
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 2dd2ceff-42d1-44ba-99bc-0639adfeed65
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 069b7bc9-a9bb-4c0c-ac7d-2bab8b04afaa
+content:
+  - type: method
+    attrs:
+      uid: 84982026-6f41-473e-855a-b75b86c60555
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 2de986b9-2e5f-4c43-8139-ef08db1c51db
+    content: https://api.woovi.com/api/v1/boleto/validate
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 67042ecb-ce5c-4d20-b39a-17377417ef31
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "barcode": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "boleto": {
+    "barcode": "string",
+    "digitable": "string",
+    "expiresDate": "string",
+    "totalValue": 0,
+    "issuingEntity": {
+      "code": "string",
+      "name": "string"
+    },
+    "finalBeneficiary": {
+      "name": "string",
+      "taxID": "string"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

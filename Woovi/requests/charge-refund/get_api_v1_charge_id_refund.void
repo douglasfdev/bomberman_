@@ -1,0 +1,65 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.828Z
+---
+
+# Get all refunds of a charge
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 763bee1e-0202-4d43-b439-b61972c146df
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 227656be-3c89-4f8c-a953-fd4b249a9cec
+content:
+  - type: method
+    attrs:
+      uid: 91055ffc-5a01-4a8a-9388-9ffa5f4db621
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: affbd99c-ec1f-4e16-b106-87427d5ad5fe
+    content: https://api.woovi.com/api/v1/charge/{id}/refund
+---
+```
+
+
+
+```json
+{
+  "refunds": [
+    {
+      "value": 0,
+      "status": "IN_PROCESSING",
+      "correlationID": "string",
+      "endToEndId": "string",
+      "time": "string",
+      "comment": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

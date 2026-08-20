@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import {
   BASE_BOMBS,
   BASE_MOVE_DURATION_MS,
@@ -39,6 +40,7 @@ import { InputManagerService } from './input-manager.service';
 export class GameLogicService {
   private readonly level = inject(LevelService);
   private readonly input = inject(InputManagerService);
+  private readonly platformId = inject(PLATFORM_ID);
 
   readonly score = signal(0);
   readonly highScore = signal(0);
@@ -61,9 +63,11 @@ export class GameLogicService {
   private lastTickMs = 0;
 
   constructor() {
-    const savedHighScore = localStorage.getItem('highScore');
-    if (savedHighScore) {
-      this.highScore.set(Number(savedHighScore));
+    if (isPlatformBrowser(this.platformId)) {
+      const savedHighScore = localStorage.getItem('highScore');
+      if (savedHighScore) {
+        this.highScore.set(Number(savedHighScore));
+      }
     }
   }
 
@@ -74,10 +78,9 @@ export class GameLogicService {
   }
 
   play(): void {
-    if (this.gamePhase() === GamePhase.Ready) {
-      this.lastTickMs = 0;
-      this.gamePhase.set(GamePhase.Playing);
-    }
+    if (this.gamePhase() !== GamePhase.Ready) return;
+    this.lastTickMs = performance.now();
+    this.gamePhase.set(GamePhase.Playing);
   }
 
   restart(): void {
@@ -297,7 +300,7 @@ export class GameLogicService {
             return escapePath;
           }
         }
-        return null; 
+        return null;
       } else {
         if (!dangerSet.has(keyOf(nextStep)) && !this.bombs.some(b => samePosition(b.position, nextStep))) {
           return nextStep;
@@ -724,7 +727,9 @@ export class GameLogicService {
     const current = this.score();
     if (current > this.highScore()) {
       this.highScore.set(current);
-      localStorage.setItem('highScore', current.toString());
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('highScore', current.toString());
+      }
     }
   }
 

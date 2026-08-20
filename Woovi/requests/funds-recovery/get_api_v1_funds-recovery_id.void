@@ -1,0 +1,101 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.880Z
+---
+
+# Get one funds recovery (MED)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: c1f683ec-247c-43f2-98e5-d1cdbe0092d5
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: aaf8452e-75d5-4efa-b0ad-86973a9a26de
+content:
+  - type: method
+    attrs:
+      uid: 8d1acd81-650f-436d-b299-bca1af90b94a
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 830d0813-945a-4daf-a5c6-db920ec95029
+    content: https://api.woovi.com/api/v1/funds-recovery/{id}
+---
+```
+
+
+
+```json
+{
+  "rootTransactionId": "E31680151202606101530AbCdEf12345",
+  "situationType": "SCAM",
+  "reportDetails": "Payment made to a fake seller. After the payment, the seller stopped responding and never delivered the product.",
+  "dictId": "3e760cd5-39b2-45da-8ab6-b212cf205568",
+  "status": "AWAITING_ANALYSIS",
+  "direction": "SENT",
+  "reporterParticipant": "31680151",
+  "creationTime": "2026-06-11T00:30:00.000Z",
+  "lastModified": "2026-06-11T00:35:00.000Z",
+  "events": [
+    {
+      "id": "f3a1c9d2-8b47-4e6a-9c21-5d7e0a4b8f13",
+      "event": "AWAITING_ANALYSIS",
+      "timestamp": "2026-06-11T00:35:00.000Z"
+    }
+  ],
+  "createdAt": "2026-06-11T00:30:00.000Z",
+  "updatedAt": "2026-06-11T00:35:00.000Z"
+}
+```
+
+
+
+```json
+{
+  "error": {
+    "id": [
+      "Invalid UUID"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Invalid appID"
+}
+```
+
+
+
+```json
+{
+  "error": "Your account does not have the permission to use this endpoint"
+}
+```
+
+
+
+```json
+{
+  "error": "Funds recovery not found"
+}
+```
+

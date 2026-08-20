@@ -1,0 +1,72 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.816Z
+---
+
+# Edit expiration date of a charge
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f0017b96-5035-4779-8010-883d66e8a6f8
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 9b9f35cb-4b2a-4d0a-96cf-e92ffc540fcf
+content:
+  - type: method
+    attrs:
+      uid: 30c3d03c-f643-4eb4-ac96-23b95b0574a0
+      method: PATCH
+      importedFrom: ""
+      visible: true
+    content: PATCH
+  - type: url
+    attrs:
+      uid: a776fced-9c72-4319-8a47-fc30244454d6
+    content: https://api.woovi.com/api/v1/charge/{id}
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 0e11496e-f187-4b7a-8d7b-81aa555d4d77
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "expiresDate": "2021-04-01T17:28:51.882Z"
+    }
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "id": "string",
+  "expiresDate": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

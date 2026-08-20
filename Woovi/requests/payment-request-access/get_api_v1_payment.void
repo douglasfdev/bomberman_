@@ -1,0 +1,127 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.954Z
+---
+
+# Get a list of payments
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 11fee432-5aea-4888-bea6-b7d1c66cb1a9
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f63b300b-8412-4cd3-9504-7c12126a2cd1
+content:
+  - type: method
+    attrs:
+      uid: 7b408104-f913-42b7-8aab-9dbdf3361528
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: fe09cb77-088e-4f83-b0ae-47ca73a13001
+    content: https://api.woovi.com/api/v1/payment
+---
+```
+
+
+
+```json
+{
+  "pageInfo": {
+    "skip": 0,
+    "limit": 10,
+    "hasPreviousPage": false,
+    "hasNextPage": true
+  },
+  "payments": {
+    "payment": {
+      "value": 100,
+      "status": "CONFIRMED",
+      "destinationAlias": "c4249323-b4ca-43f2-8139-8232aab09b93",
+      "comment": "payment comment",
+      "correlationID": "payment1",
+      "sourceAccountId": "my-source-account-id"
+    },
+    "transaction": {
+      "value": 100,
+      "endToEndId": "transaction-end-to-end-id",
+      "time": "2023-03-20T13:14:17.000Z",
+      "debitParty": {
+        "account": {
+          "branch": "0001",
+          "account": "00000000000000023280",
+          "accountType": "TRAN"
+        },
+        "psp": {
+          "id": "123456",
+          "name": "COMPANY DEBIT LTDA",
+          "code": "123456789"
+        },
+        "holder": {
+          "name": "name holder",
+          "nameFriendly": "name friendly holder"
+        },
+        "taxID": {
+          "taxID": "1212345600198",
+          "type": "BR:CNPJ"
+        }
+      },
+      "creditParty": {
+        "pixKey": {
+          "pixKey": "email@email.com.br",
+          "type": "EMAIL"
+        },
+        "account": {
+          "branch": "0001",
+          "account": "00000000000000012345",
+          "accountType": "TRAN"
+        },
+        "psp": {
+          "id": "123456",
+          "name": "COMPANY CREDIT LTDA"
+        },
+        "holder": {
+          "name": "name holder",
+          "nameFriendly": "name friendly",
+          "taxID": {
+            "taxID": "00123456000199",
+            "type": "BR:CNPJ"
+          }
+        }
+      }
+    },
+    "destination": {
+      "name": "Dan",
+      "taxID": "31324227036",
+      "pixKey": "c4249323-b4ca-43f2-8139-8232aab09b93",
+      "bank": "A Bank",
+      "branch": "1",
+      "account": "123456"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

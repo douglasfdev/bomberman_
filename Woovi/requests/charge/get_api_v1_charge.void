@@ -1,0 +1,178 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.823Z
+---
+
+# Get a list of charges
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: bf456bec-e09d-4353-9f5f-06eae19ceead
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 75ca39e2-0be5-45f6-9cab-4e82d6f3e262
+content:
+  - type: method
+    attrs:
+      uid: 01346349-46b4-4e66-9ac9-5fc1c9ba99f1
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: d985bfbb-b600-456d-841f-e755a21058cb
+    content: https://api.woovi.com/api/v1/charge
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: ef1705e1-243c-45df-b74a-a6231356503e
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "charges": [
+    {
+      "value": 0,
+      "customer": {
+        "name": "string",
+        "email": "string",
+        "phone": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "string"
+        },
+        "correlationID": "string",
+        "address": {
+          "zipcode": "string",
+          "street": "string",
+          "number": "string",
+          "neighborhood": "string",
+          "city": "string",
+          "state": "string",
+          "complement": "string",
+          "country": "string"
+        }
+      },
+      "type": "DYNAMIC",
+      "comment": "string",
+      "brCode": "string",
+      "status": "ACTIVE",
+      "correlationID": "string",
+      "paymentLinkID": "string",
+      "paymentLinkUrl": null,
+      "globalID": null,
+      "transactionID": null,
+      "identifier": "string",
+      "qrCodeImage": null,
+      "additionalInfo": [
+        {
+          "key": "string",
+          "value": "string"
+        }
+      ],
+      "pixKey": "string",
+      "createdAt": "string",
+      "updatedAt": "string",
+      "expiresIn": "string",
+      "expiresDate": "string",
+      "dueDate": "string",
+      "subscription": {
+        "globalID": "string",
+        "value": 0,
+        "name": "string",
+        "customer": {
+          "name": "string",
+          "email": "string",
+          "phone": "string",
+          "taxID": {
+            "taxID": "string",
+            "type": "string"
+          },
+          "correlationID": "string",
+          "address": {
+            "zipcode": "string",
+            "street": "string",
+            "number": "string",
+            "neighborhood": "string",
+            "city": "string",
+            "state": "string",
+            "complement": "string",
+            "country": "string"
+          }
+        },
+        "dayGenerateCharge": 0,
+        "type": "PIX_RECURRING",
+        "frequency": "WEEKLY",
+        "installmentsCount": null,
+        "isActive": false,
+        "status": "ACTIVE",
+        "correlationID": "string",
+        "paymentLinkUrl": "string",
+        "addtionalInfo": [
+          {
+            "key": "string",
+            "value": "string"
+          }
+        ],
+        "pixRecurringOptions": {
+          "emv": "string",
+          "status": "CREATED",
+          "retryPolicy": "NON_PERMITED",
+          "journey": "PAYMENT_ON_APPROVAL"
+        }
+      },
+      "paymentMethods": {
+        "pix": null
+      }
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

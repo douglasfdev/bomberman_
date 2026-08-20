@@ -1,0 +1,82 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.093Z
+---
+
+# Credit subaccount
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 2e8134a7-87a7-4d49-bb30-9481cc711f22
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 1f9d46b7-22bb-47ca-ba3f-189d62faa1c1
+content:
+  - type: method
+    attrs:
+      uid: 23c74ac1-d2a6-4da5-960e-d659822d64ef
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 8d710db7-739c-4336-aa48-3d371d304c8b
+    content: https://api.woovi.com/api/v1/subaccount/{id}/credit
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 319228fb-917a-41c6-92a5-deb3bfe55b82
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0,
+      "description": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "pixKey": "string",
+  "value": 0,
+  "description": "string",
+  "success": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "This feature is not enabled for your company"
+}
+```
+

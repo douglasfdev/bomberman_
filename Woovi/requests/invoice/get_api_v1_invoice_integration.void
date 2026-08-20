@@ -1,0 +1,56 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.901Z
+---
+
+# Get the NFe.io integration status and config for the authenticated company
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e879984f-6f59-4ec3-bfbe-8d022f3fe074
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 1b38666f-03c8-4902-afb2-81f6737dbadd
+content:
+  - type: method
+    attrs:
+      uid: 8044cb55-f258-40a3-abb7-55e8a2d46b95
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: f90c4c74-7dd7-45a2-9d7f-3aae87f66a0f
+    content: https://api.woovi.com/api/v1/invoice/integration
+---
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

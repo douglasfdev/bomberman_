@@ -1,0 +1,85 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.803Z
+---
+
+# Get or create cashback for a customer.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: b7e5cf74-515e-4dec-b544-f754dc72ddd7
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f7de3534-23c3-4e2a-8681-c9adb76f0ad2
+content:
+  - type: method
+    attrs:
+      uid: 5c40669c-86c6-409c-814a-d4022c8035fa
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 537ffdd5-420e-4b21-8086-c7d7444193a8
+    content: https://api.woovi.com/api/v1/cashback-fidelity
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 46b92530-54bd-464e-b36f-70a8a655efe0
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 100,
+      "taxID": 11111111111
+    }
+---
+```
+
+
+
+```json
+{
+  "cashback": {
+    "value": 0
+  },
+  "message": "string"
+}
+```
+
+
+
+```json
+{
+  "cashback": {
+    "value": 0
+  },
+  "message": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

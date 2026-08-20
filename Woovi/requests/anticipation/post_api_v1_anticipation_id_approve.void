@@ -1,0 +1,103 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.754Z
+---
+
+# Approve an anticipation request
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6bfd44a2-04b8-4f94-9fd7-8d95fb393960
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 7743fc1c-a034-4457-96a4-bcec8eaf590c
+content:
+  - type: method
+    attrs:
+      uid: 9cbc9c53-75de-4f11-b8d8-caef56454879
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 3750aed6-e9ff-4018-b8a5-d808db27791d
+    content: https://api.woovi.com/api/v1/anticipation/{id}/approve
+---
+```
+
+
+
+```json
+{
+  "anticipation": {
+    "id": "6290ccfd42831958a405debc",
+    "status": "PROCESSING",
+    "beneficiaryTaxID": "12345678909",
+    "requestedAmount": 100000,
+    "feeAmount": 7000,
+    "netAmount": 93000,
+    "feeMode": "PERCENTAGE",
+    "monthlyFeePercentage": 7,
+    "daysUntilDue": 7,
+    "dueDate": "2026-07-25T03:00:00.000Z",
+    "approvedAt": "2026-07-18T12:00:00.000Z",
+    "cancelledAt": null,
+    "cancelReason": null,
+    "endToEndId": null,
+    "failureCode": null,
+    "failureReason": null,
+    "createdAt": "2026-07-18T11:59:00.000Z"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

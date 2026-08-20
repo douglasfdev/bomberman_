@@ -1,0 +1,61 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.843Z
+---
+
+# Get a Company
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: baf20210-a262-4e99-9ff8-ba71fd13670a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 59a5fc1b-2e45-423a-a838-6a3f4616afaa
+content:
+  - type: method
+    attrs:
+      uid: 480ac34d-d682-41e7-bc49-46d2c53619dc
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: bf5d3ef1-2a4e-46c8-b67e-9f2313dd2894
+    content: https://api.woovi.com/api/v1/company
+---
+```
+
+
+
+```json
+{
+  "company": {
+    "officialName": "Company Official Name",
+    "tradeName": "Company Trade Name",
+    "taxID": "12345678901234",
+    "correlationID": "corr-123456"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

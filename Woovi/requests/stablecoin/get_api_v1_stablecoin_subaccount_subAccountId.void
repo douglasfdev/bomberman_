@@ -1,0 +1,71 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.052Z
+---
+
+# Get a stablecoin subaccount by id
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 02663aaa-0e4b-4bdf-9e72-9bffec496ba3
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 0ac8b2f1-b477-44dd-8bf8-34d5316eb41f
+content:
+  - type: method
+    attrs:
+      uid: 0f774cf0-1341-4c54-86bc-728f1772701b
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: ee19fa54-4985-4c6b-83bd-0e99a5725b03
+    content: https://api.woovi.com/api/v1/stablecoin/subaccount/{subAccountId}
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "subAccount": {
+    "id": "string",
+    "subAccountId": "string",
+    "account": "string",
+    "createdAt": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string"
+}
+```
+

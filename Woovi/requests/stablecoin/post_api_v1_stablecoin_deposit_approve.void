@@ -1,0 +1,82 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.028Z
+---
+
+# Approve (settle) a stablecoin deposit
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: db59030f-ede1-4f77-9a10-7e9ea6480e4a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f194255a-f824-4095-bc89-25d006442d92
+content:
+  - type: method
+    attrs:
+      uid: f1f5cce7-b3cd-4824-ac15-a351709602bc
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: aa2ca87b-383c-4701-a49b-f12641f596a8
+    content: https://api.woovi.com/api/v1/stablecoin/deposit/approve
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 30176bbd-460c-4c32-8210-09259494aab5
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "correlationId": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "correlationId": "string",
+  "depositId": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "correlationId": "string",
+  "depositId": null
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

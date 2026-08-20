@@ -1,0 +1,47 @@
+<div class="payment-container">
+  <!-- 1. Bloco principal que verifica se o usuário já é doador -->
+  <div *ngIf="isDonor(); else paymentFlow">
+    <div class="payment-success">
+      <h3>Você já é um apoiador!</h3>
+      <p>Obrigado pelo seu apoio. O jogo já está desbloqueado, sem anúncios e sem tempo de espera.</p>
+    </div>
+  </div>
+
+  <!-- 2. Template para o fluxo de pagamento, exibido caso o usuário não seja doador -->
+  <ng-template #paymentFlow>
+    <h2>Desbloquear Jogo com PIX</h2>
+
+    <div *ngIf="!pixCharge && !paymentApproved">
+      <p>Clique no botão abaixo para gerar um código PIX no valor de R$ {{ paymentData.amount / 100 | number:'1.2-2' }}.</p>
+      <button (click)="generatePix()" [disabled]="isLoading">
+        {{ isLoading ? 'Gerando...' : 'Gerar PIX para Desbloquear' }}
+      </button>
+    </div>
+
+    <div *ngIf="isLoading" class="loading">
+      <p>Aguarde, conectando com o sistema de pagamento...</p>
+    </div>
+
+    <div *ngIf="error" class="error-message">
+      <p><b>Erro:</b> {{ error }}</p>
+    </div>
+
+    <div *ngIf="pixCharge && !paymentApproved" class="pix-details">
+      <h3>Pague com PIX para continuar</h3>
+      <p>Escaneie o QR Code ou copie o código abaixo:</p>
+      
+      <img *ngIf="qrCodeUrl" [src]="qrCodeUrl" alt="PIX QR Code" />
+
+      <div class="pix-code-area">
+        <textarea readonly rows="4">{{ pixCharge.chargeData.brCode }}</textarea>
+        <button (click)="copyPixCode()">Copiar Código</button>
+      </div>
+      <p class="waiting-payment">Aguardando confirmação de pagamento...</p>
+    </div>
+
+    <div *ngIf="paymentApproved" class="payment-success">
+      <h3>Pagamento Aprovado!</h3>
+      <p>Obrigado! O seu jogo foi desbloqueado.</p>
+    </div>
+  </ng-template>
+</div>

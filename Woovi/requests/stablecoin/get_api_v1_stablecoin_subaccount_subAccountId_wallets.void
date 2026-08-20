@@ -1,0 +1,84 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.062Z
+---
+
+# List the deposit addresses of a subaccount's float
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 7d158c28-6f73-48b1-8e27-6fb65391fd93
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: c324070e-b545-4de7-ac12-384a0eac71ea
+content:
+  - type: method
+    attrs:
+      uid: 7a947df7-abf6-45c5-adc3-78875d87e48a
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: da029582-2a94-4a6f-8f71-582e76e8798a
+    content: https://api.woovi.com/api/v1/stablecoin/subaccount/{subAccountId}/wallets
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "subAccountId": "string",
+  "wallets": [
+    {
+      "address": "string",
+      "currency": "string",
+      "network": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string",
+  "errorCode": "string"
+}
+```
+
+
+
+```json
+{
+  "status": "string",
+  "error": "string",
+  "errorCode": "string"
+}
+```
+

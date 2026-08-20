@@ -1,0 +1,72 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.728Z
+---
+
+# Get an Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: cef6db9f-7e2f-41a4-8fdd-d9c841bbfb1f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: bb0aed53-38aa-444e-9d90-9526c792f85b
+content:
+  - type: method
+    attrs:
+      uid: 55841c24-6415-491c-aea1-d8e0414f3487
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 765b3b70-338e-46b1-9c1b-6c93feaa6a73
+    content: https://api.woovi.com/api/v1/account/{accountId}
+---
+```
+
+
+
+```json
+{
+  "account": {
+    "accountId": "6290ccfd42831958a405debc",
+    "isDefault": true,
+    "balance": {
+      "total": 129430,
+      "blocked": 0,
+      "available": 129430,
+      "blockedBySecurity": 0,
+      "blockedByWithdrawSafety": 0
+    },
+    "taxId": "12345678901",
+    "officialName": "Company Name LLC",
+    "tradeName": "Company Trade Name",
+    "branch": "0001",
+    "account": "123456",
+    "accountName": "Main Account"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

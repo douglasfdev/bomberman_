@@ -1,0 +1,54 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.129Z
+---
+
+# Update the value of the next installments of the subscription. It is only possible if pix automatic accepts dynamic value.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f0cbfa7e-d62f-4b8e-a3ed-39e3fd569afe
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 7cb4846d-36e7-4896-960b-73a5691467d6
+content:
+  - type: method
+    attrs:
+      uid: 112d0b86-9663-4b64-ad59-92d317a8de09
+      method: PUT
+      importedFrom: ""
+      visible: true
+    content: PUT
+  - type: url
+    attrs:
+      uid: 03c4d67d-7f34-4bee-ab86-625d3f19fdd9
+    content: https://api.woovi.com/api/v1/subscriptions/{id}/value
+---
+```
+
+
+
+```json
+{}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

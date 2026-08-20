@@ -145,3 +145,126 @@
   text-align: center;
   padding: 20px;
 }
+
+.user-badge {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top, 8px));
+  right: max(8px, env(safe-area-inset-right, 8px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: rgba(15, 20, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  z-index: 40;
+
+  .user-email {
+    color: #e2e8f0;
+    font-size: clamp(12px, 2vmin, 14px);
+    font-weight: 500;
+  }
+
+  .btn-skins {
+    color: #fbbf24;
+    border: none;
+    font-size: clamp(12px, 2vmin, 14px);
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(251, 191, 36, 0.15);
+    cursor: pointer;
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(251, 191, 36, 0.3);
+    }
+  }
+
+  .btn-logout {
+    color: #f87171;
+    text-decoration: none;
+    font-size: clamp(12px, 2vmin, 14px);
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(248, 113, 113, 0.1);
+    transition: background 0.2s;
+
+    &:hover {
+      background: rgba(248, 113, 113, 0.2);
+    }
+  }
+}
+
+.social-icon-emoji {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paywall-text {
+  font-size: 1.05rem;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.donor-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.btn-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+}
+
+.btn-google {
+  background-color: #ffffff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+}
+
+.btn-pix {
+  background-color: #32bcad;
+  color: #ffffff;
+}
+
+.social-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.restart-btn.disabled {
+  background-color: #475569;
+  color: #94a3b8;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

@@ -1,0 +1,83 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.976Z
+---
+
+# Get all Pix keys
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 95b6e485-c94e-4310-9bc2-f8298f7e059d
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: d1e7d0e8-4614-4dab-b8da-671e057f6b93
+content:
+  - type: method
+    attrs:
+      uid: 55c0652f-9493-4ba0-ac93-3a753aa016a0
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: bf6bed7a-d770-468e-9f95-e67fc1ea31ee
+    content: https://api.woovi.com/api/v1/pix-keys
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 43aca1a9-b883-42c0-9db4-f087b42522e3
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "pixKeys": [
+    {
+      "key": "string",
+      "type": "CPF",
+      "isDefault": false
+    }
+  ],
+  "account": {
+    "accountId": "string",
+    "isDefault": false,
+    "balance": {
+      "total": 0,
+      "blocked": 0,
+      "available": 0,
+      "blockedBySecurity": 0,
+      "blockedByWithdrawSafety": 0
+    },
+    "taxId": "string",
+    "officialName": "string",
+    "tradeName": "string",
+    "branch": "string",
+    "account": "string",
+    "accountName": "string"
+  }
+}
+```
+

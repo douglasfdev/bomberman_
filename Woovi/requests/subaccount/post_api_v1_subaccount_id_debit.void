@@ -1,0 +1,82 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.096Z
+---
+
+# Debit subaccount
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 87ca3a6f-3a01-4a9b-9f51-e46e0638d09c
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 379f2df4-80b8-44dc-be93-46926aecd595
+content:
+  - type: method
+    attrs:
+      uid: c042c4f2-96e2-4a81-acb6-ba52fecbe003
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 0336bc03-dd64-4a73-a7c8-297ff6f5f5a9
+    content: https://api.woovi.com/api/v1/subaccount/{id}/debit
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 2b7e5dd3-b1a3-4532-bcbb-d3023bea2a69
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0,
+      "description": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "pixKey": "string",
+  "value": 0,
+  "description": "string",
+  "success": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "This feature is not enabled for your company"
+}
+```
+

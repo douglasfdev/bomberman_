@@ -1,0 +1,69 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.086Z
+---
+
+# Get a list of subaccounts
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 1cbb2de2-5bfb-48de-a68b-447487ec0fc3
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: b5bbfb7c-6206-42d2-8f4a-6db29b22c580
+content:
+  - type: method
+    attrs:
+      uid: 91b93911-3371-4b64-a5a4-bea721359068
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 37b20443-f7b1-4f52-be1d-c3f089f57a73
+    content: https://api.woovi.com/api/v1/subaccount
+---
+```
+
+
+
+```json
+{
+  "subAccounts": [
+    {
+      "name": "test-sub-account",
+      "pixKey": "c4249323-b4ca-43f2-8139-8232aab09b93",
+      "balance": 100,
+      "withdrawBlocked": false
+    }
+  ],
+  "pageInfo": {
+    "skip": 0,
+    "limit": 10,
+    "hasPreviousPage": false,
+    "hasNextPage": true
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

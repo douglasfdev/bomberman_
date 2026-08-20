@@ -1,0 +1,150 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.924Z
+---
+
+# Create a KYC onboarding
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: b5a0677e-a4ce-4fde-b36b-0e9dcf224536
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 86614701-362f-47b8-bf70-43c902a28090
+content:
+  - type: method
+    attrs:
+      uid: 11441abd-ac38-43ec-b294-599d3d017a96
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: cc59aac0-a0e7-4210-8a4c-2995478282a4
+    content: https://api.woovi.com/api/v1/kyc/onboarding
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: c87160ad-3c1b-4c9b-af2e-2a11b1da265a
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "taxID": "string",
+      "correlationID": "string",
+      "redirectUrl": "string",
+      "representatives": [
+        {
+          "taxID": "string",
+          "name": "string"
+        }
+      ]
+    }
+---
+```
+
+
+
+```json
+{
+  "linkOnboarding": "string",
+  "redirectUrl": null,
+  "accountRegister": {
+    "status": "string",
+    "officialName": "string",
+    "tradeName": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "string"
+    },
+    "correlationID": "string",
+    "representatives": [
+      {
+        "name": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "string"
+        }
+      }
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "linkOnboarding": "string",
+  "redirectUrl": null,
+  "accountRegister": {
+    "status": "string",
+    "officialName": "string",
+    "tradeName": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "string"
+    },
+    "correlationID": "string",
+    "representatives": [
+      {
+        "name": "string",
+        "taxID": {
+          "taxID": "string",
+          "type": "string"
+        }
+      }
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "Invalid Authorization header"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

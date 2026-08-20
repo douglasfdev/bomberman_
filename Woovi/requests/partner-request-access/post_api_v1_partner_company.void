@@ -1,0 +1,137 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.944Z
+---
+
+# Create a pre registration with a partner reference (your company)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 21f5791b-15e9-4815-ba06-24df7bcb434b
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 1c6af4bc-0901-4eef-95e1-aefb868d2965
+content:
+  - type: method
+    attrs:
+      uid: 67af3929-f6ba-444e-99cc-799a9cf5b741
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: c8bb3c8d-35bf-4fe5-838a-97a5a72e95e9
+    content: https://api.woovi.com/api/v1/partner/company
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 8687cf2c-349b-4761-9b80-146040ed0c21
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "preRegistration": {
+        "name": "Example LLC",
+        "taxID": {
+          "taxID": "11111111111111",
+          "type": "BR:CNPJ"
+        },
+        "website": "examplellc.com"
+      },
+      "user": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "email": "johndoe@examplellc.com",
+        "phone": "+5511912345678",
+        "taxID": {
+          "taxID": "1111111111",
+          "type": "BR:CPF"
+        }
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "preRegistration": {
+    "name": "string",
+    "website": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CNPJ"
+    }
+  },
+  "user": {
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "phone": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CNPJ"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "preRegistration": {
+    "name": "string",
+    "website": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CNPJ"
+    }
+  },
+  "user": {
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "phone": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CNPJ"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,85 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.099Z
+---
+
+# Transfer between subaccounts
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 7ce4d9d6-9f90-44ee-a827-b31cda3f684e
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: b40f890f-5e3d-49f4-b928-3583eb00d80d
+content:
+  - type: method
+    attrs:
+      uid: ac7238ac-462d-46ce-84d9-b8f9134e7c9a
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 93b3a6ae-2623-4eb1-b58f-6ae3779e025e
+    content: https://api.woovi.com/api/v1/subaccount/transfer
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 6839aaa3-e93b-4068-8111-3c3cd62feef3
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0,
+      "fromPixKey": "string",
+      "fromPixKeyType": "CPF",
+      "toPixKey": "string",
+      "toPixKeyType": "CPF",
+      "correlationID": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "value": 65,
+  "destinationSubaccount": {
+    "name": "test-sub-account-1",
+    "pixKey": "c4249323-b4ca-43f2-8139-874baab09b93",
+    "balance": 100
+  },
+  "originSubaccount": {
+    "name": "test-sub-account-2",
+    "pixKey": "3143da48-2bc7-49a4-89bd-4e22f73bfb0c",
+    "balance": 100
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

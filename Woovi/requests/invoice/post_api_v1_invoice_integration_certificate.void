@@ -1,0 +1,90 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.898Z
+---
+
+# Upload the NFe.io A1 certificate for the invoice integration
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 11453dd0-9fcd-4b10-88be-e9cb8cb6a2c6
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 66298d77-6e7c-49f5-9d28-256f92b87ad6
+content:
+  - type: method
+    attrs:
+      uid: 85e6317d-5b8d-4d2a-8415-242ff78b499c
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 3c296dd1-a058-4153-a9fc-77fa39c1f21a
+    content: https://api.woovi.com/api/v1/invoice/integration/certificate
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: bc090ab8-6b1d-49b0-b459-e90cbca9ec5f
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "pcks12": "string",
+      "passphrase": "string",
+      "test": false
+    }
+---
+```
+
+
+
+```json
+{
+  "integration": {
+    "status": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

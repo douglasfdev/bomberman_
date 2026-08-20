@@ -1,0 +1,63 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.017Z
+---
+
+# Get one refund
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: fac16cfc-1df4-4282-b8b9-678d1a3c1a7a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f1df6193-48f2-4464-86bf-d3d720ab793d
+content:
+  - type: method
+    attrs:
+      uid: ee4047d4-6e5e-407d-866c-f5673c3747d7
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 918435c2-e5c0-4065-bd91-bed088e2f939
+    content: https://api.woovi.com/api/v1/refund/{id}
+---
+```
+
+
+
+```json
+{
+  "pixTransactionRefund": {
+    "value": 0,
+    "status": "IN_PROCESSING",
+    "correlationID": "string",
+    "refundId": "string",
+    "time": "string",
+    "comment": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

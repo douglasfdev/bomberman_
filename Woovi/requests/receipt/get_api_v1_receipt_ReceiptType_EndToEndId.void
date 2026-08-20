@@ -1,0 +1,70 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.012Z
+---
+
+# Get a PDF document related to a payment transaction formatted as a receipt by type (pix-in, pix-out or pix-refund).
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 87df2a5b-0e11-4ffa-8f83-b185db010ad5
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 9452defb-3552-4039-ba1d-11fcb09929ba
+content:
+  - type: method
+    attrs:
+      uid: 2db1c4ab-77a3-4d63-8aa6-a5edfe94c051
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: c83394e6-ad76-44c2-9646-216d41983713
+    content: https://api.woovi.com/api/v1/receipt/{ReceiptType}/{EndToEndId}
+---
+```
+
+
+
+```json
+string
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
