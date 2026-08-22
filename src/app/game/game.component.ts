@@ -132,6 +132,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/skins']);
   }
 
+  /** Navega para a tela de achievements */
+  openAchievements(): void {
+    this.router.navigate(['/achievements']);
+  }
+
   // Atualizado para aceitar e verificar o estado de login
   private enforcePaywall(isDonor: boolean, isLoggedIn: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;

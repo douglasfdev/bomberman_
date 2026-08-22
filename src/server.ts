@@ -20,6 +20,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import paymentRoutes from './routes/paymentRoutes';
 import webhookRoutes from './routes/webhookRoutes';
 import skinRoutes from './routes/skinRoutes';
+import achievementRoutes from './routes/achievementRoutes';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
@@ -160,6 +161,7 @@ export function app(): express.Express {
   server.use('/api/payments', paymentRoutes);
   server.use('/api/webhooks', webhookRoutes);
   server.use('/api/skins', skinRoutes);
+  server.use('/api/achievements', achievementRoutes);
 
   // Endpoints da API
   server.get('/api/user', (req: any, res: any) => {

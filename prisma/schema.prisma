@@ -32,8 +32,9 @@ model User {
   selectedSkin String   @default("character-d")
 
   // Relations
-  payments      Payment[]
-  skinPurchases SkinPurchase[]
+  payments         Payment[]
+  skinPurchases    SkinPurchase[]
+  userAchievements UserAchievement[]
 }
 
 model Payment {
@@ -62,5 +63,33 @@ model SkinPurchase {
   payment    Payment  @relation(fields: [paymentId], references: [id])
   createdAt  DateTime @default(now())
 
+  @@index([userId])
+}
+
+// ───────────────────────────────────────────────
+// Achievements
+// ───────────────────────────────────────────────
+
+model Achievement {
+  id          String   @id @default(cuid())
+  key         String   @unique  // e.g. "FIRST_BLOOD"
+  title       String
+  description String
+  icon        String   @default("🏆")
+  createdAt   DateTime @default(now())
+
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id])
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
   @@index([userId])
 }
