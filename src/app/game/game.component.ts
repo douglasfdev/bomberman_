@@ -110,6 +110,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.logic.tick(deltaMs);
         this.sceneBuilder.sync(this.logic, deltaMs);
       });
+
+      // Inicializa o estado do jogo (gera mapa, posiciona inimigos)
+      this.logic.start();
     } catch (e) {
       this.initError.set(true);
       console.error('WebGL init error:', e);

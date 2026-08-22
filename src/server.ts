@@ -37,6 +37,24 @@ export let io: Server;
 export function app(): express.Express {
   const server = express();
 
+  if (!process.env['APP_BASE_URL']) {
+    console.warn(
+      '[config] APP_BASE_URL não definida — o callbackURL do OAuth ficará relativo ' +
+      '("/api/auth/google/callback") e pode não bater com o Redirect URI cadastrado no ' +
+      'Google Cloud Console, causando "invalid_grant" no login.'
+    );
+  }
+
+  if (process.env['NODE_ENV'] === 'production' && !process.env['SESSION_STORE_URL']) {
+    console.warn(
+      '[config] Rodando em produção sem um session store dedicado (ex.: Redis). ' +
+      'O express-session está usando MemoryStore, que não é compartilhado entre processos. ' +
+      'Se este app rodar em cluster (PM2/pm2-cluster, múltiplas instâncias), o worker que recebe ' +
+      'o callback do OAuth pode não enxergar a sessão criada pelo worker que iniciou o login, ' +
+      'gerando falhas intermitentes no fluxo de autenticação.'
+    );
+  }
+
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
@@ -73,13 +91,40 @@ export function app(): express.Express {
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
         try {
-          const email = profile.emails?.[0]?.value;
+          const email = profile.emails?.[0]?.value?.toLowerCase().trim();
           if (!email) return done(new Error('No email provided'));
-          const user = await prismaClient.user.upsert({
-            where: { email },
-            update: { name: profile.displayName, googleId: profile.id },
-            create: { email, name: profile.displayName, googleId: profile.id },
-          });
+
+          // Primeiro tenta achar pelo googleId, que é a chave estável entre logins.
+          let user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
+
+          if (user) {
+            // Já existe conta vinculada a esse Google. Só atualiza nome/e-mail se mudaram.
+            if (user.email !== email || user.name !== profile.displayName) {
+              user = await prismaClient.user.update({
+                where: { googleId: profile.id },
+                data: { email, name: profile.displayName },
+              });
+            }
+          } else {
+            try {
+              user = await prismaClient.user.upsert({
+                where: { email },
+                update: { name: profile.displayName, googleId: profile.id },
+                create: { email, name: profile.displayName, googleId: profile.id },
+              });
+            } catch (err: any) {
+              // Corrida: outro request já criou/atualizou esse googleId entre o findUnique
+              // e o upsert (ex.: callback disparado duas vezes). Recupera o registro existente
+              // em vez de derrubar o login com P2002.
+              if (err?.code === 'P2002') {
+                user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
+                if (!user) throw err;
+              } else {
+                throw err;
+              }
+            }
+          }
+
           return done(null, user);
         } catch (error) {
           return done(error);
@@ -94,20 +139,42 @@ export function app(): express.Express {
     passport.use(
       new MicrosoftStrategy(
         {
-          clientID: process.env['MICROHTML_CLIENT_ID'],
+          clientID: process.env['MICROSOFT_CLIENT_ID'],
           clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
           callbackURL: (process.env['APP_BASE_URL'] || '') + '/api/auth/microsoft/callback',
           scope: ['user.read', 'openid', 'profile', 'email'],
         },
         async (accessToken: any, refreshToken: any, profile: any, done: any) => {
           try {
-            const email = profile?.emails?.[0]?.value;
+            const email = profile?.emails?.[0]?.value?.toLowerCase().trim();
             if (!email) return done(new Error('No email in Microsoft profile'));
-            const user = await prismaClient.user.upsert({
-              where: { email },
-              update: { name: profile.displayName || profile.username, microsoftId: profile.id },
-              create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
-            });
+
+            let user = await prismaClient.user.findUnique({ where: { microsoftId: profile.id } });
+
+            if (user) {
+              if (user.email !== email) {
+                user = await prismaClient.user.update({
+                  where: { microsoftId: profile.id },
+                  data: { email, name: profile.displayName || profile.username },
+                });
+              }
+            } else {
+              try {
+                user = await prismaClient.user.upsert({
+                  where: { email },
+                  update: { name: profile.displayName || profile.username, microsoftId: profile.id },
+                  create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
+                });
+              } catch (err: any) {
+                if (err?.code === 'P2002') {
+                  user = await prismaClient.user.findUnique({ where: { microsoftId: profile.id } });
+                  if (!user) throw err;
+                } else {
+                  throw err;
+                }
+              }
+            }
+
             return done(null, user);
           } catch (error) {
             return done(error);
@@ -171,7 +238,7 @@ export function app(): express.Express {
   });
 
   server.get('/api/donor/status', (req: any, res: any) => {
-    if (!req.user) return res.json({ isDto: false });
+    if (!req.user) return res.json({ isDonor: false });
     const user = req.user as any;
     res.json({ isDonor: !!user.isDonor });
   });
