@@ -1,0 +1,84 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.111Z
+---
+
+# Get a list of installments by subscription
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 7f70a33c-2e8f-468a-990f-65fabfbb0688
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: d4dee982-0115-4c69-931d-c6394360d3b3
+content:
+  - type: method
+    attrs:
+      uid: 102cd14e-cafc-4c95-8d35-91b85f4715d8
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: e16fe6ce-c06d-4059-a522-9c0327b0c0a9
+    content: https://api.woovi.com/api/v1/subscriptions/{id}/installments
+---
+```
+
+
+
+```json
+{
+  "installments": [
+    {
+      "dateGenerateCharge": "2026-08-18T13:39:58.111Z",
+      "expiration": 0,
+      "installmentNumber": 0,
+      "value": 0,
+      "status": "string",
+      "createdAt": "2026-08-18T13:39:58.111Z",
+      "cobr": null,
+      "paymentSubscriptionGlobalID": "string",
+      "correlationID": "string",
+      "globalID": "string"
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

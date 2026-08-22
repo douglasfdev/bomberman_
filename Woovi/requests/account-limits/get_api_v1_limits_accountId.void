@@ -1,0 +1,100 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.744Z
+---
+
+# Get account limits
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 71611e0a-b9f9-4cb6-938d-e6360f19df87
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 3d0e87f8-ca4f-4b9b-bfbf-ef6da601aa30
+content:
+  - type: method
+    attrs:
+      uid: dc8e50ff-3280-4517-92d5-a2af2ac45104
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: a6097acb-d208-4eea-95c7-7695683d0721
+    content: https://api.woovi.com/api/v1/limits/{accountId}
+---
+```
+
+
+
+```json
+{
+  "limits": {
+    "pixDayLimit": 0,
+    "pixNightLimit": 0,
+    "pixOutSameHolderDayLimit": 0,
+    "pixOutDifferentHolderDayLimit": 0,
+    "pixOutSameHolderNightLimit": 0,
+    "pixOutDifferentHolderNightLimit": 0,
+    "pixInSameHolderDayLimit": 0,
+    "pixInDifferentHolderDayLimit": 0,
+    "pixInSameHolderNightLimit": 0,
+    "pixInDifferentHolderNightLimit": 0,
+    "dayStartAt": "string",
+    "nightStartAt": "string",
+    "boletoEmissionLimit": 0,
+    "boletoMaximumValueLimit": 0
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Account ID is invalid"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "Invalid appID"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

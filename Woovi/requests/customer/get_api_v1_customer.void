@@ -1,0 +1,92 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.852Z
+---
+
+# Get a list of customers
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 302f0cbb-2b8b-4b7f-8514-e2efbcb2a7d1
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 2bc4bd9c-4c31-47df-b602-11d369326345
+content:
+  - type: method
+    attrs:
+      uid: dd455630-4ba5-4ad0-93ab-b48b1f3f64c1
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 40c60ffa-a6a2-48c4-89f3-aa1abb65d119
+    content: https://api.woovi.com/api/v1/customer
+---
+```
+
+
+
+```json
+{
+  "customers": [
+    {
+      "name": "string",
+      "email": "string",
+      "phone": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      },
+      "correlationID": "string",
+      "address": {
+        "zipcode": "string",
+        "street": "string",
+        "number": "string",
+        "neighborhood": "string",
+        "city": "string",
+        "state": "string",
+        "complement": "string",
+        "country": "string"
+      }
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

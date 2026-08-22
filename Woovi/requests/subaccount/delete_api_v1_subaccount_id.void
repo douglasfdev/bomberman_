@@ -1,0 +1,65 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.079Z
+---
+
+# Delete a Sub Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: a098bf54-34a0-4bea-b404-14fb3f8696f8
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: a9df702e-672a-46c1-b10f-33704fada838
+content:
+  - type: method
+    attrs:
+      uid: e51e41c8-dcba-4598-a695-1c9ada8e4d61
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: b3f60dd8-4ff9-4236-be65-f06ae7930b5b
+    content: https://api.woovi.com/api/v1/subaccount/{id}
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "pixKey": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "This feature is not enabled for your company"
+}
+```
+

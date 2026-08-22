@@ -1,0 +1,122 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.907Z
+---
+
+# Create or upsert the NFe.io integration for the authenticated company
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6899f550-5d02-4307-bdd2-2740a76c3f42
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: b7ff0473-3391-418b-898b-5123b5c6fa4b
+content:
+  - type: method
+    attrs:
+      uid: 7efe1489-8583-42ea-87c8-9d5c3969a979
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 7ea68940-f9a4-4514-ac2c-e959aaa15341
+    content: https://api.woovi.com/api/v1/invoice/integration
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 088d27e8-ce04-4261-8550-5739e6b07877
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "cityServiceCode": "string",
+      "municipalSubscription": "string",
+      "rpsNumber": "string",
+      "specialTax": "string",
+      "taxRegime": "string",
+      "federalTaxDetermination": "string",
+      "municipalTaxDetermination": "string",
+      "isPortalNacional": false,
+      "isActive": false
+    }
+---
+```
+
+
+
+```json
+{
+  "integration": {
+    "id": "string",
+    "type": "string",
+    "status": null,
+    "isActive": false,
+    "metadata": {
+      "nfeio": {
+        "nfeioCompanyId": "string",
+        "cityServiceCode": "string",
+        "nbs": "string",
+        "isPortalNacional": false,
+        "municipalSubscription": "string",
+        "rpsNumber": "string",
+        "specialTax": "string",
+        "taxRegime": "string",
+        "federalTaxDetermination": "string",
+        "municipalTaxDetermination": "string",
+        "legalNature": "string"
+      }
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

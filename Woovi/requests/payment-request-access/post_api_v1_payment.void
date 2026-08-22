@@ -1,0 +1,147 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.959Z
+---
+
+# Create a Payment Request
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 429655e7-59c2-4a40-99d7-b3e66839fdd9
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 9b9ac8fe-3136-450a-b3c7-8b5c3ba74fc1
+content:
+  - type: method
+    attrs:
+      uid: 3e778bd8-a2fc-4193-9011-a9720202f447
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 72ab24a7-976e-48c0-a6a8-9bb4e7b4e2b8
+    content: https://api.woovi.com/api/v1/payment
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: c665a4b9-9d3b-4fa5-bda2-2f815bdbbbc1
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "autoApprove": false
+    }
+---
+```
+
+
+
+```json
+{
+  "payment": {
+    "type": "PIX_KEY",
+    "value": 0,
+    "destinationAlias": "string",
+    "destinationAliasType": "CPF",
+    "qrCode": "string",
+    "correlationID": "string",
+    "comment": "string",
+    "sourceAccountId": "string",
+    "status": "CREATED",
+    "boleto": {
+      "barcode": "string",
+      "expiresDate": "string",
+      "totalValue": 0,
+      "issuingEntity": {
+        "code": "string",
+        "name": "string"
+      },
+      "finalBeneficiary": {
+        "name": "string",
+        "taxID": "string"
+      }
+    }
+  },
+  "transaction": {
+    "value": 0,
+    "endToEndId": "string",
+    "time": "string",
+    "providerRejectedReason": "string",
+    "debitParty": {
+      "account": {
+        "branch": "string",
+        "account": "string",
+        "accountType": "string"
+      },
+      "psp": {
+        "id": "string",
+        "name": "string",
+        "code": "string"
+      },
+      "holder": {
+        "name": "string",
+        "nameFriendly": "string"
+      },
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      }
+    },
+    "creditParty": {
+      "account": {
+        "branch": "string",
+        "account": "string",
+        "accountType": "string"
+      },
+      "psp": {
+        "id": "string",
+        "name": "string",
+        "code": "string"
+      },
+      "holder": {
+        "name": "string",
+        "nameFriendly": "string"
+      },
+      "taxID": {
+        "taxID": "string",
+        "type": "string"
+      }
+    }
+  },
+  "destination": {
+    "name": "string",
+    "taxID": "string",
+    "pixKey": "string",
+    "bank": "string",
+    "branch": "string",
+    "account": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

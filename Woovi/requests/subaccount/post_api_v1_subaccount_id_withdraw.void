@@ -1,0 +1,77 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.074Z
+---
+
+# Withdraw from a Sub Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: a63b1429-6832-4da8-b471-d749879d98d5
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 826b4e3f-b6af-482e-a979-5ee54472474f
+content:
+  - type: method
+    attrs:
+      uid: d2b17f02-93f7-41f1-9e96-cf6fd35a9e25
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: bd4e32e6-3749-4b8b-9016-f4f776da0627
+    content: https://api.woovi.com/api/v1/subaccount/{id}/withdraw
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 2f928dd1-85d3-4b8a-ae4d-fbefcb6f2ec5
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0
+    }
+---
+```
+
+
+
+```json
+{
+  "transaction": {
+    "status": "CREATED",
+    "value": 100,
+    "endToEndId": "ENDTOENDID_1234567890",
+    "correlationID": "TESTING1323",
+    "destinationAlias": "pixKeyTest@test.com",
+    "comment": "testing-transaction"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

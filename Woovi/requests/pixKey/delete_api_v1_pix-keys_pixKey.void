@@ -1,0 +1,40 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.973Z
+---
+
+# Delete a Pix key
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 8c7bb5f7-646d-4a59-875e-f3df29338787
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 8f0b3ee6-a291-4af3-93b6-0c1b3b370d8f
+content:
+  - type: method
+    attrs:
+      uid: a92a2427-d89d-49ac-9ea4-89009e45618f
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: ed0da901-6dae-4a70-9cd8-9548ff598670
+    content: https://api.woovi.com/api/v1/pix-keys/{pixKey}
+---
+```
+

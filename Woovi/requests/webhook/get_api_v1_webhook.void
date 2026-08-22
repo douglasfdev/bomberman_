@@ -1,0 +1,90 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.152Z
+---
+
+# Get a list of webhooks
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: ccd27d01-4885-4e71-b197-8cded402ad68
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: a23fde80-39f2-4b3f-91de-cd070defe9af
+content:
+  - type: method
+    attrs:
+      uid: d6d61c9e-2a41-4718-a14e-815d250a520b
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: be23f2a5-4266-45f4-a078-586c1589e76b
+    content: https://api.woovi.com/api/v1/webhook
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 321e783d-5e68-4195-b53c-bb1e94a2f51c
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "webhooks": [
+    {
+      "id": "string",
+      "name": "string",
+      "event": "OPENPIX:CHARGE_CREATED",
+      "url": "string",
+      "authorization": "string",
+      "isActive": false,
+      "createdAt": "string",
+      "updatedAt": "string"
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

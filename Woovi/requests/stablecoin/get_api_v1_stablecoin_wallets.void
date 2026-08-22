@@ -1,0 +1,57 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.065Z
+---
+
+# List custodian deposit wallets for the AppID bank account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: af85082e-43d3-4bf7-8c82-1fbd768e275a
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 0309398c-356a-4e14-8efc-462b2b2ec99d
+content:
+  - type: method
+    attrs:
+      uid: c983d970-5aa6-4a62-a22c-af3326f3b936
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 0e535c56-dde9-47bb-b5f2-92b277da718a
+    content: https://api.woovi.com/api/v1/stablecoin/wallets
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "companyBankAccountId": "string",
+  "subAccountId": "string",
+  "wallets": [
+    {
+      "address": "string",
+      "currency": "string",
+      "network": "string"
+    }
+  ]
+}
+```
+

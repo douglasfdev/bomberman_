@@ -1,0 +1,68 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.892Z
+---
+
+# Get invoices
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e94061f3-2b0c-4122-b9b6-e42004c8e680
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: e45ea9c0-b7f9-43f0-9c54-fe12bdc0a3eb
+content:
+  - type: method
+    attrs:
+      uid: 3885119d-0170-4951-a087-b0bfae05b547
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 1d15d1c3-594d-4096-97ba-0221f2c214df
+    content: https://api.woovi.com/api/v1/invoice
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 58bd3982-7b64-454b-91f6-d302cb31f8f5
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

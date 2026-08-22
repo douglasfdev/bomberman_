@@ -1,0 +1,95 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.986Z
+---
+
+# Get token bucket logs
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 798eeb53-b07f-4b04-981b-d0cd9b9d6d1e
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 8be9dd8e-4b54-4777-891e-35e2103d4862
+content:
+  - type: method
+    attrs:
+      uid: bd0eea0b-fcbb-4f5d-8df4-68ed885a6a81
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 9d78ec2e-f72e-46fd-b6fd-ef67b3f51c8c
+    content: https://api.woovi.com/api/v1/pix-keys/tokens/logs
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: cf53213c-6a34-4880-9c76-a480ed63cbfa
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "pageInfo": {
+    "skip": 0,
+    "limit": 100,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  },
+  "logs": [
+    {
+      "operation": "REMOVE",
+      "reason": "pixKeyCheck",
+      "tokens": 1,
+      "tokensBefore": 100,
+      "tokensAfter": 99,
+      "endToEndId": "E18236120202012032010s0133872GZA",
+      "pixKey": "31324227036",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "operation": "ADD",
+      "reason": "refill",
+      "tokens": 10,
+      "tokensBefore": 90,
+      "tokensAfter": 100,
+      "createdAt": "2024-01-15T11:00:00.000Z",
+      "updatedAt": "2024-01-15T11:00:00.000Z"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

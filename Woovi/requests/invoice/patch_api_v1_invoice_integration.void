@@ -1,0 +1,91 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.904Z
+---
+
+# Activate or deactivate the NFe.io integration for the authenticated company
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 856475ab-b05e-4507-a204-1e1e3852dae3
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: e5fa74a5-36f3-499a-ba5e-93835cd3ab66
+content:
+  - type: method
+    attrs:
+      uid: 5566d468-2342-4829-aa6d-42551c15432d
+      method: PATCH
+      importedFrom: ""
+      visible: true
+    content: PATCH
+  - type: url
+    attrs:
+      uid: b5e8c0a5-8542-4192-9b81-f8d51999c20a
+    content: https://api.woovi.com/api/v1/invoice/integration
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 1d48b3ff-2a1d-4288-8ac5-229a62515daa
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "isActive": false
+    }
+---
+```
+
+
+
+```json
+{
+  "integration": {
+    "id": "string",
+    "type": "string",
+    "status": null,
+    "isActive": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

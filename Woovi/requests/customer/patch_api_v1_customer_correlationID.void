@@ -1,0 +1,101 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.859Z
+---
+
+# Update a Customer
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 189b1348-c5e4-45b1-8fcc-cb15a76e9d6d
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: f059aaa5-a6eb-4a62-9411-2216eac76e5f
+content:
+  - type: method
+    attrs:
+      uid: 6bcf29a6-814d-4d08-bb52-373c6ce574ff
+      method: PATCH
+      importedFrom: ""
+      visible: true
+    content: PATCH
+  - type: url
+    attrs:
+      uid: fbcccf77-857c-490a-9fbe-57a7d3b81b0b
+    content: https://api.woovi.com/api/v1/customer/{correlationID}
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 5ad9d146-0c3f-48af-917a-420215f6bace
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "name": "Dan",
+      "email": "email0@example.com",
+      "phone": "5511999999999",
+      "address": {
+        "zipcode": "30421322",
+        "street": "Street",
+        "number": "100",
+        "neighborhood": "Neighborhood",
+        "city": "Belo Horizonte",
+        "state": "MG",
+        "complement": "APTO",
+        "country": "BR"
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "customer": {
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "string"
+    },
+    "correlationID": "string",
+    "address": {
+      "zipcode": "string",
+      "street": "string",
+      "number": "string",
+      "neighborhood": "string",
+      "city": "string",
+      "state": "string",
+      "complement": "string",
+      "country": "string"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

@@ -1,0 +1,102 @@
+<div class="modal-backdrop" (click)="close()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <!-- Header do modal -->
+    <div class="modal-header">
+      <h2 class="modal-title">
+        {{ tierEmoji() }} Adquirir Tier {{ tierInfo().label }}
+      </h2>
+      <button class="btn-close" (click)="close()" aria-label="Fechar">✕</button>
+    </div>
+
+    <!-- Informações do tier -->
+    <div class="tier-info">
+      <span class="tier-price">{{ formatPrice(tierInfo().price) }}</span>
+      <span class="tier-skins">{{ tierInfo().skinCount }} skins desbloqueadas</span>
+      <span class="tier-permanent">🔐 Acesso permanente — pague uma vez</span>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <div class="modal-body">
+
+      <!-- Loading -->
+      @if (loading()) {
+        <div class="loading-state">
+          <div class="spinner-large"></div>
+          <p>Gerando QR Code PIX...</p>
+        </div>
+      }
+
+      <!-- Erro -->
+      @if (error()) {
+        <div class="error-state">
+          <p class="error-message">❌ {{ error() }}</p>
+          <button class="btn-retry" (click)="generateCharge()">
+            🔄 Tentar novamente
+          </button>
+        </div>
+      }
+
+      <!-- QR Code e código PIX -->
+      @if (!loading() && !error() && paymentData()) {
+        <div class="payment-content">
+
+          <!-- Timer -->
+          <div class="timer" [class.urgent]="timeLeft() < 60">
+            ⏱️ Expira em: <strong>{{ formatTime(timeLeft()) }}</strong>
+          </div>
+
+          <!-- QR Code -->
+          <div class="qrcode-wrapper">
+            <img
+              [src]="paymentData()!.qrCodeImage"
+              alt="QR Code PIX"
+              class="qrcode-img"
+            />
+          </div>
+
+          <!-- Instruções -->
+          <ol class="instructions">
+            <li>Abra o app do seu banco</li>
+            <li>Acesse a área de <strong>PIX</strong></li>
+            <li>Escaneie o QR Code ou cole o código</li>
+            <li>Confirme o pagamento</li>
+            <li>Suas skins serão desbloqueadas automaticamente! 🎉</li>
+          </ol>
+
+          <!-- Código copia e cola -->
+          <div class="pix-code-section">
+            <label class="pix-label">Código PIX (copia e cola):</label>
+            <div class="pix-code-row">
+              <input
+                class="pix-code-input"
+                [value]="paymentData()!.brCode"
+                readonly
+              />
+              <button
+                class="btn-copy"
+                [class.copied]="copied()"
+                (click)="copyPixCode()"
+              >
+                {{ copied() ? '✅ Copiado!' : '📋 Copiar' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Status de aguardando -->
+          <div class="waiting-status">
+            <div class="pulse-dot"></div>
+            <span>Aguardando confirmação do pagamento...</span>
+          </div>
+
+        </div>
+      }
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn-cancel" (click)="close()">Cancelar</button>
+    </div>
+  </div>
+</div>

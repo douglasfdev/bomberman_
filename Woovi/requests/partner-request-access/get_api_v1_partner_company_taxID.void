@@ -1,0 +1,85 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.937Z
+---
+
+# Get an specific preregistration via taxID param.
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e193c35a-46f4-4cfd-88d9-385bf779ae08
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 64379b56-4606-4a79-a219-61d6cf183932
+content:
+  - type: method
+    attrs:
+      uid: bb8bae53-1f28-4c5c-a5e7-2202581ed738
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 8d9d8206-2369-4ec9-bad3-a10703ae314c
+    content: https://api.woovi.com/api/v1/partner/company/{taxID}
+---
+```
+
+
+
+```json
+{
+  "preRegistration": {
+    "preRegistration": {
+      "name": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "BR:CNPJ"
+      }
+    },
+    "user": {
+      "firstName": "string",
+      "lastName": "string",
+      "email": "string",
+      "phone": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "BR:CNPJ"
+      }
+    },
+    "company": {
+      "id": "string",
+      "name": "string",
+      "taxID": {
+        "taxID": "string",
+        "type": "BR:CNPJ"
+      }
+    },
+    "account": {
+      "clientId": "string"
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

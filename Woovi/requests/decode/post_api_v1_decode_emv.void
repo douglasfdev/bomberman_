@@ -1,0 +1,103 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.862Z
+---
+
+# Parse EMV (PIX) QR code and optionally resolve COB/REC locations
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: a558f38a-523e-4005-b609-b510a3b7198b
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 765bd85b-040a-439e-b271-44efe02b558b
+content:
+  - type: method
+    attrs:
+      uid: 25260861-8d06-4154-ae03-2a3b3070c5d1
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: ecf4678f-a4de-42fd-93df-5ac02dcc6056
+    content: https://api.woovi.com/api/v1/decode/emv
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: a062beef-72f9-4c16-9b9f-b4953bf0fa0d
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "emv": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "emv": {
+    "payloadFormatIndicator": "string",
+    "pointOfInitiationMethod": "string",
+    "merchantAccountInformationPix": {
+      "gui": "string",
+      "pixKey": "string",
+      "url": "string",
+      "additionalInformation": "string"
+    },
+    "merchantCategoryCode": "string",
+    "transactionCurrency": "string",
+    "transactionAmount": "string",
+    "countryCode": "string",
+    "merchantName": "string",
+    "merchantCity": "string",
+    "additionalDataFieldTemplate": {
+      "referenceLabel": "string"
+    },
+    "unreservedTemplates": {
+      "gui": "string",
+      "url": "string"
+    },
+    "crc": "string"
+  },
+  "cobLocation": null,
+  "recLocation": null
+}
+```
+
+
+
+```json
+{
+  "error": "Invalid EMV payload"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error occurred"
+}
+```
+

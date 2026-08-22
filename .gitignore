@@ -43,3 +43,15 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 .aider*
+
+# Environment variables
+.env
+/src/generated/prisma
+./public/assets/kenney_blocky-characters_20/Models/FBX
+./public/assets/kenney_blocky-characters_20/Models/OBJ
+
+# Voiden
+.voiden/*
+!.voiden/env-public.yaml
+!.voiden/env-*-public.yaml
+.voiden-inherited.void

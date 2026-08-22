@@ -1,0 +1,67 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.106Z
+---
+
+# Get one installment
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 34c69443-f4d5-4cc4-836e-879267d5f50f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 95a9b13f-6817-4f36-96a8-c1979be7e610
+content:
+  - type: method
+    attrs:
+      uid: 6d7a0381-c5ea-440b-aca8-d4b797b94472
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 46f940f0-1ef6-4be4-a257-226d28a9176b
+    content: https://api.woovi.com/api/v1/installments/{id}
+---
+```
+
+
+
+```json
+{
+  "installment": {
+    "dateGenerateCharge": "2026-08-18T13:39:58.106Z",
+    "expiration": 0,
+    "installmentNumber": 0,
+    "value": 0,
+    "status": "string",
+    "createdAt": "2026-08-18T13:39:58.106Z",
+    "cobr": null,
+    "paymentSubscriptionGlobalID": "string",
+    "correlationID": "string",
+    "globalID": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

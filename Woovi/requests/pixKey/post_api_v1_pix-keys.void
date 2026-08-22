@@ -1,0 +1,65 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.979Z
+---
+
+# Create a new Pix key
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6d90cd58-844a-49bf-a825-de7bb90277d7
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 916c97de-7953-4099-ac06-3b7198f88d12
+content:
+  - type: method
+    attrs:
+      uid: 79d2aabc-5fa8-4c92-809a-3222d6eed846
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: fb7434ed-9757-4051-927c-b8f4612b012c
+    content: https://api.woovi.com/api/v1/pix-keys
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: b4708c24-a185-4c83-bb06-757b38e2dd92
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "key": "string",
+      "type": "CNPJ"
+    }
+---
+```
+
+
+
+```json
+{
+  "key": "string",
+  "type": "CPF",
+  "isDefault": false
+}
+```
+

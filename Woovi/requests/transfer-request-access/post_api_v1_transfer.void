@@ -1,0 +1,77 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.142Z
+---
+
+# Create a Transfer
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: ac54fee7-2bcf-4fc6-8fd2-b631038b8b7b
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 147b474e-8953-4de6-a1d4-bca01a0194d5
+content:
+  - type: method
+    attrs:
+      uid: 0435260d-e80d-4759-ab12-40d259e8766d
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: e2530b74-cdf9-449e-b160-d1688e59654a
+    content: https://api.woovi.com/api/v1/transfer
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: ae484ec3-5d6a-42c4-9107-340271a3ed60
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 100,
+      "fromPixKey": "from@openpix.com.br",
+      "toPixKey": "to@openpix.com.br",
+      "correlationID": "123e4567-e89b-12d3-a456-426614174000"
+    }
+---
+```
+
+
+
+```json
+{
+  "transaction": {
+    "value": 0,
+    "time": "string",
+    "correlationID": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

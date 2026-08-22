@@ -1,0 +1,117 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.774Z
+---
+
+# Reject an anticipation request
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 165ac823-cdfd-44c4-b582-37251d17c422
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: fb09fc7e-ba4c-44f4-96e0-e21c57d251b8
+content:
+  - type: method
+    attrs:
+      uid: e6afdefe-abcb-4760-8472-c8c3f0f79483
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: f6b138a5-5752-4dd6-afff-c9b8d2efa969
+    content: https://api.woovi.com/api/v1/anticipation/{id}/reject
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: dc582459-f3f2-43c4-84c0-289b9b321bcd
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "reason": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "anticipation": {
+    "id": "6290ccfd42831958a405debc",
+    "status": "CANCELED",
+    "beneficiaryTaxID": "12345678909",
+    "requestedAmount": 100000,
+    "feeAmount": 7000,
+    "netAmount": 93000,
+    "feeMode": "PERCENTAGE",
+    "monthlyFeePercentage": 7,
+    "daysUntilDue": 7,
+    "dueDate": "2026-07-25T03:00:00.000Z",
+    "approvedAt": null,
+    "cancelledAt": "2026-07-18T12:05:00.000Z",
+    "cancelReason": "acima do limite",
+    "endToEndId": null,
+    "failureCode": null,
+    "failureReason": null,
+    "createdAt": "2026-07-18T11:59:00.000Z"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

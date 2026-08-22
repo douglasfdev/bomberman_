@@ -1,0 +1,60 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.159Z
+---
+
+# Get a list of webhook events
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 3fd2c29f-621c-48be-9cde-10cc88299005
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 6330288a-e552-48d4-a24b-1671e983e106
+content:
+  - type: method
+    attrs:
+      uid: a28097ea-804f-4c0a-b24a-bbea6db07494
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 0dd94ae2-b129-4125-9518-dbcacf641e47
+    content: https://api.woovi.com/api/v1/webhook/events
+---
+```
+
+
+
+```json
+{
+  "events": [
+    {
+      "name": "OPENPIX:CHARGE_CREATED"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

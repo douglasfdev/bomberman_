@@ -1,0 +1,85 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.155Z
+---
+
+# Create a new Webhook
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 0af66c32-1e87-4199-9c9a-231f9c79e349
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 87821aae-01cc-46cd-a9cb-89cd8471a449
+content:
+  - type: method
+    attrs:
+      uid: fb8ffae6-c2e5-4b3c-8a4b-be45d9b9901b
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: ea7abecb-cee0-44c1-a73a-679690ed0724
+    content: https://api.woovi.com/api/v1/webhook
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: d641f532-65f3-4ffb-82f9-a675d5aa4879
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "webhook": {
+        "name": "string",
+        "event": "OPENPIX:CHARGE_CREATED",
+        "url": "string",
+        "authorization": "string",
+        "isActive": false
+      }
+    }
+---
+```
+
+
+
+```json
+{
+  "webhook": {
+    "id": "string",
+    "name": "string",
+    "event": "OPENPIX:CHARGE_CREATED",
+    "url": "string",
+    "authorization": "string",
+    "isActive": false,
+    "createdAt": "string",
+    "updatedAt": "string"
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

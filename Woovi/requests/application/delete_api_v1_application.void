@@ -1,0 +1,78 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.777Z
+---
+
+# Delete an application
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f0a67b6a-fbd7-492c-b45f-8620ad3a1d02
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: e4fca608-ef21-40e7-9257-f4f5d32c2ed3
+content:
+  - type: method
+    attrs:
+      uid: adbd85c7-3f4f-4f32-abc8-8ffd621a8040
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: ca867088-49c7-49f5-b5a5-b244908b3ca6
+    content: https://api.woovi.com/api/v1/application
+---
+```
+
+
+
+```json
+{
+  "success": true
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "details": [
+    {
+      "field": "string",
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "Application not found"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

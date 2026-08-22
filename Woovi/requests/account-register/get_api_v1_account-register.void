@@ -1,0 +1,80 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.751Z
+---
+
+# Get account register by CorrelationID
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 15cf2a43-c468-4688-8e80-23436a33ecd5
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 07d1f171-e010-4734-b619-4a17f0b6a74a
+content:
+  - type: method
+    attrs:
+      uid: 2671d413-72aa-4d4f-ae10-9b37f70cb259
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 7b4746f4-14f8-495a-8a5b-5062162d3640
+    content: https://api.woovi.com/api/v1/account-register
+---
+```
+
+
+
+```json
+{
+  "officialName": "string",
+  "tradeName": "string",
+  "type": "string",
+  "taxID": {
+    "taxID": "string",
+    "type": "string"
+  },
+  "status": "string",
+  "correlationID": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "Account register not found"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

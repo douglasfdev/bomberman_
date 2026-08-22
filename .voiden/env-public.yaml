@@ -1,0 +1,5 @@
+default:
+  displayName: "OpenPix collection variables"
+  variables:
+    baseUrl: "https://api.openpix.com.br"
+    id: "<string>"

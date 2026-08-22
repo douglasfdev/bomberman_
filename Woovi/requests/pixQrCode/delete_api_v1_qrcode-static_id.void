@@ -1,0 +1,58 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.989Z
+---
+
+# Delete a Pix QrCode Static
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: d0013faa-729f-4862-9b27-7c90270d32ab
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 4c10a5a5-012d-4b28-9cc7-b38546b9beb6
+content:
+  - type: method
+    attrs:
+      uid: b85d3e0e-af3a-41ac-8a4e-7a17a5149097
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: 5a33e816-ad54-4a05-bcdb-41f01fdcb4d2
+    content: https://api.woovi.com/api/v1/qrcode-static/{id}
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "id": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "status": "string"
+}
+```
+

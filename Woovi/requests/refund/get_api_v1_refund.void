@@ -1,0 +1,80 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.023Z
+---
+
+# Get a list of refunds
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 2e1585c6-ed44-4c51-9a35-235c59d850bf
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 7c55cd29-56ff-46cd-96b8-48e16ada47df
+content:
+  - type: method
+    attrs:
+      uid: b4784413-36ad-470f-877c-3971c801b400
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 100772ef-ec98-4da5-a0b4-c2823cac1433
+    content: https://api.woovi.com/api/v1/refund
+---
+```
+
+
+
+```json
+{
+  "refunds": [
+    {
+      "value": 0,
+      "status": "IN_PROCESSING",
+      "correlationID": "string",
+      "refundId": "string",
+      "time": "string",
+      "comment": "string"
+    }
+  ],
+  "pageInfo": {
+    "errors": [
+      {
+        "message": "string",
+        "data": {
+          "skip": 0,
+          "limit": 0
+        }
+      }
+    ],
+    "skip": 0,
+    "limit": 0,
+    "hasPreviousPage": false,
+    "hasNextPage": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

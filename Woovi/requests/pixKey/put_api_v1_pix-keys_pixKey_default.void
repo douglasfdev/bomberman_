@@ -1,0 +1,50 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.969Z
+---
+
+# Set a pix key as default
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f6697c07-f8d7-44b3-a7d3-15dc0542feb8
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 72010934-8495-43a2-aa7f-86a18c868397
+content:
+  - type: method
+    attrs:
+      uid: d2ee1dd5-440a-480d-8364-65f5a305137c
+      method: PUT
+      importedFrom: ""
+      visible: true
+    content: PUT
+  - type: url
+    attrs:
+      uid: 446d0570-906b-4b4b-981f-0eae30b58403
+    content: https://api.woovi.com/api/v1/pix-keys/{pixKey}/default
+---
+```
+
+
+
+```json
+{
+  "key": "string",
+  "type": "CPF",
+  "isDefault": false
+}
+```
+

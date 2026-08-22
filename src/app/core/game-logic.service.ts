@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import {
   BASE_BOMBS,
   BASE_MOVE_DURATION_MS,
@@ -34,11 +35,14 @@ import { Tile, TileType } from './models/tile.model';
 import { LevelService } from './level.service';
 import { MoveTiming } from './models/move-timing.model';
 import { InputManagerService } from './input-manager.service';
+import { AchievementService } from '../services/achievement.service';
 
 @Injectable({ providedIn: 'root' })
 export class GameLogicService {
   private readonly level = inject(LevelService);
   private readonly input = inject(InputManagerService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly achievements = inject(AchievementService);
 
   readonly score = signal(0);
   readonly highScore = signal(0);
@@ -57,13 +61,27 @@ export class GameLogicService {
   private explosions: Explosion[] = [];
   private powerUps: PowerUpDrop[] = [];
 
+  // ── Achievement tracking (session counters) ──────────────────────────────
+  /** Total de caixas destruídas nesta sessão (persiste entre partidas) */
+  private sessionBoxesDestroyed = 0;
+  /** Fases completadas consecutivamente (reinicia ao perder) */
+  private consecutivePhases = 0;
+  /** Power-ups coletados na partida atual */
+  private collectedPowerUps = new Set<PowerUpType>();
+  /** Indica se o jogador tomou dano nesta fase */
+  private tookDamageThisPhase = false;
+  /** Indica se houve chain reaction nesta explosão */
+  private chainReactionDetected = false;
+
   private currentMove: MoveTiming | null = null;
   private lastTickMs = 0;
 
   constructor() {
-    const savedHighScore = localStorage.getItem('highScore');
-    if (savedHighScore) {
-      this.highScore.set(Number(savedHighScore));
+    if (isPlatformBrowser(this.platformId)) {
+      const savedHighScore = localStorage.getItem('highScore');
+      if (savedHighScore) {
+        this.highScore.set(Number(savedHighScore));
+      }
     }
   }
 
@@ -71,13 +89,14 @@ export class GameLogicService {
     this.level.generate();
     this.resetFullGame();
     this.gamePhase.set(GamePhase.Ready);
+    // Carrega achievements ao iniciar o jogo (idempotente)
+    this.achievements.loadAchievements();
   }
 
   play(): void {
-    if (this.gamePhase() === GamePhase.Ready) {
-      this.lastTickMs = 0;
-      this.gamePhase.set(GamePhase.Playing);
-    }
+    if (this.gamePhase() !== GamePhase.Ready) return;
+    this.lastTickMs = performance.now();
+    this.gamePhase.set(GamePhase.Playing);
   }
 
   restart(): void {
@@ -95,6 +114,31 @@ export class GameLogicService {
     this.level.generate();
     this.resetLevelState();
     this.gamePhase.set(GamePhase.Playing);
+  }
+
+  /** Verifica achievements que dependem de fase concluída */
+  private checkPhaseAchievements(): void {
+    this.consecutivePhases++;
+
+    // SURVIVOR: completou a fase sem tomar dano
+    if (!this.tookDamageThisPhase) {
+      this.achievements.unlock('SURVIVOR');
+    }
+
+    // SPEED_DEMON: completou a fase com velocidade máxima (speed >= 6 steps)
+    if (this.speed() >= 6) {
+      this.achievements.unlock('SPEED_DEMON');
+    }
+
+    // PHASE_CLEARER: 5 fases seguidas
+    if (this.consecutivePhases >= 5) {
+      this.achievements.unlock('PHASE_CLEARER');
+    }
+
+    // BOMB_LEGEND: atingiu fase 10
+    if (this.phase() >= 10) {
+      this.achievements.unlock('BOMB_LEGEND');
+    }
   }
 
   private resetFullGame(): void {
@@ -132,6 +176,12 @@ export class GameLogicService {
     this.powerUps = [];
     this.currentMove = null;
     this.lastTickMs = 0;
+
+    // Resetar contadores de partida
+    this.consecutivePhases = 0;
+    this.collectedPowerUps.clear();
+    this.tookDamageThisPhase = false;
+    this.chainReactionDetected = false;
   }
 
   private resetLevelState(): void {
@@ -163,6 +213,10 @@ export class GameLogicService {
     this.powerUps = [];
     this.currentMove = null;
     this.lastTickMs = 0;
+
+    // Resetar contadores de fase
+    this.tookDamageThisPhase = false;
+    this.chainReactionDetected = false;
   }
 
   tick(deltaMs: number): void {
@@ -297,7 +351,7 @@ export class GameLogicService {
             return escapePath;
           }
         }
-        return null; 
+        return null;
       } else {
         if (!dangerSet.has(keyOf(nextStep)) && !this.bombs.some(b => samePosition(b.position, nextStep))) {
           return nextStep;
@@ -624,9 +678,28 @@ export class GameLogicService {
           this.level.setTile(pos, TileType.Empty);
           this.score.update(s => s + SCORE_BOX);
           this.trySpawnPowerUp(pos);
+
+          // Achievement: EXPLORER (50 caixas no total)
+          this.sessionBoxesDestroyed++;
+          if (this.sessionBoxesDestroyed >= 50) {
+            this.achievements.unlock('EXPLORER');
+          }
+
           break;
         }
       }
+    }
+
+    // Achievement: CHAIN_REACTION — verifica se esta explosão aciona outra bomba
+    const chainBombs = this.bombs.filter(
+      (b) => b.id !== bomb.id && (
+        tiles.some((t) => samePosition(t, b.position)) ||
+        samePosition(bomb.position, b.position)
+      )
+    );
+    if (chainBombs.length > 0) {
+      this.chainReactionDetected = true;
+      this.achievements.unlock('CHAIN_REACTION');
     }
 
     const id = Date.now() + Math.random();
@@ -653,12 +726,18 @@ export class GameLogicService {
       if (samePosition(this.player.position, exp.position) || exp.tiles.some(t => samePosition(t, this.player.position))) {
         if (!this.pierce()) {
           this.player.alive = false;
+          this.tookDamageThisPhase = true;
+          this.consecutivePhases = 0; // perde a sequência
           this.gamePhase.set(GamePhase.Defeat);
           this.updateHighScore();
           return;
         }
       }
     }
+
+    // Conta inimigos mortos nesta rodada de explosões (para BOMB_MASTER)
+    let killsThisExplosion = 0;
+    let totalKillsEver = 0;
 
     for (const enemy of this.enemies) {
       if (!enemy.alive) continue;
@@ -676,20 +755,40 @@ export class GameLogicService {
         this.enemiesRemaining.set(this.enemiesRemaining() - 1);
         this.score.update(s => s + SCORE_ENEMY);
         this.trySpawnPowerUp(enemy.position);
+        killsThisExplosion++;
       }
 
       if (samePosition(this.player.position, enemy.position)) {
         this.player.alive = false;
+        this.tookDamageThisPhase = true;
+        this.consecutivePhases = 0;
         this.gamePhase.set(GamePhase.Defeat);
         this.updateHighScore();
         return;
       }
     }
 
+    // Contar total de inimigos mortos para FIRST_BLOOD
+    totalKillsEver = this.enemies.filter(e => !e.alive).length;
+
+    if (killsThisExplosion > 0) {
+      // FIRST_BLOOD: pelo menos um inimigo morto
+      if (totalKillsEver >= 1) {
+        this.achievements.unlock('FIRST_BLOOD');
+      }
+      // BOMB_MASTER: 3 inimigos na mesma explosão
+      if (killsThisExplosion >= 3) {
+        this.achievements.unlock('BOMB_MASTER');
+      }
+    }
+
+    // Power-ups coletados
     for (let i = this.powerUps.length - 1; i >= 0; i--) {
       if (samePosition(this.player.position, this.powerUps[i].position)) {
         const pu = this.powerUps.splice(i, 1)[0];
         this.score.update(s => s + SCORE_POWER_UP);
+        this.collectedPowerUps.add(pu.type);
+
         switch (pu.type) {
           case PowerUpType.Range:
             this.player.range++;
@@ -704,12 +803,28 @@ export class GameLogicService {
             this.speed.update(s => s + 1);
             break;
         }
+
+        // POWER_COLLECTOR: todos os 4 tipos coletados na partida
+        if (
+          this.collectedPowerUps.has(PowerUpType.Range) &&
+          this.collectedPowerUps.has(PowerUpType.Bomb) &&
+          this.collectedPowerUps.has(PowerUpType.Speed) &&
+          this.collectedPowerUps.has(PowerUpType.Pierce)
+        ) {
+          this.achievements.unlock('POWER_COLLECTOR');
+        }
       }
+    }
+
+    // HIGH_SCORER: 1000 pontos numa partida
+    if (this.score() >= 1000) {
+      this.achievements.unlock('HIGH_SCORER');
     }
 
     if (this.exitOpen() && samePosition(this.player.position, this.level.exitBox)) {
       this.gamePhase.set(GamePhase.Victory);
       this.updateHighScore();
+      this.checkPhaseAchievements();
     }
   }
 
@@ -724,7 +839,9 @@ export class GameLogicService {
     const current = this.score();
     if (current > this.highScore()) {
       this.highScore.set(current);
-      localStorage.setItem('highScore', current.toString());
+      if (isPlatformBrowser(this.platformId)) {
+        localStorage.setItem('highScore', current.toString());
+      }
     }
   }
 

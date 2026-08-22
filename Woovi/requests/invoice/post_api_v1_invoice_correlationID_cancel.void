@@ -1,0 +1,72 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.886Z
+---
+
+# Cancel an invoice
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 8587ac1c-d848-49c5-b13c-d7824ce58537
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 5c268b4e-5e22-4a12-b266-a6955bb7d891
+content:
+  - type: method
+    attrs:
+      uid: b273f62b-1a16-40d3-8d35-bf76da814ddf
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: c09905c6-8b9e-49b1-95ca-1927672377a8
+    content: https://api.woovi.com/api/v1/invoice/{correlationID}/cancel
+---
+```
+
+
+
+```json
+{
+  "success": false
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

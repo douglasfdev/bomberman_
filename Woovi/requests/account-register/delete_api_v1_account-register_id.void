@@ -1,0 +1,73 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.747Z
+---
+
+# Delete an account registration
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 0bfef7d6-2711-4e71-b79f-b8da4f23c83f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 640a335d-b8d2-445d-a3c5-1dedfdd54781
+content:
+  - type: method
+    attrs:
+      uid: 8bca09cc-3ddd-458d-ba53-6dc174da9189
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: 21986e7b-23d9-4845-8907-681ebbe8c6b9
+    content: https://api.woovi.com/api/v1/account-register/{id}
+---
+```
+
+
+
+```json
+{
+  "message": "string",
+  "accountRegisterId": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+

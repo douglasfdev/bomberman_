@@ -1,0 +1,50 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.162Z
+---
+
+# Get a list of webhook IPs
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: ddf5847d-9686-47d4-8737-db25da82a069
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 532bcc16-adbf-4882-a83b-8d7be3273e58
+content:
+  - type: method
+    attrs:
+      uid: 20dc7f0f-aac7-41a2-ad2b-8ab21b20ec8d
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 02e219fc-20f0-442b-b942-0a94770e0bdc
+    content: https://api.woovi.com/api/v1/webhook/ips
+---
+```
+
+
+
+```json
+{
+  "ips": [
+    "string"
+  ]
+}
+```
+

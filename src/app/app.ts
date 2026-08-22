@@ -1,9 +1,14 @@
 import { Component } from '@angular/core';
-import { GameComponent } from './game/game.component';
+import { RouterOutlet } from '@angular/router';
+import { AchievementNotificationComponent } from './components/achievement-notification/achievement-notification.component';
 
 @Component({
   selector: 'app-root',
-  imports: [GameComponent],
-  template: `<app-game />`,
+  standalone: true,
+  imports: [RouterOutlet, AchievementNotificationComponent],
+  template: `
+    <router-outlet />
+    <app-achievement-notification />
+  `,
 })
 export class App {}

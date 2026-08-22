@@ -1,0 +1,84 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.740Z
+---
+
+# Withdraw from an Account
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: d4323375-71b1-4e78-9268-8dadec65289c
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 8b5ea33a-b8ed-4579-8a39-4ac4f506a124
+content:
+  - type: method
+    attrs:
+      uid: d8030a9c-dc26-4204-a8e8-2b91a0a6f590
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: da008eaa-78d9-4285-a438-46c7e282b6cf
+    content: https://api.woovi.com/api/v1/account/{accountId}/withdraw
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 2183dd1d-e498-460a-85ba-8b7ccd55ab83
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 7000
+    }
+---
+```
+
+
+
+```json
+{
+  "withdraw": {
+    "account": {
+      "accountId": "6290ccfd42831958a405debc",
+      "isDefault": true,
+      "balance": {
+        "total": 122430,
+        "blocked": 0,
+        "available": 122430
+      }
+    },
+    "transaction": {
+      "endToEndId": "E23114447202205191817cx6VMrbwtw6",
+      "transaction": 7000
+    }
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

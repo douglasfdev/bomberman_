@@ -1,0 +1,82 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.866Z
+---
+
+# Upload new evidence
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 4cae348a-2d19-41ac-845c-21202291a47f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: ff1e0816-c600-4de1-b9b3-a3c513d39f13
+content:
+  - type: method
+    attrs:
+      uid: b9dabfea-a704-4b0d-94c0-4051ec03e57d
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: fe12cc0f-e802-4dcf-beb9-064a6d99ca06
+    content: https://api.woovi.com/api/v1/dispute/:id/evidence
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 4599c21c-d2e9-48a5-8b6f-6d57a27ea0f3
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "documents": [
+        {
+          "url": "string",
+          "correlationID": "string",
+          "description": "string"
+        }
+      ]
+    }
+---
+```
+
+
+
+```json
+{
+  "documents": [
+    {
+      "url": "string",
+      "correlationID": "string",
+      "description": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "You cannot send a evidence for a accepted dispute"
+}
+```
+

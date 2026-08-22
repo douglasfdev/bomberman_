@@ -1,0 +1,101 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.060Z
+---
+
+# Request a new stablecoin subaccount (KYB)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: f308ffc2-313f-46cb-914a-d13bf78595ec
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 315fc85e-f382-4dda-baa2-85d1c073766f
+content:
+  - type: method
+    attrs:
+      uid: 4b2a0748-29ae-448c-ae2b-6e4e2ef4c42f
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 455d9b68-464a-424e-8ca9-3da8c1a499b4
+    content: https://api.woovi.com/api/v1/stablecoin/subaccount
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: d37e27d0-fa8d-458f-92a5-0cf99152b2fc
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "accountRegisterId": "string",
+      "companyBankAccountId": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "subAccountId": "string",
+  "status": "string",
+  "correlationId": "string"
+}
+```
+
+
+
+```json
+{
+  "subAccountId": "string",
+  "status": "string",
+  "correlationId": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "correlationId": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "correlationId": "string"
+}
+```
+

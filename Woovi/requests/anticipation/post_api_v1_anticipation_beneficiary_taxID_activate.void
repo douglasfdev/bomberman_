@@ -1,0 +1,98 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.763Z
+---
+
+# Activate a beneficiary
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e5a17991-e012-4125-ad93-01602b0bf22f
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 3248ccaa-b7ba-4896-950c-ce9577fb4fd9
+content:
+  - type: method
+    attrs:
+      uid: 36d55b75-8f9e-4f3e-a5f1-6f991586aa62
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 4ca128b0-5c7e-4a1f-b53f-11b05f6f6510
+    content: https://api.woovi.com/api/v1/anticipation/beneficiary/{taxID}/activate
+---
+```
+
+
+
+```json
+{
+  "beneficiary": {
+    "name": "string",
+    "taxID": {
+      "taxID": "string",
+      "type": "BR:CPF"
+    },
+    "isActive": false,
+    "availableAmount": null,
+    "maxAdvanceableAmount": 0,
+    "notifyEmail": null,
+    "notifyPhone": null,
+    "verified": false,
+    "createdAt": null
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "data": null,
+  "errors": [
+    {
+      "message": "string"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

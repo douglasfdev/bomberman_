@@ -1,0 +1,78 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.041Z
+---
+
+# Pay out INTERNAL balance to BRL via Pix
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: c730ccd1-3dc7-4daa-8546-6c55894f30da
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: dc3904be-6372-48ce-9323-2422f9404690
+content:
+  - type: method
+    attrs:
+      uid: a5bd0243-7e88-4ded-91d7-6de24e1391e5
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 65e7000e-80ab-403c-80ec-531e9714edcc
+    content: https://api.woovi.com/api/v1/stablecoin/payout
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 5c881341-4dbf-40b0-b5c3-836d9272ba9e
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0,
+      "currency": "USDT",
+      "pixKey": "string",
+      "correlationId": null,
+      "pixMessage": null
+    }
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "payoutId": "string",
+  "correlationId": "string",
+  "pixKey": "string",
+  "pixKeyOwner": null,
+  "quote": {
+    "inputAmount": 0,
+    "inputCurrency": "string",
+    "outputAmount": 0,
+    "outputCurrency": "string",
+    "rate": 0,
+    "fee": 0
+  }
+}
+```
+

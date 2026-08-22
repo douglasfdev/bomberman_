@@ -1,0 +1,95 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.032Z
+---
+
+# Create a stablecoin deposit
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 85a823cd-8c2f-4bb2-aeeb-3a2ea3782f21
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 670c9de0-ec4c-4127-9149-c3a9b26430be
+content:
+  - type: method
+    attrs:
+      uid: f985879c-204a-4f70-b693-70e480c6715f
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 0e605171-3b28-45cc-92a5-0c2601976583
+    content: https://api.woovi.com/api/v1/stablecoin/deposit
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: c9dbe175-ac15-44b3-89c5-92d9c9d47db3
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "value": 0,
+      "currency": "USDT",
+      "network": "POLYGON",
+      "subAccountId": "string",
+      "correlationId": "string",
+      "destinationWalletAddress": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "depositId": "string",
+  "correlationId": "string",
+  "expiration": "string",
+  "quote": {
+    "inputAmount": 0,
+    "inputCurrency": "string",
+    "outputAmount": 0,
+    "outputCurrency": "string",
+    "rate": 0,
+    "fee": 0
+  }
+}
+```
+
+
+
+```json
+{
+  "step": "string",
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

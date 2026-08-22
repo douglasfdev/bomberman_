@@ -1,0 +1,119 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.884Z
+---
+
+# Open a funds recovery (MED)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: bc207d2e-6116-4014-bcd8-ec7d7020f8d9
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: e95c67be-e16f-4ccd-a49b-9353dde15a4c
+content:
+  - type: method
+    attrs:
+      uid: 374f0fd3-2be4-406c-a7ca-4a138403b06b
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: 29b20dea-6509-4c2b-85bb-24dccdefced6
+    content: https://api.woovi.com/api/v1/funds-recovery
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 7155c7d2-9bc0-4160-9aca-33ec566c8735
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "transactionEndToEndId": "string",
+      "situationType": "SCAM",
+      "details": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "rootTransactionId": "E31680151202606101530AbCdEf12345",
+  "situationType": "SCAM",
+  "reportDetails": "Payment made to a fake seller. After the payment, the seller stopped responding and never delivered the product.",
+  "dictId": "3e760cd5-39b2-45da-8ab6-b212cf205568",
+  "status": "CREATED",
+  "direction": "SENT",
+  "reporterParticipant": "31680151",
+  "creationTime": "2026-06-11T00:30:00.000Z",
+  "lastModified": "2026-06-11T00:30:00.000Z",
+  "events": [],
+  "createdAt": "2026-06-11T00:30:00.000Z",
+  "updatedAt": "2026-06-11T00:30:00.000Z"
+}
+```
+
+
+
+```json
+{
+  "error": {
+    "situationType": [
+      "Invalid enum value"
+    ]
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "Invalid appID"
+}
+```
+
+
+
+```json
+{
+  "error": "Your account does not have the permission to use this endpoint"
+}
+```
+
+
+
+```json
+{
+  "error": "Transaction not found"
+}
+```
+
+
+
+```json
+{
+  "error": "FundsRecovery already exists for transaction E31680151202606101530AbCdEf12345"
+}
+```
+

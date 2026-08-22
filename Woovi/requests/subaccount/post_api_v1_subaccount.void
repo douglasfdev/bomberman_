@@ -1,0 +1,76 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.090Z
+---
+
+# Create a subaccount
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e1ef5798-a73a-43a0-a410-58b4e7679048
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 4f78d5a8-4b24-4d42-8476-6731d8d2cf13
+content:
+  - type: method
+    attrs:
+      uid: 720a3d89-f434-4d6a-a806-2e9cc8bdab18
+      method: POST
+      importedFrom: ""
+      visible: true
+    content: POST
+  - type: url
+    attrs:
+      uid: cb08344a-22d3-4db1-bd24-9a7b36db8663
+    content: https://api.woovi.com/api/v1/subaccount
+---
+```
+
+```void
+---
+type: json_body
+attrs:
+  uid: 7d68d666-d4bb-41dc-ab30-4411ed880f6b
+  importedFrom: ""
+  contentType: json
+  body: |-
+    {
+      "pixKey": "string",
+      "name": "string"
+    }
+---
+```
+
+
+
+```json
+{
+  "SubAccount": {
+    "name": "string",
+    "pixKey": "string",
+    "balance": 0,
+    "withdrawBlocked": false
+  }
+}
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+

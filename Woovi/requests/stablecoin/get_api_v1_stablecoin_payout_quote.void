@@ -1,0 +1,68 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.044Z
+---
+
+# Quote an INTERNAL balance off-ramp to BRL via Pix
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 6120cfb5-bd83-45a2-9524-7df346335326
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 2dafdff6-5b20-4034-ab0e-b06af38755a0
+content:
+  - type: method
+    attrs:
+      uid: 507faa92-a6aa-4f99-9d5a-7ff8992f95e9
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 95948c3c-d9c8-401e-8a34-bf6246757f94
+    content: https://api.woovi.com/api/v1/stablecoin/payout/quote
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 3a58571d-879b-4a71-ae96-a832cf4e297d
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "status": "string",
+  "quote": {
+    "basePrice": null,
+    "inputAmount": null,
+    "inputCurrency": "string",
+    "outputAmount": null,
+    "outputCurrency": "string",
+    "pairName": "string"
+  }
+}
+```
+

@@ -1,0 +1,92 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.006Z
+---
+
+# Get a list of PSPs (Payment Service Providers)
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: cf4ed6a2-65e9-43b0-977b-6784d5812fd3
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 1d0937f7-9157-4370-af89-e6ce31df62d4
+content:
+  - type: method
+    attrs:
+      uid: b0e97675-cdc4-408d-bfb9-35506c629d6c
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 4718f062-1690-4cf5-b1bf-ddf23a7009b0
+    content: https://api.woovi.com/api/v1/psp
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: d870d2ae-8bc6-4326-ac8d-9b953f44b3a6
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "success": true,
+  "psps": [
+    {
+      "name": "BCO DO BRASIL S.A.",
+      "ispb": "00000000",
+      "code": "00000000",
+      "compe": "001"
+    },
+    {
+      "name": "CAIXA ECONOMICA FEDERAL",
+      "ispb": "00360305",
+      "code": "00360305",
+      "compe": "104"
+    }
+  ]
+}
+```
+
+
+
+```json
+{
+  "success": false,
+  "error": "string"
+}
+```
+
+
+
+```json
+{
+  "success": false,
+  "error": "string"
+}
+```
+

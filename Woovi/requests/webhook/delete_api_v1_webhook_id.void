@@ -1,0 +1,57 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:58.147Z
+---
+
+# Delete a Webhook
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: 084b5a7e-bf41-4e6a-9119-df2acf26d6a8
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: b169b336-f524-4b23-a45a-432a7b8e766e
+content:
+  - type: method
+    attrs:
+      uid: 5ea1c3c7-a95a-4dcc-98b2-a556e4814f4d
+      method: DELETE
+      importedFrom: ""
+      visible: true
+    content: DELETE
+  - type: url
+    attrs:
+      uid: d86c2279-3167-4475-b5ea-cee70964796d
+    content: https://api.woovi.com/api/v1/webhook/{id}
+---
+```
+
+
+
+```json
+{
+  "status": "string"
+}
+```
+
+
+
+```json
+{
+  "error": "string",
+  "status": "string"
+}
+```
+

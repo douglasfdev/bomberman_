@@ -1,0 +1,60 @@
+---
+version: 0.20.1
+generatedBy: Voiden Extension
+note: This file is auto-generated
+generatedAt: 2026-08-18T13:39:57.807Z
+---
+
+# Get an image of Qr Code from a Charge
+
+```void
+---
+type: openapispecLink
+attrs:
+  uid: e7d946cf-471c-4ff6-82cf-7ab0d76856ff
+  filePath: Woovi.json
+  filename: Woovi.json
+  isExternal: false
+---
+```
+
+```void
+---
+type: request
+attrs:
+  uid: 36032131-33aa-42e0-aac8-ae62706c381a
+content:
+  - type: method
+    attrs:
+      uid: 50e92e47-af8e-44b3-9ce0-fcaa4785f961
+      method: GET
+      importedFrom: ""
+      visible: true
+    content: GET
+  - type: url
+    attrs:
+      uid: 489d7a58-5a77-4ddd-8833-b2ac2b6da317
+    content: https://api.woovi.com/openpix/charge/brcode/image/{id}.png
+---
+```
+
+```void
+---
+type: query-table
+attrs:
+  uid: 3d09848d-3ed8-45d6-be3f-cb157dde3dcf
+  importedFrom: ""
+content:
+  - type: table
+    rows: []
+---
+```
+
+
+
+```json
+{
+  "error": "string"
+}
+```
+
