@@ -120,7 +120,7 @@ router.post('/purchase', async (req: any, res: any) => {
       correlationId: correlationID,
       payment: {
         brCode: charge.brCode,
-        qrCodeImage: charge.qrCodeImage,
+        qrCodeImage: charge.charge.qrCodeImage,
         amount,
         tier,
       },
