@@ -11,6 +11,7 @@
     "migrate:dev": "npx prisma migrate dev",
     "migrate": "npx prisma migrate deploy",
     "generate": "npx prisma generate",
+    "postinstall": "npm run generate",
     "dev:ssr": "npx ng serve --configuration development"
   },
   "private": true,

@@ -25,7 +25,7 @@ router.get('/', async (req: any, res: any) => {
         orderBy: { createdAt: 'asc' },
       });
       return res.json(
-        achievements.map((a) => ({ ...a, unlocked: false, unlockedAt: null }))
+        achievements.map((a : any) => ({ ...a, unlocked: false, unlockedAt: null }))
       );
     }
 
