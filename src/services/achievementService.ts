@@ -96,10 +96,10 @@ export async function listAchievementsForUser(userId: string) {
   ]);
 
   const unlockedMap = new Map<string, Date>(
-    unlocked.map((u) => [u.achievementId, u.unlockedAt])
+    unlocked.map((u: any) => [u.achievementId, u.unlockedAt])
   );
 
-  return achievements.map((a) => ({
+  return achievements.map((a: any) => ({
     ...a,
     unlocked: unlockedMap.has(a.id),
     unlockedAt: unlockedMap.get(a.id) ?? null,
