@@ -57,6 +57,7 @@ export function app(): express.Express {
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
+  server.set('trust proxy', 1);
 
   // Middlewares essenciais
   server.use(express.json());
