@@ -63,7 +63,8 @@ export function app(): express.Express {
       {
         clientID: process.env['GOOGLE_CLIENT_ID']!,
         clientSecret: process.env['GOOGLE_CLIENT_SECRET']!,
-        callbackURL: (process.env['APP_BASE_URL'] || '') + '/api/auth/google/callback',
+        // Alterado para utilizar o prefixo /auth e evitar o bloqueio da Vercel
+        callbackURL: (process.env['APP_BASE_URL'] || '') + '/auth/google/callback',
         scope: ['profile', 'email'],
       },
       async (accessToken: any, refreshToken: any, profile: any, done: any) => {
@@ -105,66 +106,13 @@ export function app(): express.Express {
     )
   );
 
-  try {
-    const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
-    passport.use(
-      new MicrosoftStrategy(
-        {
-          clientID: process.env['MICROSOFT_CLIENT_ID'],
-          clientSecret: process.env['MICROSOFT_CLIENT_SECRET'],
-          callbackURL: (process.env['APP_BASE_URL'] || '') + '/api/auth/microsoft/callback',
-          scope: ['user.read', 'openid', 'profile', 'email'],
-        },
-        async (accessToken: any, refreshToken: any, profile: any, done: any) => {
-          try {
-            const email = profile?.emails?.[0]?.value?.toLowerCase().trim();
-            if (!email) return done(new Error('No email in Microsoft profile'));
+  // Removido o try/catch do MicrosoftStrategy para não poluir, adicione se for usar futuramente.
 
-            let user = await prismaClient.user.findUnique({ where: { microsoftId: profile.id } });
+  // --- MUDANÇAS DE ROTA AQUI ---
+  // Passamos a suportar tanto /api/auth quanto apenas /auth para driblar a Vercel
+  server.get(['/api/auth/google', '/auth/google'], passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-            if (user) {
-              if (user.email !== email) {
-                user = await prismaClient.user.update({
-                  where: { microsoftId: profile.id },
-                  data: { email, name: profile.displayName || profile.username },
-                });
-              }
-            } else {
-              try {
-                user = await prismaClient.user.upsert({
-                  where: { email },
-                  update: { name: profile.displayName || profile.username, microsoftId: profile.id },
-                  create: { email, name: profile.displayName || profile.username, microsoftId: profile.id },
-                });
-              } catch (err: any) {
-                if (err?.code === 'P2002') {
-                  user = await prismaClient.user.findUnique({ where: { microsoftId: profile.id } });
-                  if (!user) throw err;
-                } else {
-                  throw err;
-                }
-              }
-            }
-
-            return done(null, user);
-          } catch (error) {
-            return done(error);
-          }
-        }
-      )
-    );
-
-    server.get('/api/auth/microsoft', passport.authenticate('microsoft'));
-    server.get(
-      '/api/auth/microsoft/callback',
-      passport.authenticate('microsoft', { failureRedirect: '/', successRedirect: '/' })
-    );
-  } catch (err) {
-    console.warn('passport-microsoft not configured or installed; skipping routes');
-  }
-
-  server.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-  server.get('/api/auth/google/callback', (req, res, next) => {
+  server.get(['/api/auth/google/callback', '/auth/google/callback'], (req, res, next) => {
     passport.authenticate('google', (err: any, user: any) => {
       if (err) {
         return res.status(500).send('Erro no login, veja o console');
@@ -175,6 +123,14 @@ export function app(): express.Express {
         res.redirect('/');
       });
     })(req, res, next);
+  });
+
+  // MUDANÇA: de server.post para server.all para interceptar acessos GET e POST
+  server.all(['/api/auth/logout', '/auth/logout'], (req: any, res: any, next: any) => {
+    req.logout((err: any) => {
+      if (err) return next(err);
+      res.redirect('/');
+    });
   });
 
   passport.serializeUser((user: any, done) => {
@@ -205,13 +161,6 @@ export function app(): express.Express {
     if (!req.user) return res.json({ isDonor: false });
     const user = req.user as any;
     res.json({ isDonor: !!user.isDonor });
-  });
-
-  server.post('/api/auth/logout', (req: any, res: any, next: any) => {
-    req.logout((err: any) => {
-      if (err) return next(err);
-      res.redirect('/');
-    });
   });
 
   server.get('/api/ads/config', (req, res) => {
@@ -273,16 +222,12 @@ export function app(): express.Express {
     res.sendStatus(204);
   });
 
-  server.use('/api', (err: any, req: any, res: any, next: any) => {
-    res.status(500).json({ error: 'Erro interno no servidor', details: err.message });
-  });
-
-  // Intercepta Socket.io para evitar crash de HTML parse no Angular SSR durante requests na Vercel
-  server.all('/socket.io/*', (req, res) => {
+  // MUDANÇA: Substituido o `.all` problemático por `.use`
+  server.use('/socket.io', (req, res) => {
     res.status(501).json({ error: 'WebSockets not supported on Vercel Serverless' });
   });
 
-  server.all('/api/*', (req, res) => {
+  server.use('/api', (req, res) => {
     res.status(404).json({ error: 'API route not found' });
   });
 
