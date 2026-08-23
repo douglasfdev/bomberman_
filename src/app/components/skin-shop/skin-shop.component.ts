@@ -64,7 +64,7 @@ export class SkinShopComponent implements OnInit, OnDestroy {
     }
   });
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -95,7 +95,7 @@ export class SkinShopComponent implements OnInit, OnDestroy {
   /** Trata clique em uma skin */
   onSkinClick(skin: SkinCatalogItem): void {
     if (!this.isLoggedIn()) {
-      window.location.href = '/api/auth/google';
+      window.location.href = '/auth/google';
       return;
     }
 
@@ -134,7 +134,7 @@ export class SkinShopComponent implements OnInit, OnDestroy {
   openPurchaseModal(tier: SkinTierType, event: Event): void {
     event.stopPropagation();
     if (!this.isLoggedIn()) {
-      window.location.href = '/api/auth/google';
+      window.location.href = '/auth/google';
       return;
     }
     this.purchaseModalTier.set(tier);
