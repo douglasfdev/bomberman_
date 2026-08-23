@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "/"
+    },
+    {
+      "source": "/socket.io/:path*",
+      "destination": "/"
     }
   ]
 }
