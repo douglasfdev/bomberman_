@@ -5,6 +5,10 @@
       "destination": "/"
     },
     {
+      "source": "/auth/:path*",
+      "destination": "/"
+    },
+    {
       "source": "/socket.io/:path*",
       "destination": "/"
     }
