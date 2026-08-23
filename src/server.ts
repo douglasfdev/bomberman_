@@ -27,11 +27,8 @@ const browserDistFolder = resolve(serverDir, '../browser');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 
-// Inicializa o motor SSR moderno do Angular
-// Nota: Ajustado para evitar erro de sintaxe do código original
 const angularApp = new AngularNodeAppEngine();
 
-// Declarado no topo para que as rotas da API consiga enxergar o Socket.io
 export let io: Server;
 
 export function app(): express.Express {
@@ -57,13 +54,12 @@ export function app(): express.Express {
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
+
   server.set('trust proxy', 1);
 
-  // Middlewares essenciais
   server.use(express.json());
   server.use(express.urlencoded({ extended: true }));
 
-  // Configuração da Sessão
   server.use(
     session({
       secret: process.env['SESSION_SECRET'] || 'default-secret-change-in-prod',
@@ -72,16 +68,14 @@ export function app(): express.Express {
       cookie: {
         httpOnly: true,
         secure: process.env['NODE_ENV'] === 'production',
-        maxAge: 24 * 60 * 60 * 1000, // 24 horas
+        maxAge: 24 * 60 * 60 * 1000,
       },
     })
   );
 
-  // Inicialização do Passport
   server.use(passport.initialize());
   server.use(passport.session());
 
-  // Configuração da Estratégia Google
   passport.use(
     new GoogleStrategy(
       {
@@ -95,11 +89,9 @@ export function app(): express.Express {
           const email = profile.emails?.[0]?.value?.toLowerCase().trim();
           if (!email) return done(new Error('No email provided'));
 
-          // Primeiro tenta achar pelo googleId, que é a chave estável entre logins.
           let user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
 
           if (user) {
-            // Já existe conta vinculada a esse Google. Só atualiza nome/e-mail se mudaram.
             if (user.email !== email || user.name !== profile.displayName) {
               user = await prismaClient.user.update({
                 where: { googleId: profile.id },
@@ -114,9 +106,6 @@ export function app(): express.Express {
                 create: { email, name: profile.displayName, googleId: profile.id },
               });
             } catch (err: any) {
-              // Corrida: outro request já criou/atualizou esse googleId entre o findUnique
-              // e o upsert (ex.: callback disparado duas vezes). Recupera o registro existente
-              // em vez de derrubar o login com P2002.
               if (err?.code === 'P2002') {
                 user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
                 if (!user) throw err;
@@ -134,7 +123,6 @@ export function app(): express.Express {
     )
   );
 
-  // Microsoft OAuth (opcional)
   try {
     const { Strategy: MicrosoftStrategy } = require('passport-microsoft');
     passport.use(
@@ -193,7 +181,6 @@ export function app(): express.Express {
     console.warn('passport-microsoft not configured or installed; skipping routes');
   }
 
-  // Rotas de Autenticação Google
   server.get('/api/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
   server.get('/api/auth/google/callback', (req, res, next) => {
     passport.authenticate('google', (err: any, user: any) => {
@@ -211,7 +198,6 @@ export function app(): express.Express {
     })(req, res, next);
   });
 
-  // Serialização do Usuário
   passport.serializeUser((user: any, done) => {
     done(null, user.id);
   });
@@ -225,13 +211,11 @@ export function app(): express.Express {
     }
   });
 
-  // Rotas de Pagamento (Woovi/Pix)
   server.use('/api/payments', paymentRoutes);
   server.use('/api/webhooks', webhookRoutes);
   server.use('/api/skins', skinRoutes);
   server.use('/api/achievements', achievementRoutes);
 
-  // Endpoints da API
   server.get('/api/user', (req: any, res: any) => {
     if (!req.user) return res.json(null);
     const user = req.user as any;
@@ -312,7 +296,11 @@ export function app(): express.Express {
     res.sendStatus(204);
   });
 
-  // SERVIR ARQUIVOS ESTÁCTICOS
+  server.use('/api', (err: any, req: any, res: any, next: any) => {
+    console.error('API Error:', err);
+    res.status(500).json({ error: 'Erro interno no servidor', details: err.message });
+  });
+
   server.use(
     express.static(browserDistFolder, {
       maxAge: '1y',
@@ -321,7 +309,6 @@ export function app(): express.Express {
     })
   );
 
-  // ROTA PRINCIPAL DO ANGULAR SSR
   server.use((req, res, next) => {
     if (req.originalUrl.startsWith('/api')) {
       return next();
