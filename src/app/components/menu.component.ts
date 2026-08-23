@@ -21,7 +21,7 @@ import { map } from 'rxjs/operators';
       <ng-template #showLogin>
         <div>
           <p>Faça login para apoiar o desenvolvimento!</p>
-          <a href="/api/auth/google" class="auth-button">Login com Google</a>
+          <a href="/auth/google" class="auth-button">Login com Google</a>
         </div>
       </ng-template>
     </div>
