@@ -34,24 +34,6 @@ export let io: Server;
 export function app(): express.Express {
   const server = express();
 
-  if (!process.env['APP_BASE_URL']) {
-    console.warn(
-      '[config] APP_BASE_URL não definida — o callbackURL do OAuth ficará relativo ' +
-      '("/api/auth/google/callback") e pode não bater com o Redirect URI cadastrado no ' +
-      'Google Cloud Console, causando "invalid_grant" no login.'
-    );
-  }
-
-  if (process.env['NODE_ENV'] === 'production' && !process.env['SESSION_STORE_URL']) {
-    console.warn(
-      '[config] Rodando em produção sem um session store dedicado (ex.: Redis). ' +
-      'O express-session está usando MemoryStore, que não é compartilhado entre processos. ' +
-      'Se este app rodar em cluster (PM2/pm2-cluster, múltiplas instâncias), o worker que recebe ' +
-      'o callback do OAuth pode não enxergar a sessão criada pelo worker que iniciou o login, ' +
-      'gerando falhas intermitentes no fluxo de autenticação.'
-    );
-  }
-
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
@@ -185,9 +167,6 @@ export function app(): express.Express {
   server.get('/api/auth/google/callback', (req, res, next) => {
     passport.authenticate('google', (err: any, user: any) => {
       if (err) {
-        console.error('--- ERRO OAUTH GOOGLE (completo) ---');
-        console.error(require('util').inspect(err, { depth: null, colors: true }));
-        console.error('Chaves do erro:', Object.keys(err));
         return res.status(500).send('Erro no login, veja o console');
       }
       if (!user) return res.redirect('/');
@@ -267,7 +246,6 @@ export function app(): express.Express {
       io?.to(user.email).emit('payment_approved', { isDonor: true });
       res.json({ ok: true });
     } catch (error) {
-      console.error('Error marking donor:', error);
       res.status(500).json({ error: 'internal_error' });
     }
   });
@@ -288,7 +266,6 @@ export function app(): express.Express {
         io?.to(email).emit('payment_approved', { isDonor: true, provider: provider || 'unknown' });
         return res.sendStatus(200);
       } catch (err) {
-        console.error('Webhook processing error:', err);
         return res.sendStatus(500);
       }
     }
@@ -297,8 +274,16 @@ export function app(): express.Express {
   });
 
   server.use('/api', (err: any, req: any, res: any, next: any) => {
-    console.error('API Error:', err);
     res.status(500).json({ error: 'Erro interno no servidor', details: err.message });
+  });
+
+  // Intercepta Socket.io para evitar crash de HTML parse no Angular SSR durante requests na Vercel
+  server.all('/socket.io/*', (req, res) => {
+    res.status(501).json({ error: 'WebSockets not supported on Vercel Serverless' });
+  });
+
+  server.all('/api/*', (req, res) => {
+    res.status(404).json({ error: 'API route not found' });
   });
 
   server.use(
@@ -310,10 +295,6 @@ export function app(): express.Express {
   );
 
   server.use((req, res, next) => {
-    if (req.originalUrl.startsWith('/api')) {
-      return next();
-    }
-
     angularApp
       .handle(req)
       .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
