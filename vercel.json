@@ -1,16 +1,2 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/auth/:path*",
-      "destination": "/"
-    },
-    {
-      "source": "/socket.io/:path*",
-      "destination": "/"
-    }
-  ]
 }

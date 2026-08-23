@@ -1,4 +1,3 @@
-// src/app/components/menu.component.ts
 import { Component } from '@angular/core';
 import { AsyncPipe, NgIf } from '@angular/common';
 import { AuthService, User } from '../services/auth.service';
@@ -63,6 +62,7 @@ export class MenuComponent {
   }
 
   logout() {
-    this.authService.logout();
+    // Força o navegador a ir para a rota do Express e limpa a sessão[cite: 6]
+    window.location.href = '/auth/logout';
   }
 }
