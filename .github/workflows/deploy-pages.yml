@@ -101,8 +101,11 @@ jobs:
             
             npm pkg delete scripts.postinstall
             npm install --omit=dev
+            
+            export DATABASE_URL=$DATABASE_URL
+            export DIRECT_URL=$DIRECT_URL
+            
             npx prisma generate
             npx prisma migrate deploy
             
-            npm install -g pm2
             pm2 restart bomberman || pm2 start dist/bomberman/server/server.mjs --name "bomberman"
