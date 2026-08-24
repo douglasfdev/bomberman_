@@ -40,7 +40,7 @@ jobs:
         run: npm pkg delete scripts.postinstall
 
       - name: Install dependencies
-        run: npm install
+        run: npm install --include=dev
 
       - name: Generate Prisma Client
         run: npx prisma generate
