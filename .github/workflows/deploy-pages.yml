@@ -8,6 +8,18 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      VPS_HOST: ${{ secrets.VPS_HOST }} 
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY }}
+      WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL }}
 
     steps:
       - name: Checkout
@@ -16,7 +28,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install
