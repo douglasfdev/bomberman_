@@ -87,10 +87,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
           envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
           script: |
-            curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
-            sudo yum install -y nodejs
-            sudo npm install -g pm2
-
             cd /var/www/bomberman
             
             echo "NODE_ENV=production" > .env
