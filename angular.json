@@ -33,9 +33,6 @@
             "styles": ["src/styles.scss"],
             "server": "src/main.server.ts",
             "outputMode": "server",
-            "security": {
-              "allowedHosts": []
-            },
             "ssr": {
               "entry": "src/server.ts"
             },
@@ -50,7 +47,13 @@
                 "maximumWarning": "10kb",
                 "maximumError": "15kb"
               }
-            ]
+            ],
+            "security": {
+              "allowedHosts": [
+                "147.15.127.65:4000",
+                ".trycloudflare.com"
+              ]
+            }
           },
           "configurations": {
             "production": {
@@ -74,13 +77,7 @@
               "buildTarget": "bomberman:build:development"
             }
           },
-          "defaultConfiguration": "development",
-          "options": {
-            "allowedHosts": [
-              ".trycloudflare.com",
-              "147.15.127.65:4000"
-            ]
-          }
+          "defaultConfiguration": "development"
         },
         "test": {
           "builder": "@angular/build:unit-test"
