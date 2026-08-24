@@ -9,19 +9,7 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: Production
-    env:
-      NODE_ENV: production
-      DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
-      VPS_HOST: ${{ secrets.VPS_HOST || vars.VPS_HOST }} 
-      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-      APP_BASE_URL: ${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}
-      SESSION_SECRET: ${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
-      WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY || vars.WOOVI_API_KEY }}
-      WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL || vars.WOOVI_API_BASE_URL }}
-
+    
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,48 +21,58 @@ jobs:
 
       - name: Create .env
         run: |
-          echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" >> .env
+          echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
       - name: Remove postinstall script temporarily
         run: npm pkg delete scripts.postinstall
 
       - name: Install dependencies
-        run: npm install --include=dev
+        run: npm install
 
       - name: Generate Prisma Client
         run: npx prisma generate
         env:
-          DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Build
         run: npm run build
 
+      - name: Prepare target directory
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: opc
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            sudo mkdir -p /var/www/bomberman
+            sudo chown -R opc:opc /var/www/bomberman
+
       - name: Deploy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          host: ${{ secrets.VPS_HOST }}
           username: opc
-          key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          source: "dist/,package.json,package-lock.json,prisma/"
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "dist,package.json,package-lock.json,prisma"
           target: /var/www/bomberman
 
       - name: Start Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
-          DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
-          APP_BASE_URL: ${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
-          WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY || vars.WOOVI_API_KEY }}
-          WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL || vars.WOOVI_API_BASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY }}
+          WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL }}
         with:
-          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
+          host: ${{ secrets.VPS_HOST }}
           username: opc
-          key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
+          key: ${{ secrets.VPS_SSH_KEY }}
           envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
           script: |
             cd /var/www/bomberman
