@@ -5,76 +5,70 @@ on:
     branches:
       - main
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  build-and-deploy:
+  build-and-push:
     runs-on: ubuntu-latest
     environment: Production
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: '24'
-          cache: 'npm'
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # O build precisa do .env para o dotenv/config e Prisma
-      - name: Create .env for build
-        run: |
-          echo "NODE_ENV=production" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" >> .env
-          echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
-          echo "APP_BASE_URL=${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}" >> .env
-          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}" >> .env
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}" >> .env
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}" >> .env
-
-      - name: Install all dependencies (build usa devDeps)
-        run: |
-          npm pkg delete scripts.postinstall
-          npm ci --no-audit --no-fund
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
-
-      - name: Build Angular SSR
-        run: npm run build
-        env:
-          NODE_ENV: production
-
-      # Remove devDependencies do node_modules antes de enviar ao servidor
-      # Isso reduz o tamanho de ~500MB para ~80MB
-      - name: Prune devDependencies
-        run: |
-          npm pkg delete scripts.postinstall
-          npm prune --omit=dev --no-audit --no-fund
-
-      - name: Prepare target directory on VPS
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          script: |
-            sudo mkdir -p /var/www/bomberman
-            sudo chown -R $USER:$USER /var/www/bomberman
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=latest
 
-      # Envia dist/ + node_modules/ prontos — servidor não precisa rodar npm install
-      - name: Deploy files via SCP
-        uses: appleboy/scp-action@v0.1.7
+      # Cache de layers do Docker para builds mais rápidos
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
         with:
-          host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          source: "dist/,node_modules/,package.json,prisma/,ecosystem.config.cjs"
-          target: /var/www/bomberman
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          # Passa apenas as variáveis necessárias para o build Angular
+          build-args: |
+            DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
+            DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
+            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}
+            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
+            APP_BASE_URL=${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}
+            SESSION_SECRET=${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}
+          # Cache entre runs para acelerar builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Start/Restart Server via SSH
+  deploy:
+    runs-on: ubuntu-latest
+    environment: Production
+    needs: build-and-push
+
+    steps:
+      - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
@@ -85,38 +79,68 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
           WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY || vars.WOOVI_API_KEY }}
           WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL || vars.WOOVI_API_BASE_URL }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
           command_timeout: 5m
-          envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
+          envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL,GITHUB_REPOSITORY,GITHUB_ACTOR,GITHUB_TOKEN
           script: |
             set -e
+
+            # Garante que o diretório existe
+            sudo mkdir -p /var/www/bomberman
+            sudo chown -R $USER:$USER /var/www/bomberman
             cd /var/www/bomberman
 
-            # Grava o .env no servidor
-            printf 'NODE_ENV=production\n'                    > .env
-            printf 'PORT=4000\n'                             >> .env
-            printf 'DIRECT_URL=%s\n'        "$DIRECT_URL"   >> .env
-            printf 'DATABASE_URL=%s\n'      "$DATABASE_URL" >> .env
-            printf 'APP_BASE_URL=%s\n'      "$APP_BASE_URL" >> .env
-            printf 'SESSION_SECRET=%s\n'    "$SESSION_SECRET" >> .env
-            printf 'GOOGLE_CLIENT_ID=%s\n'  "$GOOGLE_CLIENT_ID" >> .env
+            # Grava o .env
+            printf 'NODE_ENV=production\n'                       > .env
+            printf 'PORT=4000\n'                                >> .env
+            printf 'DIRECT_URL=%s\n'           "$DIRECT_URL"   >> .env
+            printf 'DATABASE_URL=%s\n'         "$DATABASE_URL" >> .env
+            printf 'APP_BASE_URL=%s\n'         "$APP_BASE_URL" >> .env
+            printf 'SESSION_SECRET=%s\n'       "$SESSION_SECRET" >> .env
+            printf 'GOOGLE_CLIENT_ID=%s\n'     "$GOOGLE_CLIENT_ID" >> .env
             printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET" >> .env
-            printf 'WOOVI_API_KEY=%s\n'     "$WOOVI_API_KEY" >> .env
-            printf 'WOOVI_API_BASE_URL=%s\n' "$WOOVI_API_BASE_URL" >> .env
+            printf 'WOOVI_API_KEY=%s\n'        "$WOOVI_API_KEY" >> .env
+            printf 'WOOVI_API_BASE_URL=%s\n'   "$WOOVI_API_BASE_URL" >> .env
+            printf 'GITHUB_REPOSITORY=%s\n'    "$GITHUB_REPOSITORY" >> .env
 
-            # Roda migrations (node_modules já está no servidor)
-            npx prisma migrate deploy
+            # Grava o docker-compose.yml atualizado
+            cat > docker-compose.yml << 'COMPOSE'
+            services:
+              app:
+                image: ghcr.io/${GITHUB_REPOSITORY}:latest
+                container_name: bomberman
+                restart: unless-stopped
+                ports:
+                  - "4000:4000"
+                env_file:
+                  - .env
+                environment:
+                  NODE_ENV: production
+                  PORT: "4000"
+                healthcheck:
+                  test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/user"]
+                  interval: 30s
+                  timeout: 10s
+                  retries: 3
+                  start_period: 15s
+            COMPOSE
 
-            # Reinicia o processo
-            npx pm2 delete bomberman 2>/dev/null || true
-            npx pm2 start ecosystem.config.cjs
-            npx pm2 save
+            # Login no GHCR para baixar a imagem privada
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
-            # Startup automático no boot
-            sudo env PATH=$PATH:/usr/bin $(which npx) pm2 startup systemd -u ubuntu --hp /home/ubuntu 2>/dev/null || true
+            # Puxa a nova imagem e recria o container (zero-downtime: pull antes de down)
+            docker pull ghcr.io/${GITHUB_REPOSITORY}:latest
+            docker compose down --remove-orphans 2>/dev/null || true
+            docker compose up -d
+
+            # Remove imagens antigas para economizar espaço
+            docker image prune -f
 
             echo "✅ Deploy concluído."
-            npx pm2 list
+            docker compose ps
