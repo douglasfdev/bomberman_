@@ -1,4 +1,5 @@
 import 'zone.js/node';
+import 'dotenv/config';
 import { APP_BASE_HREF } from '@angular/common';
 import {
   AngularNodeAppEngine,
@@ -14,7 +15,6 @@ import { createServer } from 'node:http';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import 'dotenv/config';
 import { prismaClient } from './services/prisma';
 import { PrismaPg } from "@prisma/adapter-pg";
 import paymentRoutes from './routes/paymentRoutes';
@@ -49,7 +49,8 @@ export function app(): express.Express {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: process.env['NODE_ENV'] === 'production',
+        secure: false,          // HTTP, não HTTPS
+        sameSite: 'lax',        // necessário para o redirect do Google OAuth funcionar
         maxAge: 24 * 60 * 60 * 1000,
       },
     })

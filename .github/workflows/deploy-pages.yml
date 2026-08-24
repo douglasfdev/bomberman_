@@ -13,14 +13,6 @@ jobs:
       NODE_ENV: production
       DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
       DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
-      VPS_HOST: ${{ secrets.VPS_HOST || vars.VPS_HOST }} 
-      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-      APP_BASE_URL: ${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}
-      SESSION_SECRET: ${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
-      WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY || vars.WOOVI_API_KEY }}
-      WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL || vars.WOOVI_API_BASE_URL }}
 
     steps:
       - name: Checkout
@@ -31,7 +23,7 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Create .env
+      - name: Create .env for build
         run: |
           echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" >> .env
@@ -51,7 +43,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Prepare target directory
+      - name: Prepare target directory on VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
@@ -67,10 +59,11 @@ jobs:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          source: "dist/,package.json,package-lock.json,prisma/"
+          # Inclui ecosystem.config.cjs junto com os demais arquivos
+          source: "dist/,package.json,package-lock.json,prisma/,ecosystem.config.cjs"
           target: /var/www/bomberman
 
-      - name: Start Server via SSH
+      - name: Start/Restart Server via SSH
         uses: appleboy/ssh-action@v1.0.3
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
@@ -87,24 +80,38 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
           envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
           script: |
+            set -e
             cd /var/www/bomberman
-            
-            cat <<EOF > .env
-            NODE_ENV=production
-            DIRECT_URL=$DIRECT_URL
-            DATABASE_URL=$DATABASE_URL
-            APP_BASE_URL=$APP_BASE_URL
-            SESSION_SECRET=$SESSION_SECRET
-            GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
-            GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
-            WOOVI_API_KEY=$WOOVI_API_KEY
-            WOOVI_API_BASE_URL=$WOOVI_API_BASE_URL
-            EOF
-            
+
+            # Grava o .env com todas as variáveis de produção
+            # Usa printf para evitar problemas com heredoc e interpolação
+            printf 'NODE_ENV=production\n' > .env
+            printf 'PORT=4000\n' >> .env
+            printf 'DIRECT_URL=%s\n' "$DIRECT_URL" >> .env
+            printf 'DATABASE_URL=%s\n' "$DATABASE_URL" >> .env
+            printf 'APP_BASE_URL=%s\n' "$APP_BASE_URL" >> .env
+            printf 'SESSION_SECRET=%s\n' "$SESSION_SECRET" >> .env
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID" >> .env
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET" >> .env
+            printf 'WOOVI_API_KEY=%s\n' "$WOOVI_API_KEY" >> .env
+            printf 'WOOVI_API_BASE_URL=%s\n' "$WOOVI_API_BASE_URL" >> .env
+
+            # Instala apenas dependências de produção
             npm pkg delete scripts.postinstall
             npm install --omit=dev
-            
-            npx prisma generate
-            DATABASE_URL="$DATABASE_URL" DIRECT_URL="$DIRECT_URL" npx prisma migrate deploy
-            
-            npx pm2 restart bomberman || npx pm2 start dist/bomberman/server/server.mjs --name "bomberman"
+
+            # Roda migrations
+            DATABASE_URL="${DATABASE_URL}" DIRECT_URL="${DIRECT_URL}" npx prisma generate
+            DATABASE_URL="${DATABASE_URL}" DIRECT_URL="${DIRECT_URL}" npx prisma migrate deploy
+
+            # Reinicia com ecosystem.config.cjs (que carrega as variáveis via env block)
+            # delete + start garante que o ecosystem atualizado seja sempre usado
+            npx pm2 delete bomberman 2>/dev/null || true
+            npx pm2 start ecosystem.config.cjs
+            npx pm2 save
+
+            # Configura startup automático no boot (idempotente)
+            sudo env PATH=$PATH:/usr/bin $(which npx) pm2 startup systemd -u ubuntu --hp /home/ubuntu 2>/dev/null || true
+
+            echo "✅ Deploy concluído. Processo:"
+            npx pm2 list
