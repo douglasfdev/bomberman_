@@ -59,19 +59,21 @@ export function app(): express.Express {
   server.use(passport.initialize());
   server.use(passport.session());
 
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID: process.env['GOOGLE_CLIENT_ID']!,
-        clientSecret: process.env['GOOGLE_CLIENT_SECRET']!,
-        // Alterado para utilizar o prefixo /auth e evitar o bloqueio da Vercel
-        callbackURL: (process.env['APP_BASE_URL'] || '') + '/auth/google/callback',
-        scope: ['profile', 'email'],
-      },
-      async (accessToken: any, refreshToken: any, profile: any, done: any) => {
-        try {
-          const email = profile.emails?.[0]?.value?.toLowerCase().trim();
-          if (!email) return done(new Error('No email provided'));
+  // Só registra a strategy se as variáveis estiverem disponíveis.
+  // Durante o prerender do build (Angular CLI) elas não existem.
+  if (process.env['GOOGLE_CLIENT_ID'] && process.env['GOOGLE_CLIENT_SECRET']) {
+    passport.use(
+      new GoogleStrategy(
+        {
+          clientID: process.env['GOOGLE_CLIENT_ID'],
+          clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
+          callbackURL: (process.env['APP_BASE_URL'] || '') + '/auth/google/callback',
+          scope: ['profile', 'email'],
+        },
+        async (accessToken: any, refreshToken: any, profile: any, done: any) => {
+          try {
+            const email = profile.emails?.[0]?.value?.toLowerCase().trim();
+            if (!email) return done(new Error('No email provided'));
 
           let user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
 
@@ -106,8 +108,7 @@ export function app(): express.Express {
       }
     )
   );
-
-  // Removido o try/catch do MicrosoftStrategy para não poluir, adicione se for usar futuramente.
+  } // fim do if GOOGLE_CLIENT_ID
 
   // --- MUDANÇAS DE ROTA AQUI ---
   // Passamos a suportar tanto /api/auth quanto apenas /auth para driblar a Vercel

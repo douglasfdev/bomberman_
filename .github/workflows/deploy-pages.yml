@@ -27,6 +27,10 @@ jobs:
         run: |
           echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" >> .env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}" >> .env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}" >> .env
+          echo "APP_BASE_URL=${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}" >> .env
+          echo "SESSION_SECRET=${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}" >> .env
 
       - name: Remove postinstall script temporarily
         run: npm pkg delete scripts.postinstall
