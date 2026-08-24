@@ -27,7 +27,7 @@ const browserDistFolder = resolve(serverDir, '../browser');
 
 const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL'] });
 
-const angularApp = new AngularNodeAppEngine();
+const angularApp = new AngularNodeAppEngine({ trustProxyHeaders: true });
 
 export let io: Server;
 
@@ -37,7 +37,7 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
-  server.set('trust proxy', 1);
+  server.set('trust proxy', 'loopback');
 
   server.use(express.json());
   server.use(express.urlencoded({ extended: true }));
