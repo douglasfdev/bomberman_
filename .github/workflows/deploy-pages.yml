@@ -82,13 +82,13 @@ jobs:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
+          command_timeout: 20m
           envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
           script: |
             set -e
             cd /var/www/bomberman
 
             # Grava o .env com todas as variáveis de produção
-            # Usa printf para evitar problemas com heredoc e interpolação
             printf 'NODE_ENV=production\n' > .env
             printf 'PORT=4000\n' >> .env
             printf 'DIRECT_URL=%s\n' "$DIRECT_URL" >> .env
@@ -100,22 +100,22 @@ jobs:
             printf 'WOOVI_API_KEY=%s\n' "$WOOVI_API_KEY" >> .env
             printf 'WOOVI_API_BASE_URL=%s\n' "$WOOVI_API_BASE_URL" >> .env
 
-            # Instala apenas dependências de produção
+            # Instala dependências de produção
+            # --prefer-offline usa cache local, --no-audit e --no-fund evitam requests extras
             npm pkg delete scripts.postinstall
-            npm install --omit=dev
+            npm install --omit=dev --prefer-offline --no-audit --no-fund
 
-            # Roda migrations
-            DATABASE_URL="${DATABASE_URL}" DIRECT_URL="${DIRECT_URL}" npx prisma generate
-            DATABASE_URL="${DATABASE_URL}" DIRECT_URL="${DIRECT_URL}" npx prisma migrate deploy
+            # Gera o Prisma Client e roda migrations
+            npx prisma generate
+            npx prisma migrate deploy
 
-            # Reinicia com ecosystem.config.cjs (que carrega as variáveis via env block)
-            # delete + start garante que o ecosystem atualizado seja sempre usado
+            # Reinicia o processo
             npx pm2 delete bomberman 2>/dev/null || true
             npx pm2 start ecosystem.config.cjs
             npx pm2 save
 
-            # Configura startup automático no boot (idempotente)
+            # Startup automático no boot (idempotente)
             sudo env PATH=$PATH:/usr/bin $(which npx) pm2 startup systemd -u ubuntu --hp /home/ubuntu 2>/dev/null || true
 
-            echo "✅ Deploy concluído. Processo:"
+            echo "✅ Deploy concluído."
             npx pm2 list
