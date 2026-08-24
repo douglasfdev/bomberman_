@@ -77,7 +77,8 @@
           "defaultConfiguration": "development",
           "options": {
             "allowedHosts": [
-              ".trycloudflare.com"
+              ".trycloudflare.com",
+              "147.15.127.65:4000"
             ]
           }
         },
