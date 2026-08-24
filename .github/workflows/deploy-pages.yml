@@ -89,23 +89,22 @@ jobs:
           script: |
             cd /var/www/bomberman
             
-            echo "NODE_ENV=production" > .env
-            echo "DIRECT_URL=$DIRECT_URL" >> .env
-            echo "DATABASE_URL=$DATABASE_URL" >> .env
-            echo "APP_BASE_URL=$APP_BASE_URL" >> .env
-            echo "SESSION_SECRET=$SESSION_SECRET" >> .env
-            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" >> .env
-            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" >> .env
-            echo "WOOVI_API_KEY=$WOOVI_API_KEY" >> .env
-            echo "WOOVI_API_BASE_URL=$WOOVI_API_BASE_URL" >> .env
+            cat <<EOF > .env
+            NODE_ENV=production
+            DIRECT_URL=$DIRECT_URL
+            DATABASE_URL=$DATABASE_URL
+            APP_BASE_URL=$APP_BASE_URL
+            SESSION_SECRET=$SESSION_SECRET
+            GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
+            GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET
+            WOOVI_API_KEY=$WOOVI_API_KEY
+            WOOVI_API_BASE_URL=$WOOVI_API_BASE_URL
+            EOF
             
             npm pkg delete scripts.postinstall
             npm install --omit=dev
             
-            export DATABASE_URL=$DATABASE_URL
-            export DIRECT_URL=$DIRECT_URL
-            
             npx prisma generate
-            npx prisma migrate deploy
+            DATABASE_URL="$DATABASE_URL" DIRECT_URL="$DIRECT_URL" npx prisma migrate deploy
             
-            pm2 restart bomberman || pm2 start dist/bomberman/server/server.mjs --name "bomberman"
+            npx pm2 restart bomberman || npx pm2 start dist/bomberman/server/server.mjs --name "bomberman"
