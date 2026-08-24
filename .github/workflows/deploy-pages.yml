@@ -9,10 +9,6 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment: Production
-    env:
-      NODE_ENV: production
-      DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
 
     steps:
       - name: Checkout
@@ -22,30 +18,41 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+          cache: 'npm'
 
+      # O build precisa do .env para o dotenv/config e Prisma
       - name: Create .env for build
         run: |
-          echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
+          echo "NODE_ENV=production" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL || vars.DATABASE_URL }}" >> .env
-          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}" >> .env
-          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}" >> .env
+          echo "DIRECT_URL=${{ secrets.DIRECT_URL || vars.DIRECT_URL }}" >> .env
           echo "APP_BASE_URL=${{ secrets.APP_BASE_URL || vars.APP_BASE_URL }}" >> .env
           echo "SESSION_SECRET=${{ secrets.SESSION_SECRET || vars.SESSION_SECRET }}" >> .env
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID || vars.GOOGLE_CLIENT_ID }}" >> .env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}" >> .env
 
-      - name: Remove postinstall script temporarily
-        run: npm pkg delete scripts.postinstall
-
-      - name: Install dependencies
-        run: npm install --include=dev
+      - name: Install all dependencies (build usa devDeps)
+        run: |
+          npm pkg delete scripts.postinstall
+          npm ci --no-audit --no-fund
 
       - name: Generate Prisma Client
         run: npx prisma generate
         env:
-          DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
           DATABASE_URL: ${{ secrets.DATABASE_URL || vars.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || vars.DIRECT_URL }}
 
-      - name: Build
+      - name: Build Angular SSR
         run: npm run build
+        env:
+          NODE_ENV: production
+
+      # Remove devDependencies do node_modules antes de enviar ao servidor
+      # Isso reduz o tamanho de ~500MB para ~80MB
+      - name: Prune devDependencies
+        run: |
+          npm pkg delete scripts.postinstall
+          npm prune --omit=dev --no-audit --no-fund
 
       - name: Prepare target directory on VPS
         uses: appleboy/ssh-action@v1.0.3
@@ -57,14 +64,14 @@ jobs:
             sudo mkdir -p /var/www/bomberman
             sudo chown -R $USER:$USER /var/www/bomberman
 
+      # Envia dist/ + node_modules/ prontos — servidor não precisa rodar npm install
       - name: Deploy files via SCP
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          # Inclui ecosystem.config.cjs junto com os demais arquivos
-          source: "dist/,package.json,package-lock.json,prisma/,ecosystem.config.cjs"
+          source: "dist/,node_modules/,package.json,prisma/,ecosystem.config.cjs"
           target: /var/www/bomberman
 
       - name: Start/Restart Server via SSH
@@ -82,31 +89,25 @@ jobs:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
-          command_timeout: 20m
+          command_timeout: 5m
           envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL
           script: |
             set -e
             cd /var/www/bomberman
 
-            # Grava o .env com todas as variáveis de produção
-            printf 'NODE_ENV=production\n' > .env
-            printf 'PORT=4000\n' >> .env
-            printf 'DIRECT_URL=%s\n' "$DIRECT_URL" >> .env
-            printf 'DATABASE_URL=%s\n' "$DATABASE_URL" >> .env
-            printf 'APP_BASE_URL=%s\n' "$APP_BASE_URL" >> .env
-            printf 'SESSION_SECRET=%s\n' "$SESSION_SECRET" >> .env
-            printf 'GOOGLE_CLIENT_ID=%s\n' "$GOOGLE_CLIENT_ID" >> .env
+            # Grava o .env no servidor
+            printf 'NODE_ENV=production\n'                    > .env
+            printf 'PORT=4000\n'                             >> .env
+            printf 'DIRECT_URL=%s\n'        "$DIRECT_URL"   >> .env
+            printf 'DATABASE_URL=%s\n'      "$DATABASE_URL" >> .env
+            printf 'APP_BASE_URL=%s\n'      "$APP_BASE_URL" >> .env
+            printf 'SESSION_SECRET=%s\n'    "$SESSION_SECRET" >> .env
+            printf 'GOOGLE_CLIENT_ID=%s\n'  "$GOOGLE_CLIENT_ID" >> .env
             printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET" >> .env
-            printf 'WOOVI_API_KEY=%s\n' "$WOOVI_API_KEY" >> .env
+            printf 'WOOVI_API_KEY=%s\n'     "$WOOVI_API_KEY" >> .env
             printf 'WOOVI_API_BASE_URL=%s\n' "$WOOVI_API_BASE_URL" >> .env
 
-            # Instala dependências de produção
-            # --prefer-offline usa cache local, --no-audit e --no-fund evitam requests extras
-            npm pkg delete scripts.postinstall
-            npm install --omit=dev --prefer-offline --no-audit --no-fund
-
-            # Gera o Prisma Client e roda migrations
-            npx prisma generate
+            # Roda migrations (node_modules já está no servidor)
             npx prisma migrate deploy
 
             # Reinicia o processo
@@ -114,7 +115,7 @@ jobs:
             npx pm2 start ecosystem.config.cjs
             npx pm2 save
 
-            # Startup automático no boot (idempotente)
+            # Startup automático no boot
             sudo env PATH=$PATH:/usr/bin $(which npx) pm2 startup systemd -u ubuntu --hp /home/ubuntu 2>/dev/null || true
 
             echo "✅ Deploy concluído."
