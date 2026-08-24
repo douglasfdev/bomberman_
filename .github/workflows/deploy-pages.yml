@@ -31,11 +31,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Normaliza o nome da imagem: lowercase e remove caracteres inválidos
+      - name: Normalize image name
+        id: image
+        run: |
+          IMAGE=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+          echo "name=${IMAGE}" >> $GITHUB_OUTPUT
+
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ steps.image.outputs.name }}
           tags: |
             type=sha,prefix=sha-
             type=raw,value=latest
@@ -79,22 +86,25 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET || vars.GOOGLE_CLIENT_SECRET }}
           WOOVI_API_KEY: ${{ secrets.WOOVI_API_KEY || vars.WOOVI_API_KEY }}
           WOOVI_API_BASE_URL: ${{ secrets.WOOVI_API_BASE_URL || vars.WOOVI_API_BASE_URL }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Nome normalizado igual ao usado no build
+          IMAGE_NAME: ${{ needs.build-and-push.outputs.image_tag }}
         with:
           host: ${{ secrets.VPS_HOST || vars.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME || vars.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || vars.VPS_SSH_KEY }}
           command_timeout: 5m
-          envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL,GITHUB_REPOSITORY,GITHUB_ACTOR,GITHUB_TOKEN
+          envs: DIRECT_URL,DATABASE_URL,APP_BASE_URL,SESSION_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,WOOVI_API_KEY,WOOVI_API_BASE_URL,GITHUB_ACTOR,GITHUB_TOKEN,IMAGE_NAME
           script: |
             set -e
 
-            # Garante que o diretório existe
             sudo mkdir -p /var/www/bomberman
             sudo chown -R $USER:$USER /var/www/bomberman
             cd /var/www/bomberman
+
+            # Extrai só a tag :latest da lista de tags (pode vir múltiplas)
+            FULL_IMAGE=$(echo "$IMAGE_NAME" | tr ',' '\n' | grep ':latest')
 
             # Grava o .env
             printf 'NODE_ENV=production\n'                       > .env
@@ -107,13 +117,12 @@ jobs:
             printf 'GOOGLE_CLIENT_SECRET=%s\n' "$GOOGLE_CLIENT_SECRET" >> .env
             printf 'WOOVI_API_KEY=%s\n'        "$WOOVI_API_KEY" >> .env
             printf 'WOOVI_API_BASE_URL=%s\n'   "$WOOVI_API_BASE_URL" >> .env
-            printf 'GITHUB_REPOSITORY=%s\n'    "$GITHUB_REPOSITORY" >> .env
 
-            # Grava o docker-compose.yml atualizado
-            cat > docker-compose.yml << 'COMPOSE'
+            # Grava docker-compose.yml usando a imagem correta
+            cat > docker-compose.yml << COMPOSE
             services:
               app:
-                image: ghcr.io/${GITHUB_REPOSITORY}:latest
+                image: ${FULL_IMAGE}
                 container_name: bomberman
                 restart: unless-stopped
                 ports:
@@ -131,15 +140,15 @@ jobs:
                   start_period: 15s
             COMPOSE
 
-            # Login no GHCR para baixar a imagem privada
+            # Login no GHCR
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
 
-            # Puxa a nova imagem e recria o container (zero-downtime: pull antes de down)
-            docker pull ghcr.io/${GITHUB_REPOSITORY}:latest
+            # Pull e recria o container
+            docker pull "${FULL_IMAGE}"
             docker compose down --remove-orphans 2>/dev/null || true
             docker compose up -d
 
-            # Remove imagens antigas para economizar espaço
+            # Limpa imagens antigas
             docker image prune -f
 
             echo "✅ Deploy concluído."
