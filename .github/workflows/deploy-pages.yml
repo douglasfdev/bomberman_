@@ -35,6 +35,9 @@ jobs:
           echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
 
+      - name: Remove postinstall script temporarily
+        run: npm pkg delete scripts.postinstall
+
       - name: Install dependencies
         run: npm install
 
@@ -82,7 +85,8 @@ jobs:
             echo "WOOVI_API_KEY=$WOOVI_API_KEY" >> .env
             echo "WOOVI_API_BASE_URL=$WOOVI_API_BASE_URL" >> .env
             
-            npm install --omit=dev --ignore-scripts
+            npm pkg delete scripts.postinstall
+            npm install --omit=dev
             npx prisma generate
             npx prisma migrate deploy
             
