@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy to VPS
 
 on:
   push:
@@ -8,10 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
 
     steps:
       - name: Checkout
@@ -26,16 +22,14 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build -- --base-href /${{ github.event.repository.name }}/
+        run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy via SSH
+        uses: appleboy/scp-action@v0.1.7
         with:
-          path: ./dist/bomberman/browser
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          host: ${{ secrets.VPS_HOST }}
+          username: opc
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: ./dist/bomberman/browser/*
+          target: /var/www/bomberman
+          strip_components: 4
