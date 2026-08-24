@@ -30,10 +30,16 @@ jobs:
         with:
           node-version: '24'
 
-      - name: Create .env
+      - name: Debug and Create .env
         run: |
-          echo "DIRECT_URL=${{ secrets.DIRECT_URL }}" >> .env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "DIRECT_URL length: ${#DIRECT_URL}"
+          echo "DATABASE_URL length: ${#DATABASE_URL}"
+          echo "DIRECT_URL=${DIRECT_URL}" >> .env
+          echo "DATABASE_URL=${DATABASE_URL}" >> .env
+          cat .env
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Remove postinstall script temporarily
         run: npm pkg delete scripts.postinstall
@@ -43,6 +49,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Build
         run: npm run build
