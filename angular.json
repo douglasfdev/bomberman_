@@ -55,7 +55,9 @@
                 "0.0.0.0",
                 "0.0.0.0:4000",
                 "localhost",
-                ".trycloudflare.com"
+                ".trycloudflare.com",
+                ".duckdns.org",
+                "namrebmob.duckdns.org"
               ]
             }
           },
