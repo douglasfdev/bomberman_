@@ -50,7 +50,11 @@
             ],
             "security": {
               "allowedHosts": [
+                "147.15.127.65",
                 "147.15.127.65:4000",
+                "0.0.0.0",
+                "0.0.0.0:4000",
+                "localhost",
                 ".trycloudflare.com"
               ]
             }
