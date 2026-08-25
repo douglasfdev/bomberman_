@@ -62,6 +62,10 @@ COPY --from=builder --chown=appuser:appgroup /app/package.json    ./package.json
 COPY --from=builder --chown=appuser:appgroup /app/prisma          ./prisma
 COPY --from=builder --chown=appuser:appgroup /app/src/generated   ./src/generated
 
+# Entrypoint que carrega o .env antes de rodar migrations e o servidor
+COPY --chown=appuser:appgroup entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
+
 USER appuser
 
 EXPOSE 4000
@@ -69,5 +73,4 @@ EXPOSE 4000
 ENV NODE_ENV=production \
     PORT=4000
 
-# Roda migrations e inicia — variáveis de runtime vêm do .env via dotenv/config
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/bomberman/server/server.mjs"]
+CMD ["sh", "./entrypoint.sh"]
