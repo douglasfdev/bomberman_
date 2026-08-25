@@ -31,12 +31,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Normaliza o nome da imagem: lowercase e remove caracteres inválidos
+      # Nome fixo da imagem — evita problemas com caracteres inválidos do repo name
       - name: Normalize image name
         id: image
         run: |
-          IMAGE=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+          IMAGE="ghcr.io/${{ github.repository_owner }}/bomberman"
+          IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')
           echo "name=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "Normalized image name: ${IMAGE}"
 
       - name: Extract metadata for Docker
         id: meta
