@@ -8,8 +8,5 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-echo "🔄 Rodando migrations..."
-npx prisma migrate deploy
-
 echo "🚀 Iniciando servidor..."
 exec node dist/bomberman/server/server.mjs
