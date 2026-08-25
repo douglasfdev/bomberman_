@@ -61,6 +61,8 @@ COPY --from=builder --chown=appuser:appgroup /app/node_modules    ./node_modules
 COPY --from=builder --chown=appuser:appgroup /app/package.json    ./package.json
 COPY --from=builder --chown=appuser:appgroup /app/prisma          ./prisma
 COPY --from=builder --chown=appuser:appgroup /app/src/generated   ./src/generated
+# prisma.config.ts é necessário para o prisma migrate deploy encontrar a URL
+COPY --from=builder --chown=appuser:appgroup /app/prisma.config.ts ./prisma.config.ts
 
 # Entrypoint que carrega o .env antes de rodar migrations e o servidor
 COPY --chown=appuser:appgroup entrypoint.sh ./entrypoint.sh
