@@ -1,12 +1,13 @@
 #!/bin/sh
 set -e
 
-# Carrega o .env se existir (variáveis de runtime injetadas pelo docker compose)
-if [ -f /app/.env ]; then
-  export $(grep -v '^#' /app/.env | xargs)
+# As variáveis já chegam como env vars via --env-file do docker compose.
+# Não precisa carregar .env manualmente — apenas valida que DATABASE_URL existe.
+if [ -z "$DATABASE_URL" ]; then
+  echo "❌ DATABASE_URL não está definida. Verifique o .env no host e o env_file do compose."
+  exit 1
 fi
 
-# Roda migrations com DATABASE_URL disponível
 echo "🔄 Rodando migrations..."
 npx prisma migrate deploy
 
