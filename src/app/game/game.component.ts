@@ -11,13 +11,18 @@ import { GamePhase } from '../core/models/game-state.model';
 import { AuthService } from '../services/auth.service';
 import { SkinService } from '../services/skin.service';
 import { AdBannerComponent } from '../components/ad-banner.component';
+import { CardDraftComponent } from './card-draft/card-draft.component';
+import { RunStateService } from '../core/roguelite/run-state.service';
+import { RogueliteBootstrapService } from '../core/roguelite/roguelite-bootstrap.service';
+import { SkillTreeService } from '../core/roguelite/skill-tree.service';
+import { SkillTreeComponent } from './skill-tree/skill-tree.component';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
   standalone: true,
-  imports: [CommonModule, AdBannerComponent]
+  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent]
 })
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
@@ -30,10 +35,16 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly sceneBuilder = inject(SceneBuilderService);
   readonly authService = inject(AuthService);
   readonly skinService = inject(SkinService);
+  readonly runState = inject(RunStateService);
+  readonly bootstrap = inject(RogueliteBootstrapService);
   private readonly router = inject(Router);
+  readonly skillTree = inject(SkillTreeService);
 
   readonly Direction = Direction;
   readonly GamePhase = GamePhase;
+
+  // Skill Tree state
+  showSkillTree = signal(false);
 
   readonly score = this.logic.score;
   readonly enemiesRemaining = this.logic.enemiesRemaining;
@@ -43,6 +54,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly pierce = this.logic.pierce;
   readonly gamePhase = this.logic.gamePhase;
 
+  // Roguelite HUD
+  readonly lives = this.runState.lives;
+  readonly shield = this.runState.shield;
+  readonly timeLeft = this.runState.formattedTime;
+  readonly isTimeCritical = this.runState.isTimeCritical;
+  readonly isTimeWarning = this.runState.isTimeWarning;
+  readonly activeSynergies = this.runState.activeSynergies;
+
   isTouch = false;
   initError = signal(false);
 
@@ -50,26 +69,47 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   canPlay = signal(false);
   waitTimer = signal(0);
 
+  // Draft state
+  showDraft = signal(false);
+  draftPhase = signal(0);
+
   private actionSub?: Subscription;
   private timerInterval: any;
+  private draftSub?: Subscription;
 
   constructor() {
     effect(() => {
       const phase = this.gamePhase();
       const isDonor = this.authService.isDonor();
-      // Rastreia o sinal de email para detectar login/logout e re-executar o efeito
       const isLoggedIn = !!this.authService.userEmail();
 
-      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
+      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat || phase === GamePhase.RunEnd) {
         this.enforcePaywall(isDonor, isLoggedIn);
       }
     });
 
-    // Quando a skin selecionada mudar, atualiza o SceneBuilder
     effect(() => {
       const skin = this.authService.selectedSkin();
       if (skin && isPlatformBrowser(this.platformId)) {
         this.sceneBuilder.setPlayerSkin(skin);
+      }
+    });
+
+    // Watch for draft phase
+    effect(() => {
+      const phase = this.gamePhase();
+      if (phase === GamePhase.Draft) {
+        this.openDraft();
+      } else {
+        this.closeDraft();
+      }
+    });
+
+    // Watch for skill tree keybind (T)
+    effect(() => {
+      const phase = this.gamePhase();
+      if (phase === GamePhase.Playing && this.input.isKeyPressed('KeyT')) {
+        this.toggleSkillTree();
       }
     });
   }
@@ -82,22 +122,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
     try {
+      await this.bootstrap.initialize(this.logic);
+
       this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
       this.sceneBuilder.init(this.engine.scene!);
 
-      // Aplica a skin do usuário assim que a cena inicializa
       const currentSkin = this.authService.selectedSkin();
       if (currentSkin) {
         this.sceneBuilder.setPlayerSkin(currentSkin);
       }
 
-      // Carrega catálogo e skins do usuário se estiver logado
       if (this.authService.userEmail()) {
         this.skinService.loadMySkins().subscribe({
           next: (data) => {
@@ -109,6 +149,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.engine.startLoop((deltaMs: number) => {
         this.logic.tick(deltaMs);
         this.sceneBuilder.sync(this.logic, deltaMs);
+        this.updateRunTimer(deltaMs);
       });
 
       // Inicializa o estado do jogo (gera mapa, posiciona inimigos)
@@ -123,11 +164,66 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       clearInterval(this.timerInterval);
       this.actionSub?.unsubscribe();
+      this.draftSub?.unsubscribe();
       this.input.detach();
       this.sceneBuilder.dispose();
       this.engine.dispose();
     }
     this.donorEffect.destroy();
+  }
+
+  private updateRunTimer(deltaMs: number): void {
+    const run = this.runState.currentRun();
+    if (!run) return;
+    
+    this.runState.updateTimeLeft(this.runState.timeLeftMs() - deltaMs);
+    if (this.runState.timeLeftMs() <= 0) {
+      this.handleTimeUp();
+    }
+  }
+
+  private async handleTimeUp(): Promise<void> {
+    const run = this.runState.currentRun();
+    if (!run) return;
+    
+    this.logic.gamePhase.set(GamePhase.Defeat);
+    await this.runState.endRun({
+      score: this.logic.score(),
+      timeLeftMs: 0,
+      reason: 'TIME_UP',
+    });
+    this.logic.gamePhase.set(GamePhase.RunEnd);
+  }
+
+  private async openDraft(): Promise<void> {
+    const phase = this.logic.phase();
+    this.draftPhase.set(phase);
+    try {
+      await this.runState.getDraft(phase);
+      this.showDraft.set(true);
+    } catch (e) {
+      console.error('Erro ao abrir draft:', e);
+      this.closeDraft();
+    }
+  }
+
+  closeDraft(): void {
+    this.showDraft.set(false);
+    this.draftPhase.set(0);
+  }
+
+  async onDraftConfirm(cardKey: string): Promise<void> {
+    this.showDraft.set(false);
+    try {
+      await this.runState.applyChoice({
+        phase: this.draftPhase(),
+        offered: this.runState.currentDraft()?.offered ?? [],
+        picked: cardKey,
+      });
+      this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+    } catch (e) {
+      console.error('Erro ao confirmar escolha:', e);
+    }
   }
 
   /** Navega para a loja de skins */
@@ -173,19 +269,35 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.logic.plantBomb();
   }
 
-  play(): void {
-    // Garante que apenas um clique inicie a partida e força liberação se passou pelo paywall
-    if (!this.canPlay()) return;
+  async play(): Promise<void> {
+    clearInterval(this.timerInterval);
     this.canPlay.set(true);
+    this.waitTimer.set(0);
+    await this.runState.startRun();
     this.logic.play();
   }
 
   restart(): void {
-    if (!this.canPlay()) return;
-    this.logic.restart();
+    clearInterval(this.timerInterval);
+    this.canPlay.set(true);
+    this.waitTimer.set(0);
+    this.runState.startRun().then(() => this.logic.restart());
   }
 
-  // Adicione ao final da classe, antes do fechamento
+  getSynergyIcon(synergy: string): string {
+    const icons: Record<string, string> = {
+      FREEZE_CHAIN: '❄️⛓️',
+      SHATTER: '💎',
+      CHAIN_DETONATION: '💣⛓️',
+      MEGA_REMOTE: '💥📡',
+      GHOST_BOMB: '👻💣',
+      TOTAL_VAMPIRISM: '🦇🩸',
+      LETHAL_SPEED: '🏃💨',
+      MASTER_REFLECTOR: '🔄⛓️',
+    };
+    return icons[synergy] ?? '✨';
+  }
+
   private donorEffect = effect(() => {
     const isDonor = this.authService.isDonor();
     if (isDonor && this.gamePhase() !== GamePhase.Playing) {
@@ -193,4 +305,16 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.waitTimer.set(0);
     }
   });
+
+  toggleSkillTree(): void {
+    if (this.gamePhase() !== GamePhase.Playing) return;
+    this.showSkillTree.update(v => !v);
+    if (this.showSkillTree()) {
+      this.skillTree.load().catch(console.error);
+    }
+  }
+
+  closeSkillTree(): void {
+    this.showSkillTree.set(false);
+  }
 }

@@ -4,8 +4,10 @@ import { PowerUpType } from './power-up.model';
 export enum GamePhase {
   Ready = 'ready',
   Playing = 'playing',
+  Draft = 'draft',
   Victory = 'victory',
   Defeat = 'defeat',
+  RunEnd = 'run_end',
 }
 
 export interface PowerUpDrop {
@@ -18,6 +20,9 @@ export interface Explosion {
   readonly position: GridPosition;
   readonly tiles: GridPosition[];
   readonly expiresAtMs: number;
+  readonly freeze?: boolean;
+  readonly frozenEnemyIds?: number[];
+  readonly mega?: boolean;
 }
 
 export interface InterpolatedMove {

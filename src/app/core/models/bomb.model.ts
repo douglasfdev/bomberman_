@@ -6,5 +6,7 @@ export interface Bomb {
   readonly position: GridPosition;
   readonly range: number;
   readonly pierce: boolean;
+  readonly freeze: boolean;
+  readonly mega: boolean;
   plantedAtMs: number;
 }

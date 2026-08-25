@@ -69,6 +69,15 @@ export class InputManagerService {
     return this.directionSubject.value;
   }
 
+  isKeyPressed(code: string): boolean {
+    // Check if the key code corresponds to a currently pressed direction
+    const direction = KEY_DIRECTIONS[code];
+    if (direction) {
+      return this.pressedKeys.includes(direction);
+    }
+    return false;
+  }
+
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     const direction = KEY_DIRECTIONS[event.code];
     if (direction) {

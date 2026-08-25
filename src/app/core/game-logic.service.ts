@@ -36,6 +36,7 @@ import { LevelService } from './level.service';
 import { MoveTiming } from './models/move-timing.model';
 import { InputManagerService } from './input-manager.service';
 import { AchievementService } from '../services/achievement.service';
+import { RunStateService } from './roguelite/run-state.service';
 
 @Injectable({ providedIn: 'root' })
 export class GameLogicService {
@@ -43,6 +44,7 @@ export class GameLogicService {
   private readonly input = inject(InputManagerService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly achievements = inject(AchievementService);
+  private readonly runState = inject(RunStateService);
 
   readonly score = signal(0);
   readonly highScore = signal(0);
@@ -55,7 +57,34 @@ export class GameLogicService {
   readonly gamePhase = signal<GamePhase>(GamePhase.Ready);
   readonly exitOpen = signal(false);
 
-  private player: PlayerState = { position: { x: 1, y: 1 }, alive: true, maxBombs: BASE_BOMBS, range: BASE_RANGE, moveDurationMs: BASE_MOVE_DURATION_MS, pierce: false };
+  private player: PlayerState = {
+    position: { x: 1, y: 1 },
+    alive: true,
+    maxBombs: BASE_BOMBS,
+    range: BASE_RANGE,
+    moveDurationMs: BASE_MOVE_DURATION_MS,
+    pierce: false,
+    freezeBomb: false,
+    lifeSteal: false,
+    canKick: false,
+    remoteDetonate: false,
+    megaBombCharges: 0,
+    ghostWalkCd: -1,
+    revenge: false,
+    reflect: false,
+    shatter: false,
+    ricochet: false,
+    vampirism: false,
+    magnetRange: 0,
+    bossSlayer: false,
+    freezeChainDamage: 1,
+    chainPierceKick: false,
+    megaRemoteRange: 1,
+    ghostKickInside: false,
+    totalVampirism: false,
+    lethalSpeedSlow: 0,
+    reflectChain: false,
+  };
   private enemies: (EnemyState & { nextMoveAtMs: number; nextBombAtMs: number; currentMove: MoveTiming | null; })[] = [];
   private bombs: Bomb[] = [];
   private explosions: Explosion[] = [];
@@ -102,6 +131,7 @@ export class GameLogicService {
   restart(): void {
     this.level.generate();
     this.resetFullGame();
+    this.lastTickMs = performance.now();
     this.gamePhase.set(GamePhase.Playing);
   }
 
@@ -157,7 +187,27 @@ export class GameLogicService {
       maxBombs: BASE_BOMBS,
       range: BASE_RANGE,
       moveDurationMs: BASE_MOVE_DURATION_MS,
-      pierce: false
+      pierce: false,
+      freezeBomb: false,
+      lifeSteal: false,
+      canKick: false,
+      remoteDetonate: false,
+      megaBombCharges: 0,
+      ghostWalkCd: -1,
+      revenge: false,
+      reflect: false,
+      shatter: false,
+      ricochet: false,
+      vampirism: false,
+      magnetRange: 0,
+      bossSlayer: false,
+      freezeChainDamage: 1,
+      chainPierceKick: false,
+      megaRemoteRange: 1,
+      ghostKickInside: false,
+      totalVampirism: false,
+      lethalSpeedSlow: 0,
+      reflectChain: false,
     };
 
     this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
@@ -194,7 +244,27 @@ export class GameLogicService {
       maxBombs: this.maxBombs(),
       range: this.range(),
       moveDurationMs: BASE_MOVE_DURATION_MS,
-      pierce: this.pierce()
+      pierce: this.pierce(),
+      freezeBomb: this.player.freezeBomb,
+      lifeSteal: this.player.lifeSteal,
+      canKick: this.player.canKick,
+      remoteDetonate: this.player.remoteDetonate,
+      megaBombCharges: this.player.megaBombCharges,
+      ghostWalkCd: this.player.ghostWalkCd,
+      revenge: this.player.revenge,
+      reflect: this.player.reflect,
+      shatter: this.player.shatter,
+      ricochet: this.player.ricochet,
+      vampirism: this.player.vampirism,
+      magnetRange: this.player.magnetRange,
+      bossSlayer: this.player.bossSlayer,
+      freezeChainDamage: this.player.freezeChainDamage,
+      chainPierceKick: this.player.chainPierceKick,
+      megaRemoteRange: this.player.megaRemoteRange,
+      ghostKickInside: this.player.ghostKickInside,
+      totalVampirism: this.player.totalVampirism,
+      lethalSpeedSlow: this.player.lethalSpeedSlow,
+      reflectChain: this.player.reflectChain,
     };
 
     this.enemies = Array.from({ length: ENEMY_COUNT }, (_, i) => ({
@@ -217,6 +287,17 @@ export class GameLogicService {
     // Resetar contadores de fase
     this.tookDamageThisPhase = false;
     this.chainReactionDetected = false;
+  }
+
+  private respawnPlayer(): void {
+    this.player = {
+      ...this.player,
+      position: { ...this.level.playerSpawn },
+      alive: true,
+    };
+    this.currentMove = null;
+    this.lastTickMs = performance.now();
+    this.gamePhase.set(GamePhase.Playing);
   }
 
   tick(deltaMs: number): void {
@@ -274,8 +355,28 @@ export class GameLogicService {
       position: { ...this.player.position },
       range: this.player.range,
       pierce: this.player.pierce,
+      freeze: this.player.freezeBomb,
+      mega: this.player.megaBombCharges > 0,
       plantedAtMs: performance.now(),
     });
+    if (this.player.megaBombCharges > 0) {
+      this.player.megaBombCharges--;
+    }
+  }
+
+  applySpeedStacks(stacks: number): void {
+    const step = SPEED_STEP_MS * stacks;
+    const newDuration = Math.max(MIN_MOVE_DURATION_MS, this.player.moveDurationMs - step);
+    this.player.moveDurationMs = newDuration;
+    this.speed.update(s => s + stacks);
+  }
+
+  setPlayerProperty<K extends keyof PlayerState>(key: K, value: PlayerState[K]): void {
+    (this.player as any)[key] = value;
+  }
+
+  getPlayerProperty<K extends keyof PlayerState>(key: K): PlayerState[K] {
+    return this.player[key];
   }
 
   private updatePlayer(elapsed: number): void {
@@ -345,6 +446,8 @@ export class GameLogicService {
               position: { ...enemy.position },
               range: BASE_RANGE,
               pierce: false,
+              freeze: false,
+              mega: false,
               plantedAtMs: now,
             });
             enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
@@ -370,6 +473,8 @@ export class GameLogicService {
           position: { ...enemy.position },
           range: BASE_RANGE,
           pierce: false,
+          freeze: false,
+          mega: false,
           plantedAtMs: now,
         });
         enemy.nextBombAtMs = now + ENEMY_BOMB_INTERVAL_MS;
@@ -564,7 +669,7 @@ export class GameLogicService {
 
     const allBombs = [...this.bombs];
     if (simulatedBomb) {
-      allBombs.push({ id: -1, planterId: 'player', position: simulatedBomb, range: BASE_RANGE, pierce: false, plantedAtMs: 0 });
+      allBombs.push({ id: -1, planterId: 'player', position: simulatedBomb, range: BASE_RANGE, pierce: false, freeze: false, mega: false, plantedAtMs: 0 });
     }
 
     for (const bomb of allBombs) {
@@ -660,10 +765,12 @@ export class GameLogicService {
   private explode(bomb: Bomb): void {
     const tiles: GridPosition[] = [bomb.position];
     const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+    const frozenEnemies = new Set<number>();
+    const effectiveRange = bomb.mega ? bomb.range * 2 : bomb.range;
 
     for (const dir of dirs) {
       const delta = directionDelta(dir);
-      for (let r = 1; r <= bomb.range; r++) {
+      for (let r = 1; r <= effectiveRange; r++) {
         const pos = { x: bomb.position.x + delta.x * r, y: bomb.position.y + delta.y * r };
         if (!this.level.isInBounds(pos)) break;
 
@@ -671,6 +778,9 @@ export class GameLogicService {
         tiles.push(pos);
 
         if (tile.type === TileType.Wall) {
+          if (bomb.mega) {
+            continue;
+          }
           break;
         }
 
@@ -679,18 +789,20 @@ export class GameLogicService {
           this.score.update(s => s + SCORE_BOX);
           this.trySpawnPowerUp(pos);
 
-          // Achievement: EXPLORER (50 caixas no total)
           this.sessionBoxesDestroyed++;
           if (this.sessionBoxesDestroyed >= 50) {
             this.achievements.unlock('EXPLORER');
           }
 
-          break;
+          if (this.player.vampirism && Math.random() < 0.05) {
+            this.addLife(1);
+          }
+
+          if (!bomb.pierce) break;
         }
       }
     }
 
-    // Achievement: CHAIN_REACTION — verifica se esta explosão aciona outra bomba
     const chainBombs = this.bombs.filter(
       (b) => b.id !== bomb.id && (
         tiles.some((t) => samePosition(t, b.position)) ||
@@ -700,6 +812,19 @@ export class GameLogicService {
     if (chainBombs.length > 0) {
       this.chainReactionDetected = true;
       this.achievements.unlock('CHAIN_REACTION');
+      for (const cb of chainBombs) {
+        this.explode(cb);
+        this.bombs = this.bombs.filter(b => b.id !== cb.id);
+      }
+    }
+
+    if (bomb.freeze) {
+      for (const enemy of this.enemies) {
+        if (!enemy.alive) continue;
+        if (samePosition(enemy.position, bomb.position) || tiles.some(t => samePosition(t, enemy.position))) {
+          frozenEnemies.add(enemy.id);
+        }
+      }
     }
 
     const id = Date.now() + Math.random();
@@ -708,7 +833,14 @@ export class GameLogicService {
       position: bomb.position,
       tiles,
       expiresAtMs: performance.now() + EXPLOSION_MS,
+      freeze: bomb.freeze,
+      frozenEnemyIds: Array.from(frozenEnemies),
+      mega: bomb.mega,
     });
+  }
+
+  private addLife(amount: number): void {
+    this.runState.addShield();
   }
 
   private trySpawnPowerUp(position: GridPosition): void {
@@ -722,20 +854,30 @@ export class GameLogicService {
   }
 
   private checkCollisions(): void {
+    // Player hit by explosion
     for (const exp of this.explosions) {
       if (samePosition(this.player.position, exp.position) || exp.tiles.some(t => samePosition(t, this.player.position))) {
         if (!this.pierce()) {
-          this.player.alive = false;
-          this.tookDamageThisPhase = true;
-          this.consecutivePhases = 0; // perde a sequência
-          this.gamePhase.set(GamePhase.Defeat);
-          this.updateHighScore();
-          return;
+          if (this.runState.shield() > 0) {
+            this.runState.loseLife();
+          } else {
+            const died = this.runState.loseLife();
+            this.player.alive = false;
+            this.tookDamageThisPhase = true;
+            this.consecutivePhases = 0;
+            if (died) {
+              this.gamePhase.set(GamePhase.Defeat);
+              this.updateHighScore();
+            } else {
+              // Respawn player after losing a life
+              this.respawnPlayer();
+            }
+            return;
+          }
         }
       }
     }
 
-    // Conta inimigos mortos nesta rodada de explosões (para BOMB_MASTER)
     let killsThisExplosion = 0;
     let totalKillsEver = 0;
 
@@ -743,46 +885,71 @@ export class GameLogicService {
       if (!enemy.alive) continue;
 
       let hit = false;
+      let hitExplosion: any = null;
       for (const exp of this.explosions) {
         if (samePosition(enemy.position, exp.position) || exp.tiles.some(t => samePosition(t, enemy.position))) {
           hit = true;
+          hitExplosion = exp;
           break;
         }
       }
 
       if (hit) {
-        enemy.alive = false;
+        const isFrozen = hitExplosion?.frozenEnemyIds?.includes(enemy.id) ?? false;
+        const shatterKill = this.player.shatter && isFrozen;
+        const freezeChainDamage = this.player.freezeChainDamage > 1 && isFrozen;
+
+        if (shatterKill || freezeChainDamage) {
+          enemy.alive = false;
+        } else {
+          enemy.alive = false;
+        }
+
         this.enemiesRemaining.set(this.enemiesRemaining() - 1);
         this.score.update(s => s + SCORE_ENEMY);
         this.trySpawnPowerUp(enemy.position);
         killsThisExplosion++;
+
+        if (this.player.lifeSteal && Math.random() < 0.1) {
+          this.addLife(1);
+        }
+
+        if (this.player.bossSlayer && (enemy as any).isBoss) {
+          this.score.update(s => s + SCORE_ENEMY);
+        }
       }
 
       if (samePosition(this.player.position, enemy.position)) {
-        this.player.alive = false;
-        this.tookDamageThisPhase = true;
-        this.consecutivePhases = 0;
-        this.gamePhase.set(GamePhase.Defeat);
-        this.updateHighScore();
-        return;
+        if (this.runState.shield() > 0) {
+          this.runState.loseLife();
+        } else {
+          const died = this.runState.loseLife();
+          this.player.alive = false;
+          this.tookDamageThisPhase = true;
+          this.consecutivePhases = 0;
+          if (died) {
+            this.gamePhase.set(GamePhase.Defeat);
+            this.updateHighScore();
+          } else {
+            // Respawn player after losing a life
+            this.respawnPlayer();
+          }
+          return;
+        }
       }
     }
 
-    // Contar total de inimigos mortos para FIRST_BLOOD
     totalKillsEver = this.enemies.filter(e => !e.alive).length;
 
     if (killsThisExplosion > 0) {
-      // FIRST_BLOOD: pelo menos um inimigo morto
       if (totalKillsEver >= 1) {
         this.achievements.unlock('FIRST_BLOOD');
       }
-      // BOMB_MASTER: 3 inimigos na mesma explosão
       if (killsThisExplosion >= 3) {
         this.achievements.unlock('BOMB_MASTER');
       }
     }
 
-    // Power-ups coletados
     for (let i = this.powerUps.length - 1; i >= 0; i--) {
       if (samePosition(this.player.position, this.powerUps[i].position)) {
         const pu = this.powerUps.splice(i, 1)[0];
@@ -804,7 +971,6 @@ export class GameLogicService {
             break;
         }
 
-        // POWER_COLLECTOR: todos os 4 tipos coletados na partida
         if (
           this.collectedPowerUps.has(PowerUpType.Range) &&
           this.collectedPowerUps.has(PowerUpType.Bomb) &&
@@ -816,7 +982,6 @@ export class GameLogicService {
       }
     }
 
-    // HIGH_SCORER: 1000 pontos numa partida
     if (this.score() >= 1000) {
       this.achievements.unlock('HIGH_SCORER');
     }
