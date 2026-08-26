@@ -1,23 +1,6 @@
 import { Component, input, output, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-interface SkillNodeData {
-  id: string;
-  key: string;
-  name: string;
-  description: string;
-  icon: string;
-  baseCost: number;
-  costScaling: number;
-  maxLevel: number;
-  prerequisites: string[];
-  category: string;
-  positionX: number;
-  positionY: number;
-  effects: Record<string, any>;
-  isActive: boolean;
-}
-
 @Component({
   selector: 'app-skill-node',
   standalone: true,
@@ -29,6 +12,7 @@ interface SkillNodeData {
       [class.locked]="!isUnlocked()"
       [class.maxed]="isMaxLevel()"
       [class.selected]="isSelected()"
+      [class.panning]="disablePointerEvents()"
       [style.left.px]="position().x"
       [style.top.px]="position().y"
       (click)="onClick()"
@@ -72,6 +56,10 @@ interface SkillNodeData {
 
     .skill-node.selected {
       filter: drop-shadow(0 0 16px #58a6ff);
+    }
+
+    .skill-node.panning {
+      pointer-events: none;
     }
 
     .node-ring {
@@ -216,6 +204,9 @@ export class SkillNodeComponent {
   readonly isUnlocked = input.required<boolean>();
   readonly isMaxLevel = input.required<boolean>();
   readonly position = input.required<{ x: number; y: number }>();
+
+  // Disable pointer events when panning the skill tree
+  readonly disablePointerEvents = input(false);
 
   readonly select = output<void>();
 
