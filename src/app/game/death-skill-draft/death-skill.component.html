@@ -1,0 +1,82 @@
+@if (isOpen()) {
+      <div class="death-draft-overlay" (click)="close.emit()">
+        <div class="death-draft-container" (click)="$event.stopPropagation()">
+          <header class="death-draft-header">
+            <h2>Fim da Run</h2>
+            <p class="phase-info">
+              Pontuação: {{ score() }} | SP ganhos: <span class="sp-value">{{ earnedSP() }}</span>
+            </p>
+            @if (earnedSP() > 0) {
+              <p class="sp-info">Gaste seus SP para melhorar suas habilidades permanentemente!</p>
+            } @else {
+              <p class="sp-info warning">Pontuação insuficiente para ganhar SP (mínimo 1000 pontos)</p>
+            }
+          </header>
+
+          <div class="cards-grid" role="list" aria-label="Habilidades disponíveis para upgrade">
+            @for (skill of availableSkills(); track skill.key; let i = $index) {
+              <article
+                class="skill-card"
+                [class.selected]="selectedIndex() === i"
+                [class.disabled]="!canUpgrade(skill) || earnedSP() === 0"
+                [class.skill-category]="'cat-' + skill.category.toLowerCase()"
+                role="listitem"
+                tabindex="0"
+                (click)="select(i)"
+                (keydown.enter)="select(i)"
+                (keydown.space)="select(i)"
+                (keydown.arrowRight)="navigate(1)"
+                (keydown.arrowLeft)="navigate(-1)"
+              >
+                <div class="skill-icon">{{ skill.icon }}</div>
+                <h3 class="skill-name">{{ skill.name }}</h3>
+                <p class="skill-description">{{ skill.description }}</p>
+                
+                <div class="skill-level">
+                  Nível atual: <span class="current-level">{{ getCurrentLevel(skill) }}</span> / {{ skill.maxLevel }}
+                </div>
+                
+                @if (getCurrentLevel(skill) < skill.maxLevel) {
+                  <div class="upgrade-preview">
+                    Próximo: {{ getNextLevelEffect(skill) }}
+                    <span class="cost">Custo: {{ getUpgradeCost(skill) }} SP</span>
+                  </div>
+                } @else {
+                  <div class="max-level">MÁX</div>
+                }
+                
+                @if (skill.prerequisites.length > 0) {
+                  <div class="prerequisites">
+                    Requer: {{ skill.prerequisites.join(', ') }}
+                  </div>
+                }
+              </article>
+            }
+          </div>
+
+          <footer class="death-draft-footer">
+            <div class="selection-info">
+              @if (earnedSP() === 0) {
+                <span class="no-sp">Sem SP para gastar</span>
+              } @else if (selectedIndex() === null) {
+                <span class="warning">Selecione uma habilidade para melhorar</span>
+              } @else if (!canUpgrade(selectedSkill()!)) {
+                <span class="warning">Esta habilidade não pode ser melhorada (pré-requisitos ou nível máximo)</span>
+              } @else {
+                <span class="ready">Confirmar upgrade de {{ selectedSkill()?.name }}</span>
+              }
+            </div>
+            <button
+              class="confirm-btn"
+              [disabled]="selectedIndex() === null || !canUpgrade(selectedSkill()!) || earnedSP() === 0"
+              (click)="confirm()"
+            >
+              {{ earnedSP() === 0 ? 'Continuar' : 'Confirmar Upgrade' }}
+            </button>
+            <button class="cancel-btn" (click)="close.emit()">
+              {{ earnedSP() === 0 ? '' : 'Pular' }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    }

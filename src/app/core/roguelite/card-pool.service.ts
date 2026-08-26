@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { signal, computed } from '@angular/core';
 import { Card, CardDTO, CardRarity, CardCategory } from '../models/card.model';
 import { RunPersistenceService } from './run-persistence.service';
+import { CARD_DEFINITIONS } from '../../data/cards.seed';
 
 interface WeightedCard extends Card {
   _weight: number;
@@ -41,11 +42,20 @@ export class CardPoolService {
         synergyWith: [],
         minPhase: 1,
       }));
-      this.pool.set(cards);
+      if (cards.length > 0) {
+        this.pool.set(cards);
+        console.log('[CardPool] Loaded from backend:', cards.length, 'cards');
+      } else {
+        throw new Error('Empty pool from backend');
+      }
       this.offeredInRun.set(new Set());
     } catch (e) {
-      this.error.set('Falha ao carregar pool de cartas');
-      throw e;
+      console.warn('[CardPool] Backend indisponível ou vazio, usando pool local de cartas:', e);
+      // Fallback para pool local - ensure CARD_DEFINITIONS is used
+      console.log('[CardPool] CARD_DEFINITIONS length:', CARD_DEFINITIONS?.length);
+      this.pool.set(CARD_DEFINITIONS);
+      this.offeredInRun.set(new Set());
+      console.log('[CardPool] Pool set to local, length:', this.pool().length);
     } finally {
       this.isLoading.set(false);
     }

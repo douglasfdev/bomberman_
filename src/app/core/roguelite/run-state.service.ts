@@ -142,14 +142,14 @@ export class RunStateService {
     try {
       const run = this.currentRun();
       if (!run) throw new Error('Nenhuma run ativa');
-      
+
       // Se for run local, gerar draft local
       if (run.id.startsWith('local-')) {
         const draft = this.generateLocalDraft(run, phase);
         this.currentDraft.set(draft);
         return draft;
       }
-      
+
       const draft = await this.persistence.getDraft(run.id, phase);
       this.currentDraft.set(draft);
       return draft;
@@ -173,7 +173,7 @@ export class RunStateService {
     try {
       const run = this.currentRun();
       if (!run) throw new Error('Nenhuma run ativa');
-      
+
       if (run.id.startsWith('local-')) {
         // Modo local: aplicar escolha localmente
         const choice: RunChoice = {
@@ -203,7 +203,7 @@ export class RunStateService {
         this.currentDraft.set(null);
         return { choice, upgrade };
       }
-      
+
       const result = await this.persistence.applyChoice(run.id, payload);
       this.currentRun.update((r) => {
         if (!r) return r;
@@ -230,7 +230,7 @@ export class RunStateService {
     try {
       const run = this.currentRun();
       if (!run) throw new Error('Nenhuma run ativa');
-      
+
       if (run.id.startsWith('local-')) {
         // Modo local: finalizar localmente
         const endedRun: Run = {
@@ -255,7 +255,7 @@ export class RunStateService {
           endedReason: endedRun.endedReason,
         };
       }
-      
+
       const ended = await this.persistence.endRun(run.id, payload);
       this.currentRun.set(dtoToRun(ended));
       return ended;
@@ -273,7 +273,7 @@ export class RunStateService {
     try {
       const run = this.currentRun();
       if (!run) throw new Error('Nenhuma run ativa');
-      
+
       // Create prestige choices record
       const prestigeChoices = prestigeCards.map(cardKey => ({
         id: 'local-prestige-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
@@ -283,7 +283,7 @@ export class RunStateService {
         picked: cardKey,
         createdAt: new Date(),
       }));
-      
+
       // Create prestige upgrades (these become permanent for the next run)
       const prestigeUpgrades = prestigeCards.map(cardKey => ({
         id: 'local-prestige-upgrade-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
@@ -292,7 +292,7 @@ export class RunStateService {
         stacks: 1,
         createdAt: new Date(),
       }));
-      
+
       if (run.id.startsWith('local-')) {
         // Modo local: criar nova run com os upgrades de prestígio
         const newRun = createLocalRun();
@@ -311,10 +311,10 @@ export class RunStateService {
         newRun.choices = prestigeChoices;
         newRun.upgrades = prestigeUpgrades;
         newRun.skills = run.skills; // Keep skills from previous run
-        
+
         this.currentRun.set(newRun);
         this.recomputeSynergies();
-        
+
         return {
           id: newRun.id,
           seed: newRun.seed,
@@ -329,21 +329,21 @@ export class RunStateService {
           endedReason: null,
         };
       }
-      
+
       // For server runs, call backend
       const ended = await this.persistence.endRun(run.id, {
         score: 0,
         timeLeftMs: 0,
         reason: 'PRESTIGE',
       });
-      
+
       // Start new run with prestige upgrades
       const newRun = await this.persistence.startRun();
       // Apply prestige upgrades to new run...
-      
+
       this.currentRun.set(dtoToRun(newRun));
       this.recomputeSynergies();
-      
+
       return ended;
     } catch (e) {
       this.error.set('Falha ao fazer prestígio');
@@ -420,7 +420,7 @@ export class RunStateService {
     });
   }
 
-  private recomputeSynergies(): void {
+  public recomputeSynergies(): void {
     const run = this.currentRun();
     if (!run) {
       this.activeSynergies.set([]);

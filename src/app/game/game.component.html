@@ -145,6 +145,14 @@
     (confirmPrestige)="onPrestigeConfirm($event)"
   ></app-prestige-draft>
 
+  <!-- Death Skill Draft Overlay -->
+  <app-death-skill-draft
+    *ngIf="showDeathSkillDraft()"
+    [score]="deathDraftScore()"
+    (close)="onDeathSkillDraftClose()"
+    (confirmUpgrade)="onDeathSkillDraftConfirm($event)"
+  ></app-death-skill-draft>
+
   @if (initError()) {
     <div class="error">Seu navegador não suporta WebGL.</div>
   }

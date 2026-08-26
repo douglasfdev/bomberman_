@@ -763,6 +763,14 @@ export class GameLogicService {
   }
 
   private explode(bomb: Bomb): void {
+    this.explodeWithChain(bomb, new Set());
+  }
+
+  private explodeWithChain(bomb: Bomb, explodedInChain: Set<number>): void {
+    // Prevent infinite recursion
+    if (explodedInChain.has(bomb.id)) return;
+    explodedInChain.add(bomb.id);
+
     const tiles: GridPosition[] = [bomb.position];
     const dirs = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
     const frozenEnemies = new Set<number>();
@@ -804,7 +812,7 @@ export class GameLogicService {
     }
 
     const chainBombs = this.bombs.filter(
-      (b) => b.id !== bomb.id && (
+      (b) => b.id !== bomb.id && !explodedInChain.has(b.id) && (
         tiles.some((t) => samePosition(t, b.position)) ||
         samePosition(bomb.position, b.position)
       )
@@ -813,7 +821,7 @@ export class GameLogicService {
       this.chainReactionDetected = true;
       this.achievements.unlock('CHAIN_REACTION');
       for (const cb of chainBombs) {
-        this.explode(cb);
+        this.explodeWithChain(cb, explodedInChain);
         this.bombs = this.bombs.filter(b => b.id !== cb.id);
       }
     }

@@ -17,13 +17,15 @@ import { RogueliteBootstrapService } from '../core/roguelite/roguelite-bootstrap
 import { SkillTreeService } from '../core/roguelite/skill-tree.service';
 import { SkillTreeComponent } from './skill-tree/skill-tree.component';
 import { PrestigeDraftComponent } from './prestige-draft/prestige-draft.component';
+import { DeathSkillDraftComponent } from './death-skill-draft/death-skill.component';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
   standalone: true,
-  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent, PrestigeDraftComponent]
+  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent, PrestigeDraftComponent, DeathSkillDraftComponent]
 })
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
@@ -76,6 +78,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Prestige draft state
   showPrestigeDraft = signal(false);
+  // Death skill draft state
+  showDeathSkillDraft = signal(false);
+  deathDraftScore = signal(0);
 
   readonly maxPrestigeCards = computed(() => 
     Math.min(3 + Math.floor(this.logic.phase() / 3), 5)
@@ -112,6 +117,9 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
         this.closeDraft();
       }
     });
+
+// Watch for Defeat phase (time up or no lives) - show death skill draft
+    // Removed duplicate effect as handleTimeUp manages it now.
 
     // Watch for skill tree keybind (T)
     effect(() => {
@@ -183,9 +191,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private updateRunTimer(deltaMs: number): void {
     const run = this.runState.currentRun();
     if (!run) return;
+    if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
     
-    this.runState.updateTimeLeft(this.runState.timeLeftMs() - deltaMs);
-    if (this.runState.timeLeftMs() <= 0) {
+    const newTimeLeft = this.runState.timeLeftMs() - deltaMs;
+    this.runState.updateTimeLeft(newTimeLeft);
+    
+    if (newTimeLeft <= 0) {
       this.handleTimeUp();
     }
   }
@@ -193,13 +204,71 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   private async handleTimeUp(): Promise<void> {
     const run = this.runState.currentRun();
     if (!run) return;
+    if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
     
-    this.logic.gamePhase.set(GamePhase.Defeat);
+    const finalScore = this.logic.score();
+    this.deathDraftScore.set(finalScore);
+    
+    // End the run on backend (ignore errors in dev/local mode)
     await this.runState.endRun({
-      score: this.logic.score(),
+      score: finalScore,
       timeLeftMs: 0,
       reason: 'TIME_UP',
+    }).catch(e => {
+      console.warn('[Game] End run failed (continuing without backend):', e);
     });
+    
+    // Show death skill draft
+    console.log('[Game] Setting gamePhase to Defeat and showDeathSkillDraft to true');
+    this.logic.gamePhase.set(GamePhase.Defeat);
+    this.showDeathSkillDraft.set(true);
+    console.log('[Game] showDeathSkillDraft is now:', this.showDeathSkillDraft());
+  }
+
+  async onDeathSkillDraftConfirm(cardKey: string): Promise<void> {
+    this.showDeathSkillDraft.set(false);
+    try {
+      // Apply the chosen card as a permanent upgrade for the next run
+      const run = this.runState.currentRun();
+      if (run && run.id.startsWith('local-')) {
+        const choice = {
+          id: 'local-choice-' + Date.now(),
+          runId: run.id,
+          phase: run.phase,
+          offered: this.runState.currentDraft()?.offered ?? [],
+          picked: cardKey,
+          createdAt: new Date(),
+        };
+        const upgrade = {
+          id: 'local-upgrade-' + Date.now(),
+          runId: run.id,
+          cardKey: cardKey,
+          stacks: 1,
+          createdAt: new Date(),
+        };
+        this.runState.currentRun.update((r) => {
+          if (!r) return r;
+          return {
+            ...r,
+            upgrades: [...r.upgrades, upgrade],
+            choices: [...r.choices, choice],
+          };
+        });
+        // Recompute synergies (private method changed to public or accessed directly)
+        // @ts-ignore
+        this.runState.recomputeSynergies?.();
+      }
+      // Reload to ensure skills persist for next run
+      await this.skillTree.load();
+    } catch (e) {
+      console.error('Erro ao confirmar upgrade:', e);
+    }
+    // Go to run end screen
+    this.logic.gamePhase.set(GamePhase.RunEnd);
+  }
+
+  onDeathSkillDraftClose(): void {
+    this.showDeathSkillDraft.set(false);
     this.logic.gamePhase.set(GamePhase.RunEnd);
   }
 
@@ -286,7 +355,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) return;
     clearInterval(this.timerInterval);
 
-    if (isDonor || isLoggedIn) {
+    // Skip paywall in development mode for faster testing
+    // Check multiple ways to detect dev mode
+    const isDev = !environment.production || 
+                  (typeof window !== 'undefined' && window.location.hostname === 'localhost') ||
+                  (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1');
+    
+    console.log('[Game] enforcePaywall:', { isDonor, isLoggedIn, isDev, canPlay: this.canPlay() });
+    
+    if (isDonor || isLoggedIn || isDev) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
     } else {
