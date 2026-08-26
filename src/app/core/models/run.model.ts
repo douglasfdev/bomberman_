@@ -35,7 +35,7 @@ export interface RunUpgrade {
   createdAt: Date;
 }
 
-export type RunEndedReason = 'TIME_UP' | 'NO_LIVES' | 'VICTORY' | 'QUIT';
+export type RunEndedReason = 'TIME_UP' | 'NO_LIVES' | 'VICTORY' | 'QUIT' | 'PRESTIGE';
 
 export interface RunDTO {
   id: string;
@@ -66,6 +66,14 @@ export interface EndRunPayload {
   score: number;
   timeLeftMs: number;
   reason: RunEndedReason;
+}
+
+export interface PrestigeDraftDTO {
+  offered: string[];
+}
+
+export interface PrestigeChoicePayload {
+  picked: string;
 }
 
 export interface CardDTO {

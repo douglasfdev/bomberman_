@@ -136,6 +136,15 @@
   <!-- Skill Tree Overlay -->
   <app-skill-tree *ngIf="showSkillTree()" (close)="closeSkillTree()"></app-skill-tree>
 
+  <!-- Prestige Draft Overlay -->
+  <app-prestige-draft
+    *ngIf="showPrestigeDraft()"
+    [phase]="logic.phase()"
+    [maxCards]="maxPrestigeCards()"
+    (close)="closePrestigeDraft()"
+    (confirmPrestige)="onPrestigeConfirm($event)"
+  ></app-prestige-draft>
+
   @if (initError()) {
     <div class="error">Seu navegador não suporta WebGL.</div>
   }

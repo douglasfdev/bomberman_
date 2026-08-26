@@ -1,5 +1,5 @@
 import { isPlatformBrowser, CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, effect } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
@@ -16,13 +16,14 @@ import { RunStateService } from '../core/roguelite/run-state.service';
 import { RogueliteBootstrapService } from '../core/roguelite/roguelite-bootstrap.service';
 import { SkillTreeService } from '../core/roguelite/skill-tree.service';
 import { SkillTreeComponent } from './skill-tree/skill-tree.component';
+import { PrestigeDraftComponent } from './prestige-draft/prestige-draft.component';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
   standalone: true,
-  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent]
+  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent, PrestigeDraftComponent]
 })
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
@@ -72,6 +73,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   // Draft state
   showDraft = signal(false);
   draftPhase = signal(0);
+
+  // Prestige draft state
+  showPrestigeDraft = signal(false);
+
+  readonly maxPrestigeCards = computed(() => 
+    Math.min(3 + Math.floor(this.logic.phase() / 3), 5)
+  );
 
   private actionSub?: Subscription;
   private timerInterval: any;
@@ -223,6 +231,43 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
     } catch (e) {
       console.error('Erro ao confirmar escolha:', e);
+    }
+  }
+
+  // Prestige Draft methods
+  async openPrestigeDraft(): Promise<void> {
+    if (this.gamePhase() !== GamePhase.Playing) return;
+    
+    // Pause the game
+    this.logic.gamePhase.set(GamePhase.Draft);
+    
+    // Calculate how many cards the player can choose based on phase
+    const phase = this.logic.phase();
+    const maxCards = Math.min(3 + Math.floor(phase / 3), 5); // 3-5 cards based on phase
+    
+    this.showPrestigeDraft.set(true);
+  }
+
+  closePrestigeDraft(): void {
+    this.showPrestigeDraft.set(false);
+    // Resume game if it was paused
+    if (this.gamePhase() === GamePhase.Draft) {
+      this.logic.gamePhase.set(GamePhase.Playing);
+    }
+  }
+
+  async onPrestigeConfirm(cardKeys: string[]): Promise<void> {
+    this.showPrestigeDraft.set(false);
+    this.logic.gamePhase.set(GamePhase.Playing);
+    
+    try {
+      const result = await this.runState.resetRunForPrestige(cardKeys);
+      // Apply the prestige upgrades to the game logic
+      this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+      // Restart the game with new run
+      this.logic.restart();
+    } catch (e) {
+      console.error('Erro ao fazer prestígio:', e);
     }
   }
 

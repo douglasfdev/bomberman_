@@ -267,6 +267,92 @@ export class RunStateService {
     }
   }
 
+  async resetRunForPrestige(prestigeCards: string[]): Promise<RunDTO> {
+    this.isLoading.set(true);
+    this.error.set(null);
+    try {
+      const run = this.currentRun();
+      if (!run) throw new Error('Nenhuma run ativa');
+      
+      // Create prestige choices record
+      const prestigeChoices = prestigeCards.map(cardKey => ({
+        id: 'local-prestige-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        runId: run.id,
+        phase: run.phase,
+        offered: [],
+        picked: cardKey,
+        createdAt: new Date(),
+      }));
+      
+      // Create prestige upgrades (these become permanent for the next run)
+      const prestigeUpgrades = prestigeCards.map(cardKey => ({
+        id: 'local-prestige-upgrade-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        runId: run.id,
+        cardKey: cardKey,
+        stacks: 1,
+        createdAt: new Date(),
+      }));
+      
+      if (run.id.startsWith('local-')) {
+        // Modo local: criar nova run com os upgrades de prestígio
+        const newRun = createLocalRun();
+        newRun.id = 'local-' + Date.now();
+        newRun.seed = generateSeed();
+        newRun.phase = 1;
+        newRun.maxPhase = 1;
+        newRun.lives = 3;
+        newRun.shield = 0;
+        newRun.timeLeftMs = 30000;
+        newRun.score = 0;
+        newRun.startedAt = new Date();
+        newRun.endedAt = null;
+        newRun.endedReason = null;
+        newRun.skillPoints = 0;
+        newRun.choices = prestigeChoices;
+        newRun.upgrades = prestigeUpgrades;
+        newRun.skills = run.skills; // Keep skills from previous run
+        
+        this.currentRun.set(newRun);
+        this.recomputeSynergies();
+        
+        return {
+          id: newRun.id,
+          seed: newRun.seed,
+          phase: newRun.phase,
+          maxPhase: newRun.maxPhase,
+          lives: newRun.lives,
+          shield: newRun.shield,
+          timeLeftMs: newRun.timeLeftMs,
+          score: 0,
+          startedAt: newRun.startedAt.toISOString(),
+          endedAt: null,
+          endedReason: null,
+        };
+      }
+      
+      // For server runs, call backend
+      const ended = await this.persistence.endRun(run.id, {
+        score: 0,
+        timeLeftMs: 0,
+        reason: 'PRESTIGE',
+      });
+      
+      // Start new run with prestige upgrades
+      const newRun = await this.persistence.startRun();
+      // Apply prestige upgrades to new run...
+      
+      this.currentRun.set(dtoToRun(newRun));
+      this.recomputeSynergies();
+      
+      return ended;
+    } catch (e) {
+      this.error.set('Falha ao fazer prestígio');
+      throw e;
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
   async getHistory(limit = 20, offset = 0): Promise<RunDTO[]> {
     this.isLoading.set(true);
     this.error.set(null);
