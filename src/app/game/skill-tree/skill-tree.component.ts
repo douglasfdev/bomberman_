@@ -1,4 +1,4 @@
-import { Component, effect, signal, computed, ViewChild, ElementRef, inject, OnInit, OnDestroy, HostListener, Output, EventEmitter } from '@angular/core';
+import { Component, effect, signal, computed, ViewChild, ElementRef, inject, OnInit, OnDestroy, HostListener, Output, EventEmitter, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SkillTreeService } from '../../core/roguelite/skill-tree.service';
 import { SkillNodeComponent } from './skill-node/skill-node.component';
@@ -16,6 +16,7 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   @ViewChild('panzoom') panzoomElement!: ElementRef<HTMLElement>;
 
   readonly skillTree = inject(SkillTreeService);
+  private readonly injector = inject(EnvironmentInjector);
 
   @Output() close = new EventEmitter<void>();
 
@@ -40,13 +41,15 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
     this.initPanzoom();
 
     // Wait for nodes to load, then calculate positions
-    effect(() => {
-      const nodes = this.skillTree.nodes();
-      if (nodes.length > 0) {
-        this.calculateViewport();
-        this.calculateNodePositions();
-        this.fitToView();
-      }
+    runInInjectionContext(this.injector, () => {
+      effect(() => {
+        const nodes = this.skillTree.nodes();
+        if (nodes.length > 0) {
+          this.calculateViewport();
+          this.calculateNodePositions();
+          this.fitToView();
+        }
+      });
     });
     
     this.resizeObserver = new ResizeObserver(() => this.calculateViewport());

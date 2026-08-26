@@ -11,7 +11,7 @@ export class ThreeEngineService {
   renderer!: THREE.WebGLRenderer;
   controls!: OrbitControls;
 
-  private readonly clock = new THREE.Timer();
+  private lastFrameTime = 0;
   private container!: HTMLElement;
   private resizeObserver?: ResizeObserver;
   private running = false;
@@ -66,12 +66,15 @@ export class ThreeEngineService {
     if (!isPlatformBrowser(this.platformId)) return;
 
     this.running = true;
+    this.lastFrameTime = performance.now();
     const loop = (): void => {
       if (!this.running) {
         return;
       }
       this.frame = requestAnimationFrame(loop);
-      const deltaMs = Math.min(this.clock.getDelta() * 1000, 50);
+      const now = performance.now();
+      const deltaMs = Math.min(now - this.lastFrameTime, 50);
+      this.lastFrameTime = now;
 
       if (this.controls) {
         this.controls.update();
