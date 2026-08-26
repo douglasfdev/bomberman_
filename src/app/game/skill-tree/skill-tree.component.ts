@@ -2,6 +2,7 @@ import { Component, effect, signal, computed, ViewChild, ElementRef, inject, OnI
 import { CommonModule } from '@angular/common';
 import { SkillTreeService } from '../../core/roguelite/skill-tree.service';
 import { SkillNodeComponent } from './skill-node/skill-node.component';
+import Panzoom from '@panzoom/panzoom';
 
 @Component({
   selector: 'app-skill-tree',
@@ -12,35 +13,22 @@ import { SkillNodeComponent } from './skill-node/skill-node.component';
 })
 export class SkillTreeComponent implements OnInit, OnDestroy {
   @ViewChild('container') container!: ElementRef<HTMLDivElement>;
-  @ViewChild('canvas') canvas!: ElementRef<HTMLDivElement>;
+  @ViewChild('panzoom') panzoomElement!: ElementRef<HTMLElement>;
 
   readonly skillTree = inject(SkillTreeService);
 
   @Output() close = new EventEmitter<void>();
 
-  private panStart = { x: 0, y: 0 };
-  private isPanning = false;
-  private scale = 1;
-  private translateX = 0;
-  private translateY = 0;
-  private viewportWidth = 0;
-  private viewportHeight = 0;
+  public panzoomInstance: any = null;
   private resizeObserver: ResizeObserver | null = null;
-
-  // Threshold for panning (in pixels) - only start panning after moving this many pixels
-  private readonly PAN_THRESHOLD = 5;
-
-  // Expose a signal for panning state to disable pointer events on nodes
-  readonly isPanningSignal = signal(false);
-
   private readonly nodePositions = new Map<string, { x: number; y: number }>();
 
-  // Track if mouse has moved enough to start panning
-  private hasMovedEnough = false;
-
+  // ViewBox computed for SVG
   readonly viewBox = computed(() => {
-    const scale = this.scale;
-    return `${-this.translateX / scale} ${-this.translateY / scale} ${this.viewportWidth / scale} ${this.viewportHeight / scale}`;
+    const canvas = this.panzoomElement?.nativeElement;
+    if (!canvas) return '0 0 1200 800';
+    const rect = canvas.getBoundingClientRect();
+    return `0 0 ${rect.width} ${rect.height}`;
   });
 
   ngOnInit(): void {
@@ -48,6 +36,9 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // Initialize panzoom on the canvas element
+    this.initPanzoom();
+
     // Wait for nodes to load, then calculate positions
     effect(() => {
       const nodes = this.skillTree.nodes();
@@ -57,19 +48,17 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
         this.fitToView();
       }
     });
-
+    
     this.resizeObserver = new ResizeObserver(() => this.calculateViewport());
     this.resizeObserver.observe(this.container.nativeElement);
   }
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+    this.panzoomInstance?.destroy();
   }
 
   private calculateViewport(): void {
-    const rect = this.container.nativeElement.getBoundingClientRect();
-    this.viewportWidth = rect.width;
-    this.viewportHeight = rect.height;
     this.fitToView();
   }
 
@@ -78,8 +67,8 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
       // Positions are normalized (0-1), convert to canvas coordinates
       // Using a force-directed layout would be better, but for now use predefined positions
       this.nodePositions.set(node.key, {
-        x: node.positionX * (this.viewportWidth || 1200),
-        y: node.positionY * (this.viewportHeight || 800),
+        x: node.positionX * 1200,
+        y: node.positionY * 800,
       });
     });
   }
@@ -87,9 +76,7 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   fitToView(): void {
     const nodes = this.skillTree.nodes();
     if (nodes.length === 0) {
-      this.translateX = 0;
-      this.translateY = 0;
-      this.scale = 1;
+      this.panzoomInstance?.reset();
       return;
     }
 
@@ -120,16 +107,27 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
     const contentCenterX = (minX + maxX) / 2;
     const contentCenterY = (minY + maxY) / 2;
 
+    // Get viewport dimensions
+    const rect = this.panzoomElement?.nativeElement?.getBoundingClientRect();
+    const viewportWidth = rect?.width || this.container.nativeElement.clientWidth;
+    const viewportHeight = rect?.height || this.container.nativeElement.clientHeight;
+
     // Calculate scale to fit content in viewport with some margin
-    const scaleX = this.viewportWidth / contentWidth;
-    const scaleY = this.viewportHeight / contentHeight;
+    const scaleX = viewportWidth / contentWidth;
+    const scaleY = viewportHeight / contentHeight;
     const targetScale = Math.min(scaleX, scaleY, 1.5); // max scale 1.5
 
-    this.scale = targetScale;
-
     // Center the content in the viewport
-    this.translateX = -contentCenterX * this.scale + this.viewportWidth / 2;
-    this.translateY = -contentCenterY * this.scale + this.viewportHeight / 2;
+    const translateX = -contentCenterX * targetScale + viewportWidth / 2;
+    const translateY = -contentCenterY * targetScale + viewportHeight / 2;
+
+    // Apply via panzoom
+    this.panzoomInstance?.pan({
+      x: translateX,
+      y: translateY,
+      scale: targetScale,
+      animate: false
+    });
   }
 
   getConnectionPath(fromKey: string, toKey: string): string {
@@ -180,77 +178,44 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
       event.preventDefault();
       this.fitToView();
     }
-  }
-
-  onWheel(event: WheelEvent): void {
-    event.preventDefault();
-    const delta = event.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.min(Math.max(this.scale * delta, 0.5), 3);
-    this.scale = newScale;
-  }
-
-  onMouseDown(event: MouseEvent): void {
-    // Allow panning from anywhere within the canvas area
-    const target = event.target as HTMLElement;
-    const canvas = this.canvas?.nativeElement;
-
-    // Check if click is within the canvas area (canvas or its children)
-    if (canvas && (target === canvas || canvas.contains(target))) {
-      this.isPanning = true;
-      // Don't set isPanningSignal yet - wait for movement threshold
-      this.panStart = { x: event.clientX, y: event.clientY };
-      this.hasMovedEnough = false;
-      this.container.nativeElement.style.cursor = 'grabbing';
+    if (event.key === '+' || event.key === '=') {
       event.preventDefault();
+      this.panzoomInstance?.zoomIn({ animate: true });
+    }
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      this.panzoomInstance?.zoomOut({ animate: true });
     }
   }
 
-  onMouseMove(event: MouseEvent): void {
-    if (!this.isPanning) return;
-    const dx = event.clientX - this.panStart.x;
-    const dy = event.clientY - this.panStart.y;
+  private initPanzoom(): void {
+    const canvas = this.panzoomElement?.nativeElement;
+    if (!canvas) return;
 
-    // Check if mouse has moved enough to start panning
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (!this.hasMovedEnough && distance >= this.PAN_THRESHOLD) {
-      this.hasMovedEnough = true;
-      this.isPanningSignal.set(true);
-    }
+    this.panzoomInstance = Panzoom(canvas, {
+      maxScale: 3,
+      minScale: 0.3,
+      animate: true,
+      duration: 200,
+      easing: 'ease-out',
+      cursor: 'grab',
+      contain: 'inside',
+      startScale: 1,
+      startX: 0,
+      startY: 0,
+      // Exclude interactive elements from panzoom
+      excludeClass: 'panzoom-exclude',
+    });
 
-    if (this.hasMovedEnough) {
-      this.translateX += dx / this.scale;
-      this.translateY += dy / this.scale;
-      this.panStart = { x: event.clientX, y: event.clientY };
-    }
-  }
+    // Bind wheel zoom to the canvas element
+    canvas.addEventListener('wheel', (event) => {
+      this.panzoomInstance.zoomWithWheel(event);
+    }, { passive: false });
 
-  onMouseUp(): void {
-    this.isPanning = false;
-    this.hasMovedEnough = false;
-    this.isPanningSignal.set(false);
-    this.container.nativeElement.style.cursor = 'grab';
-  }
-
-  onTouchStart(event: TouchEvent): void {
-    if (event.touches.length === 1) {
-      this.isPanning = true;
-      this.isPanningSignal.set(true);
-      this.panStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-    }
-  }
-
-  onTouchMove(event: TouchEvent): void {
-    if (!this.isPanning || event.touches.length !== 1) return;
-    const dx = event.touches[0].clientX - this.panStart.x;
-    const dy = event.touches[0].clientY - this.panStart.y;
-    this.translateX += dx / this.scale;
-    this.translateY += dy / this.scale;
-    this.panStart = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-    event.preventDefault();
-  }
-
-  onTouchEnd(): void {
-    this.isPanning = false;
-    this.isPanningSignal.set(false);
+    // Exclude interactive elements from panzoom
+    const excludeClass = 'panzoom-exclude';
+    canvas.querySelectorAll('.skill-node, .skill-tooltip-panel, .reset-btn, .close-btn, .tooltip-close, .upgrade-btn, .zoom-in-btn, .zoom-out-btn').forEach(el => {
+      el.classList.add(excludeClass);
+    });
   }
 }
