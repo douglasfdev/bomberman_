@@ -203,6 +203,12 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
       startScale: 1,
       startX: 0,
       startY: 0,
+      // Enable pinch-to-zoom on touch devices
+      pinchAndPan: true,
+      // Disable panning when zoomed out to starting scale (optional)
+      panOnlyWhenZoomed: false,
+      // Round pixels to prevent blurry rendering
+      roundPixels: true,
       // Exclude interactive elements from panzoom
       excludeClass: 'panzoom-exclude',
     });
@@ -214,7 +220,7 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
 
     // Exclude interactive elements from panzoom
     const excludeClass = 'panzoom-exclude';
-    canvas.querySelectorAll('.skill-node, .skill-tooltip-panel, .reset-btn, .close-btn, .tooltip-close, .upgrade-btn, .zoom-in-btn, .zoom-out-btn').forEach(el => {
+    canvas.querySelectorAll('.skill-node, .skill-tooltip-panel, .reset-btn, .close-btn, .tooltip-close, .upgrade-btn, .zoom-in-btn, .zoom-out-btn, .skill-tree-header').forEach(el => {
       el.classList.add(excludeClass);
     });
   }
