@@ -1,6 +1,27 @@
 <div class="game-container" #gameContainer>
   <canvas class="game-canvas" #gameCanvas></canvas>
 
+  <!-- Roguelite HUD -->
+  <div class="hud-roguelite">
+    <div class="hud-left">
+      <span class="hud-item" [class.warning]="isTimeWarning()" [class.critical]="isTimeCritical()">
+        ⏱️ {{ timeLeft() }}
+      </span>
+      <span class="hud-item">❤️ {{ lives() }}</span>
+      <span class="hud-item" [class.active]="shield() > 0">🛡️ {{ shield() }}</span>
+    </div>
+    <div class="hud-center">
+      <button class="skill-tree-btn" (click)="toggleSkillTree()" title="Árvore de Habilidades (T)" [class.active]="showSkillTree()">
+        🌳 <span class="sp-count">{{ skillTree.userSkillPoints() }}</span>
+      </button>
+    </div>
+    <div class="hud-right">
+      <span class="hud-synergy" *ngFor="let synergy of activeSynergies()" [title]="synergy">
+        {{ getSynergyIcon(synergy) }}
+      </span>
+    </div>
+  </div>
+
   <div class="hud-top">
     <span>Pontos: {{ score() }}</span>
     <span>Inimigos: {{ enemiesRemaining() }}</span>
@@ -35,7 +56,7 @@
     </div>
   }
 
-  @if (gamePhase() !== GamePhase.Playing) {
+  @if (gamePhase() !== GamePhase.Playing && gamePhase() !== GamePhase.Draft) {
     <div class="overlay">
       
       @switch (gamePhase()) {
@@ -48,6 +69,10 @@
         @case (GamePhase.Defeat) {
           <h2 class="overlay-title">Derrota</h2>
         }
+        @case (GamePhase.RunEnd) {
+          <h2 class="overlay-title">Fim da Run</h2>
+          <p>Pontuação: {{ score() }}</p>
+        }
       }
 
       <!-- Painel só aparece se NÃO for doador -->
@@ -56,7 +81,7 @@
           <p class="paywall-text">Apoie o jogo para remover os anúncios e o tempo de espera!</p>
           
           <div class="donor-actions">
-  
+
             <!-- Verifica se NÃO tem e-mail na sessão para mostrar o botão do Google -->
             @if (!authService.userEmail()) {
               <a href="/auth/google" class="btn-social btn-google">
@@ -85,7 +110,6 @@
 
       <button 
         class="restart-btn" 
-        [disabled]="!canPlay()" 
         [class.disabled]="!canPlay()"
         (click)="gamePhase() === GamePhase.Ready ? play() : restart()"
       >
@@ -98,6 +122,35 @@
 
     </div>
   }
+
+  <!-- Card Draft Overlay -->
+  <app-card-draft
+    *ngIf="showDraft()"
+    [phase]="draftPhase()"
+    [offered]="runState.currentDraft()?.offered ?? []"
+    (close)="closeDraft()"
+    (confirmChoice)="onDraftConfirm($event)"
+  ></app-card-draft>
+
+  <!-- Skill Tree Overlay -->
+  <app-skill-tree *ngIf="showSkillTree()" (close)="closeSkillTree()"></app-skill-tree>
+
+  <!-- Prestige Draft Overlay -->
+  <app-prestige-draft
+    *ngIf="showPrestigeDraft()"
+    [phase]="logic.phase()"
+    [maxCards]="maxPrestigeCards()"
+    (close)="closePrestigeDraft()"
+    (confirmPrestige)="onPrestigeConfirm($event)"
+  ></app-prestige-draft>
+
+<!-- Death Skill Draft Overlay -->
+  <app-death-skill-draft
+    *ngIf="showDeathSkillDraft()" 
+    [score]="deathDraftScore()"
+    (close)="onDeathSkillDraftClose()"
+    (confirmUpgrade)="onDeathSkillDraftConfirm($event)"
+  ></app-death-skill-draft>
 
   @if (initError()) {
     <div class="error">Seu navegador não suporta WebGL.</div>

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn to use it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,74 +7,61 @@ datasource db {
   provider = "postgresql"
 }
 
-enum SkinTier {
-  FREE
-  BASIC
-  PREMIUM
-}
-
 model User {
-  id             String   @id @default(ulid())
-  email          String   @unique
-  identification String?  @unique
-  name           String?
-  googleId       String?  @unique
-  microsoftId    String?  @unique
-  buymeId        String?  @unique
-  isDonor        Boolean  @default(false)
-  donorAvatars   Int      @default(0)
+  id               String            @id @default(ulid())
+  email            String            @unique
+  name             String?
+  googleId         String?           @unique
+  microsoftId      String?           @unique
+  buymeId          String?           @unique
+  isDonor          Boolean           @default(false)
+  donorAvatars     Int               @default(0)
+  identification   String?           @unique
+  selectedSkin     String            @default("character-d")
+  skinTier         SkinTier          @default(FREE)
+  skillPoints      Int               @default(0)
 
-  // Skin system
-  skinTier     SkinTier @default(FREE)
-  selectedSkin String   @default("character-d")
-
-  // Relations
   payments         Payment[]
+  runs             Run[]
   skinPurchases    SkinPurchase[]
   userAchievements UserAchievement[]
+  skills           UserSkill[]
 }
 
 model Payment {
-  id            String   @id @default(cuid())
-  correlationId String   @unique
-  value         Int      // Store value in cents
-  provider      String   @default("woovi")
-  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  purpose       String   @default("donation") // "donation" | "skin_basic" | "skin_premium"
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  // Relations
-  user         User          @relation(fields: [userId], references: [id])
-  userId       String
-  skinPurchase SkinPurchase?
+  id            String        @id @default(cuid())
+  correlationId String        @unique
+  value         Int
+  provider      String        @default("woovi")
+  status        String        @default("PENDING")
+  purpose       String        @default("donation")
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  skinPurchase  SkinPurchase?
 }
 
 model SkinPurchase {
   id         String   @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id])
   tier       SkinTier
-  amountPaid Int // valor em centavos
+  amountPaid Int
   paymentId  String   @unique
-  payment    Payment  @relation(fields: [paymentId], references: [id])
   createdAt  DateTime @default(now())
+  payment    Payment  @relation(fields: [paymentId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
 }
 
-// ───────────────────────────────────────────────
-// Achievements
-// ───────────────────────────────────────────────
-
 model Achievement {
-  id          String   @id @default(cuid())
-  key         String   @unique  // e.g. "FIRST_BLOOD"
-  title       String
-  description String
-  icon        String   @default("🏆")
-  createdAt   DateTime @default(now())
-
+  id               String            @id @default(cuid())
+  key              String            @unique
+  title            String
+  description      String
+  icon             String            @default("🏆")
+  createdAt        DateTime          @default(now())
   userAchievements UserAchievement[]
 }
 
@@ -86,10 +70,132 @@ model UserAchievement {
   userId        String
   achievementId String
   unlockedAt    DateTime    @default(now())
-
-  user        User        @relation(fields: [userId], references: [id])
-  achievement Achievement @relation(fields: [achievementId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  user          User        @relation(fields: [userId], references: [id])
 
   @@unique([userId, achievementId])
   @@index([userId])
+}
+
+model Run {
+  id          String       @id @default(ulid())
+  userId      String
+  seed        String
+  phase       Int          @default(1)
+  maxPhase    Int          @default(1)
+  lives       Int          @default(3)
+  shield      Int          @default(0)
+  timeLeftMs  Int
+  score       Int          @default(0)
+  startedAt   DateTime     @default(now())
+  endedAt     DateTime?
+  endedReason String?
+  seedData    Json?
+  skillPoints Int          @default(0)
+  user        User         @relation(fields: [userId], references: [id])
+  choices     RunChoice[]
+  upgrades    RunUpgrade[]
+  skills      RunSkill[]
+
+  @@index([userId])
+}
+
+model RunChoice {
+  id        String   @id @default(cuid())
+  runId     String
+  phase     Int
+  offered   String[]
+  picked    String
+  createdAt DateTime @default(now())
+  run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model RunUpgrade {
+  id        String   @id @default(cuid())
+  runId     String
+  cardKey   String
+  stacks    Int      @default(1)
+  createdAt DateTime @default(now())
+  run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@unique([runId, cardKey])
+}
+
+model Card {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  description   String
+  icon          String
+  rarity        String
+  category      String
+  maxStacks     Int      @default(1)
+  prerequisites String[] @default([])
+  weight        Int      @default(10)
+  isSynergy     Boolean  @default(false)
+  synergyWith   String[] @default([])
+}
+
+model EnemyArchetype {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  baseHp        Int
+  baseSpeed     Int
+  baseDamage    Int
+  bombRange     Int
+  bombChance    Float
+  abilities     String[] @default([])
+  scalePerPhase Json
+  minPhase      Int      @default(1)
+  weight        Int      @default(10)
+  isBoss        Boolean  @default(false)
+}
+
+model SkillNode {
+  id            String   @id @default(cuid())
+  key           String   @unique
+  name          String
+  description   String
+  icon          String
+  baseCost      Int      @default(1)
+  costScaling   Float    @default(1.5)
+  maxLevel      Int      @default(3)
+  prerequisites String[] @default([])
+  category      String
+  positionX     Float
+  positionY     Float
+  effects       Json
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userSkills    UserSkill[]
+}
+
+model UserSkill {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillKey  String
+  skill     SkillNode @relation(fields: [skillKey], references: [key])
+  level     Int      @default(0)
+  @@unique([userId, skillKey])
+  @@index([userId])
+}
+
+model RunSkill {
+  id        String   @id @default(cuid())
+  runId     String
+  run       Run      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  skillKey  String
+  level     Int      @default(0)
+  @@unique([runId, skillKey])
+  @@index([runId])
+}
+
+enum SkinTier {
+  FREE
+  BASIC
+  PREMIUM
 }

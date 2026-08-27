@@ -2601,7 +2601,7 @@ Expected: todos os specs PASS (models, level, input, game-logic).
 
 - [ ] **Step 3: Smoke test manual (Desktop)**
 
-Run: `npm start` e abrir `http://localhost:4200`.
+Run: `npm start` e abrir `http://localhost:4000`.
 Checklist:
 1. Cena isométrica com chão, paredes intercaladas, caixas; jogador azul no canto (1,1).
 2. WASD/setas movem o jogador tile a tile; Espaço planta bomba.

@@ -1,5 +1,5 @@
 import { isPlatformBrowser, CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, effect } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject, signal, computed, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GameLogicService } from '../core/game-logic.service';
@@ -11,29 +11,43 @@ import { GamePhase } from '../core/models/game-state.model';
 import { AuthService } from '../services/auth.service';
 import { SkinService } from '../services/skin.service';
 import { AdBannerComponent } from '../components/ad-banner.component';
+import { CardDraftComponent } from './card-draft/card-draft.component';
+import { RunStateService } from '../core/roguelite/run-state.service';
+import { RogueliteBootstrapService } from '../core/roguelite/roguelite-bootstrap.service';
+import { SkillTreeService } from '../core/roguelite/skill-tree.service';
+import { SkillTreeComponent } from './skill-tree/skill-tree.component';
+import { PrestigeDraftComponent } from './prestige-draft/prestige-draft.component';
+import { DeathSkillDraftComponent } from './death-skill-draft/death-skill.component';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.scss'],
   standalone: true,
-  imports: [CommonModule, AdBannerComponent]
+  imports: [CommonModule, AdBannerComponent, CardDraftComponent, SkillTreeComponent, PrestigeDraftComponent, DeathSkillDraftComponent]
 })
 export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
   @ViewChild('gameCanvas', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
 
-  private readonly platformId = inject(PLATFORM_ID);
+  public readonly platformId = inject(PLATFORM_ID);
   readonly logic = inject(GameLogicService);
   readonly input = inject(InputManagerService);
   readonly engine = inject(ThreeEngineService);
   readonly sceneBuilder = inject(SceneBuilderService);
   readonly authService = inject(AuthService);
   readonly skinService = inject(SkinService);
+  readonly runState = inject(RunStateService);
+  readonly bootstrap = inject(RogueliteBootstrapService);
   private readonly router = inject(Router);
+  readonly skillTree = inject(SkillTreeService);
 
   readonly Direction = Direction;
   readonly GamePhase = GamePhase;
+
+  // Skill Tree state
+  showSkillTree = signal(false);
 
   readonly score = this.logic.score;
   readonly enemiesRemaining = this.logic.enemiesRemaining;
@@ -43,6 +57,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   readonly pierce = this.logic.pierce;
   readonly gamePhase = this.logic.gamePhase;
 
+  // Roguelite HUD
+  readonly lives = this.runState.lives;
+  readonly shield = this.runState.shield;
+  readonly timeLeft = this.runState.formattedTime;
+  readonly isTimeCritical = this.runState.isTimeCritical;
+  readonly isTimeWarning = this.runState.isTimeWarning;
+  readonly activeSynergies = this.runState.activeSynergies;
+
   isTouch = false;
   initError = signal(false);
 
@@ -50,26 +72,60 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   canPlay = signal(false);
   waitTimer = signal(0);
 
+  // Draft state
+  showDraft = signal(false);
+  draftPhase = signal(0);
+
+  // Prestige draft state
+  showPrestigeDraft = signal(false);
+  // Death skill draft state
+  showDeathSkillDraft = signal(false);
+  deathDraftScore = signal(0);
+
+  readonly maxPrestigeCards = computed(() =>
+    Math.min(3 + Math.floor(this.logic.phase() / 3), 5)
+  );
+
   private actionSub?: Subscription;
   private timerInterval: any;
+  private draftSub?: Subscription;
 
   constructor() {
     effect(() => {
       const phase = this.gamePhase();
       const isDonor = this.authService.isDonor();
-      // Rastreia o sinal de email para detectar login/logout e re-executar o efeito
       const isLoggedIn = !!this.authService.userEmail();
 
-      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat) {
+      if (phase === GamePhase.Ready || phase === GamePhase.Victory || phase === GamePhase.Defeat || phase === GamePhase.RunEnd) {
         this.enforcePaywall(isDonor, isLoggedIn);
       }
     });
 
-    // Quando a skin selecionada mudar, atualiza o SceneBuilder
     effect(() => {
       const skin = this.authService.selectedSkin();
       if (skin && isPlatformBrowser(this.platformId)) {
         this.sceneBuilder.setPlayerSkin(skin);
+      }
+    });
+
+    // Watch for draft phase
+    effect(() => {
+      const phase = this.gamePhase();
+      if (phase === GamePhase.Draft) {
+        this.openDraft();
+      } else {
+        this.closeDraft();
+      }
+    });
+
+    // Watch for Defeat phase (time up or no lives) - show death skill draft
+    // Removed duplicate effect as handleTimeUp manages it now.
+
+    // Watch for skill tree keybind (T)
+    effect(() => {
+      const phase = this.gamePhase();
+      if (phase === GamePhase.Playing && this.input.isKeyPressed('KeyT')) {
+        this.toggleSkillTree();
       }
     });
   }
@@ -82,22 +138,22 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
     }
 
     try {
+      await this.bootstrap.initialize(this.logic);
+
       this.engine.init(this.container.nativeElement, this.canvas.nativeElement);
       this.sceneBuilder.init(this.engine.scene!);
 
-      // Aplica a skin do usuário assim que a cena inicializa
       const currentSkin = this.authService.selectedSkin();
       if (currentSkin) {
         this.sceneBuilder.setPlayerSkin(currentSkin);
       }
 
-      // Carrega catálogo e skins do usuário se estiver logado
       if (this.authService.userEmail()) {
         this.skinService.loadMySkins().subscribe({
           next: (data) => {
@@ -109,6 +165,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.engine.startLoop((deltaMs: number) => {
         this.logic.tick(deltaMs);
         this.sceneBuilder.sync(this.logic, deltaMs);
+        this.updateRunTimer(deltaMs);
       });
 
       // Inicializa o estado do jogo (gera mapa, posiciona inimigos)
@@ -123,11 +180,167 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       clearInterval(this.timerInterval);
       this.actionSub?.unsubscribe();
+      this.draftSub?.unsubscribe();
       this.input.detach();
       this.sceneBuilder.dispose();
       this.engine.dispose();
     }
     this.donorEffect.destroy();
+  }
+
+  private updateRunTimer(deltaMs: number): void {
+    const run = this.runState.currentRun();
+    if (!run) return;
+    if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
+
+    const newTimeLeft = this.runState.timeLeftMs() - deltaMs;
+    this.runState.updateTimeLeft(newTimeLeft);
+
+    if (newTimeLeft <= 0) {
+      this.handleTimeUp();
+    }
+  }
+
+private async handleTimeUp(): Promise<void> {
+    const run = this.runState.currentRun();
+    if (!run) return;
+    if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
+    
+    // Apply score multiplier
+    const baseScore = this.logic.score();
+    const multiplier = this.runState.getScoreMultiplier();
+    const finalScore = Math.floor(baseScore * multiplier);
+    
+    this.deathDraftScore.set(finalScore);
+    
+    // End the run on backend (ignore errors in dev/local mode)
+    await this.runState.endRun({
+      score: finalScore,
+      timeLeftMs: 0,
+      reason: 'TIME_UP',
+    }).catch(e => {
+      console.warn('[Game] End run failed (continuing without backend):', e);
+    });
+    
+    // Show death skill draft
+    this.logic.gamePhase.set(GamePhase.Defeat);
+    this.showDeathSkillDraft.set(true);
+  }
+
+  async onDeathSkillDraftConfirm(cardKey: string): Promise<void> {
+    this.showDeathSkillDraft.set(false);
+    try {
+      // Apply the chosen card as a permanent upgrade for the next run
+      const run = this.runState.currentRun();
+      if (run && run.id.startsWith('local-')) {
+        const choice = {
+          id: 'local-choice-' + Date.now(),
+          runId: run.id,
+          phase: run.phase,
+          offered: this.runState.currentDraft()?.offered ?? [],
+          picked: cardKey,
+          createdAt: new Date(),
+        };
+        const upgrade = {
+          id: 'local-upgrade-' + Date.now(),
+          runId: run.id,
+          cardKey: cardKey,
+          stacks: 1,
+          createdAt: new Date(),
+        };
+        this.runState.currentRun.update((r) => {
+          if (!r) return r;
+          return {
+            ...r,
+            upgrades: [...r.upgrades, upgrade],
+            choices: [...r.choices, choice],
+          };
+        });
+        // Recompute synergies
+        this.runState.recomputeSynergies?.();
+        // APLICAR OS EFEITOS DOS UPGRADES NO JOGO!
+        this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+      }
+      // Reload to ensure skills persist for next run
+      await this.skillTree.load();
+    } catch (e) {
+      console.error('Erro ao confirmar upgrade:', e);
+    }
+    // Go to run end screen
+    this.logic.gamePhase.set(GamePhase.RunEnd);
+  }
+
+  onDeathSkillDraftClose(): void {
+    this.showDeathSkillDraft.set(false);
+    this.logic.gamePhase.set(GamePhase.RunEnd);
+  }
+
+  private async openDraft(): Promise<void> {
+    const phase = this.logic.phase();
+    this.draftPhase.set(phase);
+    try {
+      await this.runState.getDraft(phase);
+      this.showDraft.set(true);
+    } catch (e) {
+      console.error('Erro ao abrir draft:', e);
+      this.closeDraft();
+    }
+  }
+
+  closeDraft(): void {
+    this.showDraft.set(false);
+    this.draftPhase.set(0);
+  }
+
+  async onDraftConfirm(cardKey: string): Promise<void> {
+    this.showDraft.set(false);
+    try {
+      await this.runState.applyChoice({
+        phase: this.draftPhase(),
+        offered: this.runState.currentDraft()?.offered ?? [],
+        picked: cardKey,
+      });
+      this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+    } catch (e) {
+      console.error('Erro ao confirmar escolha:', e);
+    }
+  }
+
+  // Prestige Draft methods
+  async openPrestigeDraft(): Promise<void> {
+    if (this.gamePhase() !== GamePhase.Playing) return;
+
+    // Pause the game
+    this.logic.gamePhase.set(GamePhase.Draft);
+
+    // Calculate how many cards the player can choose based on phase
+    const phase = this.logic.phase();
+    const maxCards = Math.min(3 + Math.floor(phase / 3), 5); // 3-5 cards based on phase
+
+    this.showPrestigeDraft.set(true);
+  }
+
+  closePrestigeDraft(): void {
+    this.showPrestigeDraft.set(false);
+    // Resume game if it was paused
+    if (this.gamePhase() === GamePhase.Draft) {
+      this.logic.gamePhase.set(GamePhase.Playing);
+    }
+  }
+
+  async onPrestigeConfirm(cardKeys: string[]): Promise<void> {
+    this.showPrestigeDraft.set(false);
+    this.logic.gamePhase.set(GamePhase.Playing);
+
+    try {
+      const result = await this.runState.resetRunForPrestige(cardKeys);
+      // Apply the prestige upgrades to the game logic
+      this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+      // Restart the game with new run
+      this.logic.restart();
+    } catch (e) {
+      console.error('Erro ao fazer prestígio:', e);
+    }
   }
 
   /** Navega para a loja de skins */
@@ -145,7 +358,15 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!isPlatformBrowser(this.platformId)) return;
     clearInterval(this.timerInterval);
 
-    if (isDonor || isLoggedIn) {
+    // Skip paywall in development mode for faster testing
+    // Check multiple ways to detect dev mode
+    const isDev = !environment.production ||
+      (typeof window !== 'undefined' && window.location.hostname === 'localhost') ||
+      (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1');
+
+    console.log('[Game] enforcePaywall:', { isDonor, isLoggedIn, isDev, canPlay: this.canPlay() });
+
+    if (isDonor || isLoggedIn || isDev) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
     } else {
@@ -173,19 +394,55 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.logic.plantBomb();
   }
 
-  play(): void {
-    // Garante que apenas um clique inicie a partida e força liberação se passou pelo paywall
-    if (!this.canPlay()) return;
+  async play(): Promise<void> {
+    clearInterval(this.timerInterval);
     this.canPlay.set(true);
+    this.waitTimer.set(0);
+    await this.runState.startRun();
+    // Aplicar upgrades se a run for carregada de um save ou se houver upgrades
+    const runUpgrades = this.runState.upgrades();
+    if (runUpgrades.length > 0) {
+      this.bootstrap.getUpgradeApplier().applyUpgrades(runUpgrades);
+    }
     this.logic.play();
   }
 
-  restart(): void {
-    if (!this.canPlay()) return;
-    this.logic.restart();
+restart(): void {
+    // Carregar upgrades atuais antes de iniciar nova run
+    const currentRun = this.runState.currentRun();
+    const currentUpgrades = currentRun ? [...currentRun.upgrades] : [];
+
+    clearInterval(this.timerInterval);
+    this.canPlay.set(true);
+    this.waitTimer.set(0);
+
+    this.runState.startRun().then(() => {
+      this.logic.restart();
+      
+      // Aplicar upgrades da run anterior à nova run
+      const newRun = this.runState.currentRun();
+      if (newRun && currentUpgrades.length > 0) {
+        newRun.upgrades = [...newRun.upgrades, ...currentUpgrades];
+        this.bootstrap.getUpgradeApplier().applyUpgrades(currentUpgrades);
+        this.runState.recomputeSynergies();
+      }
+    });
   }
 
-  // Adicione ao final da classe, antes do fechamento
+  getSynergyIcon(synergy: string): string {
+    const icons: Record<string, string> = {
+      FREEZE_CHAIN: '❄️⛓️',
+      SHATTER: '💎',
+      CHAIN_DETONATION: '💣⛓️',
+      MEGA_REMOTE: '💥📡',
+      GHOST_BOMB: '👻💣',
+      TOTAL_VAMPIRISM: '🦇🩸',
+      LETHAL_SPEED: '🏃💨',
+      MASTER_REFLECTOR: '🔄⛓️',
+    };
+    return icons[synergy] ?? '✨';
+  }
+
   private donorEffect = effect(() => {
     const isDonor = this.authService.isDonor();
     if (isDonor && this.gamePhase() !== GamePhase.Playing) {
@@ -193,4 +450,16 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       this.waitTimer.set(0);
     }
   });
+
+  toggleSkillTree(): void {
+    if (this.gamePhase() !== GamePhase.Playing) return;
+    this.showSkillTree.update(v => !v);
+    if (this.showSkillTree()) {
+      this.skillTree.load().catch(console.error);
+    }
+  }
+
+  closeSkillTree(): void {
+    this.showSkillTree.set(false);
+  }
 }

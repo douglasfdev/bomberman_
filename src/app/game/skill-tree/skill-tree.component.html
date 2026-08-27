@@ -1,0 +1,94 @@
+<div class="skill-tree-overlay" (click)="closeSkillTree()">
+  <div 
+    class="skill-tree-container" 
+    #container
+    (click)="$event.stopPropagation()"
+  >
+    <header class="skill-tree-header">
+      <h2>Árvore de Habilidades</h2>
+      <div class="header-info">
+        <span class="sp-display">💎 SP: {{ skillTree.userSkillPoints() }}</span>
+        <div class="category-legend">
+          <span class="legend-item bomb">BOMB</span>
+          <span class="legend-item range">RANGE</span>
+          <span class="legend-item speed">SPEED</span>
+          <span class="legend-item synergy">SYNERGY</span>
+          <span class="legend-item defense">DEFENSE</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="reset-btn" (click)="fitToView()" title="Centralizar visão (R)" aria-label="Centralizar visão">⌖</button>
+        <button class="zoom-in-btn" (click)="panzoomInstance?.zoomIn({animate:true})" title="Zoom in (+)" aria-label="Zoom in">🔍+</button>
+        <button class="zoom-out-btn" (click)="panzoomInstance?.zoomOut({animate:true})" title="Zoom out (-)" aria-label="Zoom out">🔍-</button>
+        <button class="close-btn" (click)="closeSkillTree()" aria-label="Fechar">✕</button>
+      </div>
+    </header>
+
+    <div class="skill-tree-canvas">
+      <div class="skill-tree-panzoom" #panzoom>
+        @if (skillTree.isLoading()) {
+          <div class="loading-indicator">Carregando árvore de habilidades...</div>
+        } @else {
+          <svg class="connections-svg" [attr.viewBox]="viewBox()">
+            @for (node of skillTree.nodes(); track node.key) {
+              @for (prereqKey of node.prerequisites; track prereqKey) {
+                <path 
+                  class="connection-path"
+                  [attr.d]="getConnectionPath(node.key, prereqKey)"
+                  [attr.stroke]="getCategoryColor(node.category)"
+                  [attr.stroke-width]="isPrereqMet(prereqKey) ? 3 : 1"
+                  [attr.stroke-dasharray]="isPrereqMet(prereqKey) ? 'none' : '5,5'"
+                  fill="none"
+                />
+              }
+            }
+          </svg>
+          
+          @for (node of skillTree.nodes(); track node.key) {
+            <app-skill-node
+              [node]="node"
+              [level]="skillTree.getUserSkillLevel(node.key)"
+              [isSelected]="skillTree.selectedNodeKey() === node.key"
+              [isUnlocked]="skillTree.isUnlocked(node)"
+              [isMaxLevel]="skillTree.isMaxLevel(node)"
+              [position]="skillTree.getNodePosition(node.key) ?? { x: 0, y: 0 }"
+              class="panzoom-exclude"
+              (select)="skillTree.selectNode(node.key)"
+            />
+          }
+        }
+      </div>
+    </div>
+
+    @if (skillTree.selectedNode(); as selected) {
+      <div class="skill-tooltip-panel panzoom-exclude">
+        <header class="tooltip-header">
+          <h3>{{ selected.icon }} {{ selected.name }}</h3>
+          <button class="tooltip-close" (click)="skillTree.clearSelection()" aria-label="Fechar">✕</button>
+        </header>
+        <p>{{ selected.description }}</p>
+        <div class="tooltip-stats">
+          <span>Categoria: {{ selected.category }}</span>
+          <span>Nível: {{ skillTree.getUserSkillLevel(selected.key) }} / {{ selected.maxLevel }}</span>
+          @if (!skillTree.isMaxLevel(selected)) {
+            <span class="cost">Custo: {{ skillTree.upgradeCost()?.cost ?? 0 }} SP</span>
+            @if (skillTree.upgradeCost()!.missingPrereqs.length > 0) {
+              <span class="prereq-warning">Requer: {{ skillTree.upgradeCost()!.missingPrereqs.join(', ') }}</span>
+            }
+          } @else {
+            <span class="maxed">MÁXIMO</span>
+          }
+        </div>
+        @if (!skillTree.isMaxLevel(selected) && skillTree.isUnlocked(selected)) {
+          <button 
+            class="upgrade-btn" 
+            (click)="upgradeSelected()"
+            [disabled]="!skillTree.upgradeCost()?.canAfford || skillTree.isLoading()"
+          >
+            {{ skillTree.isLoading() ? 'Aplicando...' : 'Upgradear (' + (skillTree.upgradeCost()?.cost ?? 0) + ' SP)' }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -21,6 +21,8 @@ import paymentRoutes from './routes/paymentRoutes';
 import webhookRoutes from './routes/webhookRoutes';
 import skinRoutes from './routes/skinRoutes';
 import achievementRoutes from './routes/achievementRoutes';
+import rogueliteRoutes from './routes/rogueliteRoutes';
+import skillRoutes from './routes/skillRoutes';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
@@ -152,6 +154,8 @@ export function app(): express.Express {
   server.use('/api/webhooks', webhookRoutes);
   server.use('/api/skins', skinRoutes);
   server.use('/api/achievements', achievementRoutes);
+  server.use('/api/roguelite', rogueliteRoutes);
+  server.use('/api/skills', skillRoutes);
 
   server.get('/api/user', (req: any, res: any) => {
     if (!req.user) return res.json(null);
