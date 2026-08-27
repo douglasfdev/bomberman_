@@ -52,7 +52,11 @@ export class SkillTreeService {
     const currentLevel = userSkill?.level ?? 0;
     if (currentLevel >= node.maxLevel) return null;
 
-    const cost = Math.ceil(node.baseCost * Math.pow(node.costScaling, currentLevel));
+    // Primeira habilidade custa 600 SP, depois cresce exponencialmente
+    // 600 + (600 * 2^level) = 600 * (1 + 2^level)
+    // Nível 0: 600 SP, Nível 1: 1800 SP, Nível 2: 4200 SP...
+    const BASE_SKILL_COST = 600;
+    const cost = Math.ceil(BASE_SKILL_COST * (1 + Math.pow(2, currentLevel)));
     const missingPrereqs = this.getMissingPrerequisites(node);
 
     return {
@@ -67,7 +71,7 @@ export class SkillTreeService {
 
   async load(): Promise<void> {
     this.state.update(s => ({ ...s, isLoading: true, error: null }));
-try {
+    try {
       const [nodes, userSkills] = await Promise.all([
         this.persistence.getTree(),
         this.persistence.getUserSkills(),
@@ -92,7 +96,7 @@ try {
         isLoading: false,
         error: null,
         nodePositions,
-        });
+      });
     } catch (e) {
       this.state.update(s => ({ ...s, isLoading: false, error: 'Falha ao carregar skill tree' }));
       throw e;
@@ -119,6 +123,18 @@ try {
         userSkills.set(skillKey, result.userSkill);
         return { ...s, userSkills, isLoading: false };
       });
+
+      // Limpar upgrades de cartas da run atual (skill fixa = reset parcial)
+      const run = this.runState.currentRun();
+      if (run) {
+        // Remover todos os upgrades de cartas, manter apenas skill points
+        run.upgrades = run.upgrades.filter(u => {
+          const isCardUpgrade = u.cardKey && u.cardKey !== 'SCORE_MULTIPLIER';
+          return !isCardUpgrade;
+        });
+        this.runState.recomputeSynergies();
+      }
+
       return true;
     } catch (e: any) {
       this.state.update(s => ({ ...s, isLoading: false, error: e.error?.error || 'Falha ao upar skill' }));
