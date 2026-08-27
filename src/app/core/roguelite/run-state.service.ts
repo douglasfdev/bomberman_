@@ -408,6 +408,15 @@ export class RunStateService {
     });
   }
 
+  getScoreMultiplier(): number {
+    const run = this.currentRun();
+    if (!run) return 1;
+    const scoreMultiplierUpgrade = run.upgrades.find(u => u.cardKey === 'SCORE_MULTIPLIER');
+    if (!scoreMultiplierUpgrade) return 1;
+    const stacks = scoreMultiplierUpgrade.stacks || 1;
+    return 1 + 0.1 * stacks;
+  }
+
   advancePhase(): void {
     this.currentRun.update((r) => {
       if (!r) return r;

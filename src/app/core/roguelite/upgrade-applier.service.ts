@@ -196,6 +196,7 @@ export class UpgradeApplierService {
         gl.setPlayerProperty('totalVampirism', false);
         break;
       case 'TIME_BONUS':
+        this.runState?.addTime(-30000);
         break;
       case 'MAGNET':
         gl.setPlayerProperty('magnetRange', 0);

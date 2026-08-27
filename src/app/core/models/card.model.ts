@@ -28,6 +28,7 @@ export interface Card {
   isSynergy: boolean;
   synergyWith: string[];
   minPhase?: number;
+  multiplier?: number;
 }
 
 export interface CardDTO {

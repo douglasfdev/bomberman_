@@ -194,23 +194,25 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
 
     const newTimeLeft = this.runState.timeLeftMs() - deltaMs;
-    console.log('[Timer] updateRunTimer:', { current: this.runState.timeLeftMs(), deltaMs, newTimeLeft });
     this.runState.updateTimeLeft(newTimeLeft);
 
     if (newTimeLeft <= 0) {
-      console.log('[Timer] Time up! Calling handleTimeUp');
       this.handleTimeUp();
     }
   }
 
-  private async handleTimeUp(): Promise<void> {
+private async handleTimeUp(): Promise<void> {
     const run = this.runState.currentRun();
     if (!run) return;
     if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
-
-    const finalScore = this.logic.score();
+    
+    // Apply score multiplier
+    const baseScore = this.logic.score();
+    const multiplier = this.runState.getScoreMultiplier();
+    const finalScore = Math.floor(baseScore * multiplier);
+    
     this.deathDraftScore.set(finalScore);
-
+    
     // End the run on backend (ignore errors in dev/local mode)
     await this.runState.endRun({
       score: finalScore,
@@ -219,13 +221,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }).catch(e => {
       console.warn('[Game] End run failed (continuing without backend):', e);
     });
-
+    
     // Show death skill draft
-    console.log('[Game] Setting gamePhase to Defeat and showDeathSkillDraft to true');
     this.logic.gamePhase.set(GamePhase.Defeat);
-    // Usar scheduler do Angular para garantir que as mudanças sigam o pipeline
     this.showDeathSkillDraft.set(true);
-    console.log('[Game] showDeathSkillDraft is now:', this.showDeathSkillDraft());
   }
 
   async onDeathSkillDraftConfirm(cardKey: string): Promise<void> {
@@ -400,36 +399,32 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.canPlay.set(true);
     this.waitTimer.set(0);
     await this.runState.startRun();
+    // Aplicar upgrades se a run for carregada de um save ou se houver upgrades
+    const runUpgrades = this.runState.upgrades();
+    if (runUpgrades.length > 0) {
+      this.bootstrap.getUpgradeApplier().applyUpgrades(runUpgrades);
+    }
     this.logic.play();
   }
 
-  restart(): void {
-    console.log('[Game] Restart called');
+restart(): void {
     // Carregar upgrades atuais antes de iniciar nova run
     const currentRun = this.runState.currentRun();
     const currentUpgrades = currentRun ? [...currentRun.upgrades] : [];
-    console.log('[Game] Current upgrades to carry over:', currentUpgrades.length);
 
     clearInterval(this.timerInterval);
     this.canPlay.set(true);
     this.waitTimer.set(0);
 
     this.runState.startRun().then(() => {
-      console.log('[Game] New run started, restarting logic');
-      // Aplicar upgrades APÓS reiniciar o jogo (pois resetFullGame zera ghostWalkCd etc.)
       this.logic.restart();
-
-      // Aplicar upgrades da run anterior à nova run APÓS o restart
+      
+      // Aplicar upgrades da run anterior à nova run
       const newRun = this.runState.currentRun();
       if (newRun && currentUpgrades.length > 0) {
         newRun.upgrades = [...newRun.upgrades, ...currentUpgrades];
-        console.log('[Game] Merging upgrades,', currentUpgrades.length, 'upgrades applied');
-        // Aplicar upgrades ao jogo para efeitos como TIME_BONUS, RANGE, etc.
         this.bootstrap.getUpgradeApplier().applyUpgrades(currentUpgrades);
         this.runState.recomputeSynergies();
-        console.log('[Game] Upgrades applied successfully');
-      } else {
-        console.log('[Game] No upgrades to carry over');
       }
     });
   }
