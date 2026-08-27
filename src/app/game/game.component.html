@@ -72,7 +72,6 @@
         @case (GamePhase.RunEnd) {
           <h2 class="overlay-title">Fim da Run</h2>
           <p>Pontuação: {{ score() }}</p>
-          <p>Fase: {{ runState.phase() }}</p>
         }
       }
 
@@ -82,7 +81,7 @@
           <p class="paywall-text">Apoie o jogo para remover os anúncios e o tempo de espera!</p>
           
           <div class="donor-actions">
-    
+
             <!-- Verifica se NÃO tem e-mail na sessão para mostrar o botão do Google -->
             @if (!authService.userEmail()) {
               <a href="/auth/google" class="btn-social btn-google">
@@ -145,9 +144,9 @@
     (confirmPrestige)="onPrestigeConfirm($event)"
   ></app-prestige-draft>
 
-  <!-- Death Skill Draft Overlay -->
+<!-- Death Skill Draft Overlay -->
   <app-death-skill-draft
-    *ngIf="showDeathSkillDraft()"
+    *ngIf="showDeathSkillDraft()" 
     [score]="deathDraftScore()"
     (close)="onDeathSkillDraftClose()"
     (confirmUpgrade)="onDeathSkillDraftConfirm($event)"

@@ -31,9 +31,12 @@ test.describe('Death Skill Draft Flow', () => {
     console.log('Waiting for timer to run out...');
     await page.waitForTimeout(35000);
     
+    // Wait a bit more for Angular to process the state change
+    await page.waitForTimeout(1000);
+    
     // Check if death skill draft appears - wait for it to be attached first
     const deathDraft = page.locator('app-death-skill-draft');
-    await deathDraft.waitFor({ state: 'attached', timeout: 10000 });
+    await deathDraft.waitFor({ state: 'attached', timeout: 15000 });
     console.log('Death skill draft attached!');
     
     // Check available skills

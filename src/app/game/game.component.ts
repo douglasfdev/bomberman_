@@ -31,7 +31,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('gameContainer', { static: true }) container!: ElementRef<HTMLElement>;
   @ViewChild('gameCanvas', { static: true }) canvas!: ElementRef<HTMLCanvasElement>;
 
-  private readonly platformId = inject(PLATFORM_ID);
+  public readonly platformId = inject(PLATFORM_ID);
   readonly logic = inject(GameLogicService);
   readonly input = inject(InputManagerService);
   readonly engine = inject(ThreeEngineService);
@@ -82,7 +82,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   showDeathSkillDraft = signal(false);
   deathDraftScore = signal(0);
 
-  readonly maxPrestigeCards = computed(() => 
+  readonly maxPrestigeCards = computed(() =>
     Math.min(3 + Math.floor(this.logic.phase() / 3), 5)
   );
 
@@ -118,7 +118,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     });
 
-// Watch for Defeat phase (time up or no lives) - show death skill draft
+    // Watch for Defeat phase (time up or no lives) - show death skill draft
     // Removed duplicate effect as handleTimeUp manages it now.
 
     // Watch for skill tree keybind (T)
@@ -192,11 +192,13 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const run = this.runState.currentRun();
     if (!run) return;
     if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
-    
+
     const newTimeLeft = this.runState.timeLeftMs() - deltaMs;
+    console.log('[Timer] updateRunTimer:', { current: this.runState.timeLeftMs(), deltaMs, newTimeLeft });
     this.runState.updateTimeLeft(newTimeLeft);
-    
+
     if (newTimeLeft <= 0) {
+      console.log('[Timer] Time up! Calling handleTimeUp');
       this.handleTimeUp();
     }
   }
@@ -205,10 +207,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     const run = this.runState.currentRun();
     if (!run) return;
     if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
-    
+
     const finalScore = this.logic.score();
     this.deathDraftScore.set(finalScore);
-    
+
     // End the run on backend (ignore errors in dev/local mode)
     await this.runState.endRun({
       score: finalScore,
@@ -217,10 +219,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }).catch(e => {
       console.warn('[Game] End run failed (continuing without backend):', e);
     });
-    
+
     // Show death skill draft
     console.log('[Game] Setting gamePhase to Defeat and showDeathSkillDraft to true');
     this.logic.gamePhase.set(GamePhase.Defeat);
+    // Usar scheduler do Angular para garantir que as mudanças sigam o pipeline
     this.showDeathSkillDraft.set(true);
     console.log('[Game] showDeathSkillDraft is now:', this.showDeathSkillDraft());
   }
@@ -254,9 +257,10 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
             choices: [...r.choices, choice],
           };
         });
-        // Recompute synergies (private method changed to public or accessed directly)
-        // @ts-ignore
+        // Recompute synergies
         this.runState.recomputeSynergies?.();
+        // APLICAR OS EFEITOS DOS UPGRADES NO JOGO!
+        this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
       }
       // Reload to ensure skills persist for next run
       await this.skillTree.load();
@@ -306,14 +310,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   // Prestige Draft methods
   async openPrestigeDraft(): Promise<void> {
     if (this.gamePhase() !== GamePhase.Playing) return;
-    
+
     // Pause the game
     this.logic.gamePhase.set(GamePhase.Draft);
-    
+
     // Calculate how many cards the player can choose based on phase
     const phase = this.logic.phase();
     const maxCards = Math.min(3 + Math.floor(phase / 3), 5); // 3-5 cards based on phase
-    
+
     this.showPrestigeDraft.set(true);
   }
 
@@ -328,7 +332,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   async onPrestigeConfirm(cardKeys: string[]): Promise<void> {
     this.showPrestigeDraft.set(false);
     this.logic.gamePhase.set(GamePhase.Playing);
-    
+
     try {
       const result = await this.runState.resetRunForPrestige(cardKeys);
       // Apply the prestige upgrades to the game logic
@@ -357,12 +361,12 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // Skip paywall in development mode for faster testing
     // Check multiple ways to detect dev mode
-    const isDev = !environment.production || 
-                  (typeof window !== 'undefined' && window.location.hostname === 'localhost') ||
-                  (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1');
-    
+    const isDev = !environment.production ||
+      (typeof window !== 'undefined' && window.location.hostname === 'localhost') ||
+      (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1');
+
     console.log('[Game] enforcePaywall:', { isDonor, isLoggedIn, isDev, canPlay: this.canPlay() });
-    
+
     if (isDonor || isLoggedIn || isDev) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
@@ -400,10 +404,34 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   restart(): void {
+    console.log('[Game] Restart called');
+    // Carregar upgrades atuais antes de iniciar nova run
+    const currentRun = this.runState.currentRun();
+    const currentUpgrades = currentRun ? [...currentRun.upgrades] : [];
+    console.log('[Game] Current upgrades to carry over:', currentUpgrades.length);
+
     clearInterval(this.timerInterval);
     this.canPlay.set(true);
     this.waitTimer.set(0);
-    this.runState.startRun().then(() => this.logic.restart());
+
+    this.runState.startRun().then(() => {
+      console.log('[Game] New run started, restarting logic');
+      // Aplicar upgrades APÓS reiniciar o jogo (pois resetFullGame zera ghostWalkCd etc.)
+      this.logic.restart();
+
+      // Aplicar upgrades da run anterior à nova run APÓS o restart
+      const newRun = this.runState.currentRun();
+      if (newRun && currentUpgrades.length > 0) {
+        newRun.upgrades = [...newRun.upgrades, ...currentUpgrades];
+        console.log('[Game] Merging upgrades,', currentUpgrades.length, 'upgrades applied');
+        // Aplicar upgrades ao jogo para efeitos como TIME_BONUS, RANGE, etc.
+        this.bootstrap.getUpgradeApplier().applyUpgrades(currentUpgrades);
+        this.runState.recomputeSynergies();
+        console.log('[Game] Upgrades applied successfully');
+      } else {
+        console.log('[Game] No upgrades to carry over');
+      }
+    });
   }
 
   getSynergyIcon(synergy: string): string {

@@ -12,33 +12,23 @@
 # Error details
 
 ```
-Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4000/
+Error: expect(locator).not.toHaveClass(expected) failed
+
+Locator: locator('button.restart-btn')
+Expected pattern: not /disabled/
+Timeout: 10000ms
+Error: element(s) not found
+
 Call log:
-  - navigating to "http://localhost:4000/", waiting until "load"
+  - Expect "not toHaveClass" with timeout 10000ms
+  - waiting for locator('button.restart-btn')
 
 ```
 
-# Page snapshot
-
 ```yaml
-- generic [ref=e3]:
-  - generic [ref=e6]:
-    - heading "Não é possível acessar esse site" [level=1] [ref=e7]
-    - paragraph [ref=e8]:
-      - text: A conexão com
-      - strong [ref=e9]: localhost
-      - text: foi recusada.
-    - generic [ref=e10]:
-      - paragraph [ref=e11]: "Tente:"
-      - list [ref=e12]:
-        - listitem [ref=e13]: Verificar a conexão
-        - listitem [ref=e14]:
-          - link "Verificar o proxy e o firewall" [ref=e15] [cursor=pointer]:
-            - /url: "#buttons"
-    - generic [ref=e16]: ERR_CONNECTION_REFUSED
-  - generic [ref=e17]:
-    - button "Recarregar" [ref=e19] [cursor=pointer]
-    - button "Saiba mais" [ref=e20] [cursor=pointer]
+- text: ⏱️ 19s ❤️ 3 🛡️ 0
+- button "🌳 0"
+- text: "Pontos: 180 Inimigos: 3 Bombas: 3 Alcance: 2"
 ```
 
 # Test source
@@ -55,8 +45,7 @@ Call log:
   9  |     });
   10 |     page.on('pageerror', err => console.log('PAGE ERROR:', err.message));
   11 |     
-> 12 |     await page.goto('http://localhost:4000');
-     |                ^ Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4000/
+  12 |     await page.goto('http://localhost:4000');
   13 |     
   14 |     // Wait for game to initialize
   15 |     await page.waitForSelector('canvas', { state: 'visible' });
@@ -64,7 +53,8 @@ Call log:
   17 |     
   18 |     // Click start button (no paywall in dev mode)
   19 |     const startBtn = page.locator('button.restart-btn');
-  20 |     await expect(startBtn).not.toHaveClass(/disabled/, { timeout: 10000 });
+> 20 |     await expect(startBtn).not.toHaveClass(/disabled/, { timeout: 10000 });
+     |                                ^ Error: expect(locator).not.toHaveClass(expected) failed
   21 |     console.log('Start button enabled, clicking...');
   22 |     await startBtn.click();
   23 |     await page.waitForTimeout(3000);
@@ -78,19 +68,22 @@ Call log:
   31 |     console.log('Waiting for timer to run out...');
   32 |     await page.waitForTimeout(35000);
   33 |     
-  34 |     // Check if death skill draft appears - wait for it to be attached first
-  35 |     const deathDraft = page.locator('app-death-skill-draft');
-  36 |     await deathDraft.waitFor({ state: 'attached', timeout: 10000 });
-  37 |     console.log('Death skill draft attached!');
-  38 |     
-  39 |     // Check available skills
-  40 |     const skillCards = page.locator('.card');
-  41 |     const count = await skillCards.count();
-  42 |     console.log('Available cards count:', count);
-  43 |     expect(count).toBeGreaterThan(0);
-  44 |     
-  45 |     // Take screenshot
-  46 |     await page.screenshot({ path: 'e2e/screenshots/death-draft-test.png', fullPage: true });
-  47 |   });
-  48 | });
+  34 |     // Wait a bit more for Angular to process the state change
+  35 |     await page.waitForTimeout(1000);
+  36 |     
+  37 |     // Check if death skill draft appears - wait for it to be attached first
+  38 |     const deathDraft = page.locator('app-death-skill-draft');
+  39 |     await deathDraft.waitFor({ state: 'attached', timeout: 15000 });
+  40 |     console.log('Death skill draft attached!');
+  41 |     
+  42 |     // Check available skills
+  43 |     const skillCards = page.locator('.card');
+  44 |     const count = await skillCards.count();
+  45 |     console.log('Available cards count:', count);
+  46 |     expect(count).toBeGreaterThan(0);
+  47 |     
+  48 |     // Take screenshot
+  49 |     await page.screenshot({ path: 'e2e/screenshots/death-draft-test.png', fullPage: true });
+  50 |   });
+  51 | });
 ```
