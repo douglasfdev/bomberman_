@@ -134,7 +134,14 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     if (isPlatformBrowser(this.platformId)) {
       this.input.attach();
       this.isTouch = this.input.isTouchDevice();
-      this.actionSub = this.input.action$.subscribe(() => this.logic.plantBomb());
+      this.actionSub = this.input.action$.subscribe(() => {
+        // Se tiver remoteDetonate, SPACE detona; senão planta bomba
+        if ((this.logic as any).player?.remoteDetonate) {
+          this.logic.remoteDetonate();
+        } else {
+          this.logic.plantBomb();
+        }
+      });
     }
   }
 
@@ -201,18 +208,18 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-private async handleTimeUp(): Promise<void> {
+  private async handleTimeUp(): Promise<void> {
     const run = this.runState.currentRun();
     if (!run) return;
     if (this.gamePhase() === GamePhase.Defeat || this.gamePhase() === GamePhase.RunEnd) return;
-    
+
     // Apply score multiplier
     const baseScore = this.logic.score();
     const multiplier = this.runState.getScoreMultiplier();
     const finalScore = Math.floor(baseScore * multiplier);
-    
+
     this.deathDraftScore.set(finalScore);
-    
+
     // End the run on backend (ignore errors in dev/local mode)
     await this.runState.endRun({
       score: finalScore,
@@ -221,7 +228,7 @@ private async handleTimeUp(): Promise<void> {
     }).catch(e => {
       console.warn('[Game] End run failed (continuing without backend):', e);
     });
-    
+
     // Show death skill draft
     this.logic.gamePhase.set(GamePhase.Defeat);
     this.showDeathSkillDraft.set(true);
@@ -229,8 +236,10 @@ private async handleTimeUp(): Promise<void> {
 
   async onDeathSkillDraftConfirm(cardKey: string): Promise<void> {
     this.showDeathSkillDraft.set(false);
+    setTimeout(() => {
+      this.logic.gamePhase.set(GamePhase.RunEnd);
+    }, 100);
     try {
-      // Apply the chosen card as a permanent upgrade for the next run
       const run = this.runState.currentRun();
       if (run && run.id.startsWith('local-')) {
         const choice = {
@@ -256,18 +265,15 @@ private async handleTimeUp(): Promise<void> {
             choices: [...r.choices, choice],
           };
         });
-        // Recompute synergies
         this.runState.recomputeSynergies?.();
-        // APLICAR OS EFEITOS DOS UPGRADES NO JOGO!
-        this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
+        const upgrades = this.runState.upgrades();
+        this.bootstrap.getUpgradeApplier().applyUpgrades(upgrades);
+        this.bootstrap.getGameLogic()?.syncPlayerWithUpgrades?.();
       }
-      // Reload to ensure skills persist for next run
       await this.skillTree.load();
     } catch (e) {
       console.error('Erro ao confirmar upgrade:', e);
     }
-    // Go to run end screen
-    this.logic.gamePhase.set(GamePhase.RunEnd);
   }
 
   onDeathSkillDraftClose(): void {
@@ -408,9 +414,22 @@ private async handleTimeUp(): Promise<void> {
   }
 
 restart(): void {
-    // Carregar upgrades atuais antes de iniciar nova run
+    // Carregar upgrades da run atual
     const currentRun = this.runState.currentRun();
     const currentUpgrades = currentRun ? [...currentRun.upgrades] : [];
+
+    // Coletar nomes das skills fixas já compradas (são strings)
+    const treeSkillKeys: string[] = [];
+    const userSkillsMap = (this.skillTree as any).state?.()?.userSkills as Map<string, any> | undefined;
+    if (userSkillsMap) {
+      for (const [key, userSkill] of userSkillsMap) {
+        if (userSkill && userSkill.level > 0) {
+          for (let i = 0; i < userSkill.level; i++) {
+            treeSkillKeys.push(key);
+          }
+        }
+      }
+    }
 
     clearInterval(this.timerInterval);
     this.canPlay.set(true);
@@ -418,13 +437,48 @@ restart(): void {
 
     this.runState.startRun().then(() => {
       this.logic.restart();
-      
-      // Aplicar upgrades da run anterior à nova run
+
+      // Aplicar upgrades (cartas + skills fixas) à nova run
       const newRun = this.runState.currentRun();
-      if (newRun && currentUpgrades.length > 0) {
-        newRun.upgrades = [...newRun.upgrades, ...currentUpgrades];
-        this.bootstrap.getUpgradeApplier().applyUpgrades(currentUpgrades);
+      if (!newRun) return;
+
+      const existingKeys = new Set(newRun.upgrades.map(u => u.cardKey));
+      const upgradesToAdd: typeof newRun.upgrades = [];
+      const now = Date.now();
+
+      // Adicionar upgrades de carta da run anterior
+      for (const u of currentUpgrades) {
+        if (!existingKeys.has(u.cardKey)) {
+          upgradesToAdd.push({
+            id: 'local-card-' + now + '-' + u.cardKey,
+            runId: newRun.id,
+            cardKey: u.cardKey,
+            stacks: u.stacks ?? 1,
+            createdAt: new Date(),
+          });
+          existingKeys.add(u.cardKey);
+        }
+      }
+
+      // Adicionar upgrades de skills fixas da árvore
+      for (const key of treeSkillKeys) {
+        if (!existingKeys.has(key)) {
+          upgradesToAdd.push({
+            id: 'local-tree-' + now + '-' + key,
+            runId: newRun.id,
+            cardKey: key,
+            stacks: 1,
+            createdAt: new Date(),
+          });
+          existingKeys.add(key);
+        }
+      }
+
+      if (upgradesToAdd.length > 0) {
+        newRun.upgrades = [...newRun.upgrades, ...upgradesToAdd];
+        this.bootstrap.getUpgradeApplier().applyUpgrades(upgradesToAdd);
         this.runState.recomputeSynergies();
+        this.bootstrap.getGameLogic()?.syncPlayerWithUpgrades?.();
       }
     });
   }

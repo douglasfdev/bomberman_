@@ -9,73 +9,71 @@ import { Card } from '../../core/models/card.model';
   standalone: true,
   imports: [CommonModule],
   template: `
-    @if (isOpen()) {
-      <div class="death-draft-overlay" (click)="close.emit()">
-        <div class="death-draft-container" (click)="$event.stopPropagation()">
-          <header class="death-draft-header">
-            <h2>Fim da Run</h2>
-            <p class="phase-info">
-              Pontuação: {{ score() }} | SP ganhos para a Árvore: <span class="sp-value">{{ earnedSP() }}</span> (1 SP / 1000 pts)
-            </p>
-            <p class="sp-info">Escolha sua carta de upgrade para a próxima run ou recompensa:</p>
-          </header>
+    <div class="death-draft-overlay" (click)="close.emit()">
+      <div class="death-draft-container" (click)="$event.stopPropagation()">
+        <header class="death-draft-header">
+          <h2>Fim da Run</h2>
+          <p class="phase-info">
+            Pontuação: {{ score() }} | SP ganhos para a Árvore: <span class="sp-value">{{ earnedSP() }}</span> (1 SP / 1000 pts)
+          </p>
+          <p class="sp-info">Escolha sua carta de upgrade para a próxima run ou recompensa:</p>
+        </header>
 
-          <div class="cards-grid" role="list" aria-label="Cartas disponíveis">
-            @for (card of offeredCards(); track card.key; let i = $index) {
-              <article
-                class="card"
-                [class.selected]="selectedIndex() === i"
-                [class.card-category]="'cat-' + card.category.toLowerCase()"
-                role="listitem"
-                tabindex="0"
-                (click)="chooseCard(i)"
-                (keydown.enter)="chooseCard(i)"
-                (keydown.space)="chooseCard(i)"
-              >
-                <div class="card-icon">{{ card.icon }}</div>
-                <h3 class="card-name">{{ card.name }}</h3>
-                <p class="card-description">{{ card.description }}</p>
-                <div class="card-meta">
-                  <span class="rarity-badge">{{ card.rarity }}</span>
-                  <span class="category-badge">{{ card.category }}</span>
+        <div class="cards-grid" role="list" aria-label="Cartas disponíveis">
+          @for (card of offeredCards(); track card.key; let i = $index) {
+            <article
+              class="card"
+              [class.selected]="selectedIndex() === i"
+              [class.card-category]="'cat-' + card.category.toLowerCase()"
+              role="listitem"
+              tabindex="0"
+              (click)="chooseCard(i)"
+              (keydown.enter)="chooseCard(i)"
+              (keydown.space)="chooseCard(i)"
+            >
+              <div class="card-icon">{{ card.icon }}</div>
+              <h3 class="card-name">{{ card.name }}</h3>
+              <p class="card-description">{{ card.description }}</p>
+              <div class="card-meta">
+                <span class="rarity-badge">{{ card.rarity }}</span>
+                <span class="category-badge">{{ card.category }}</span>
+              </div>
+              @if (card.prerequisites.length > 0) {
+                <div class="prerequisites">
+                  Requer: {{ card.prerequisites.join(', ') }}
                 </div>
-                @if (card.prerequisites.length > 0) {
-                  <div class="prerequisites">
-                    Requer: {{ card.prerequisites.join(', ') }}
-                  </div>
-                }
-                @if (card.maxStacks > 1) {
-                  <div class="stacks">Máx: {{ card.maxStacks }}</div>
-                }
-                @if (card.synergyWith.length > 0) {
-                  <div class="synergy-hint">Sinergia: {{ card.synergyWith.join(', ') }}</div>
-                }
-              </article>
+              }
+              @if (card.maxStacks > 1) {
+                <div class="stacks">Máx: {{ card.maxStacks }}</div>
+              }
+              @if (card.synergyWith.length > 0) {
+                <div class="synergy-hint">Sinergia: {{ card.synergyWith.join(', ') }}</div>
+              }
+            </article>
+          }
+        </div>
+
+        <footer class="death-draft-footer">
+          <div class="selection-info">
+            @if (selectedIndex() === null) {
+              <span class="warning">Selecione uma carta de upgrade</span>
+            } @else {
+              <span class="ready">Pronto!</span>
             }
           </div>
-
-          <footer class="death-draft-footer">
-            <div class="selection-info">
-              @if (selectedIndex() === null) {
-                <span class="warning">Selecione uma carta de upgrade</span>
-              } @else {
-                <span class="ready">Pronto!</span>
-              }
-            </div>
-            <button
-              class="confirm-btn"
-              [disabled]="selectedIndex() === null"
-              (click)="confirmSelection()"
-            >
-              Confirmar Escolha
-            </button>
-            <button class="cancel-btn" (click)="close.emit()">
-              Pular / Fechar
-            </button>
-          </footer>
-        </div>
+          <button
+            class="confirm-btn"
+            [disabled]="selectedIndex() === null"
+            (click)="confirmSelection()"
+          >
+            Confirmar Escolha
+          </button>
+          <button class="cancel-btn" (click)="close.emit()">
+            Pular / Fechar
+          </button>
+        </footer>
       </div>
-    }
+    </div>
   `,
   styles: [`
     .death-draft-overlay {
@@ -295,7 +293,6 @@ export class DeathSkillDraftComponent implements OnInit {
   readonly score = input.required<number>();
   readonly close = output<void>();
   readonly confirmUpgrade = output<string>();
-  readonly isOpen = signal(true);
 
   private readonly cardPool = inject(CardPoolService);
   private readonly runState = inject(RunStateService);

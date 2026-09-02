@@ -1,6 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { SkillTreePersistenceService, SkillNode, UserSkill, SkillUpgradeCost } from './skill-tree-persistence.service';
 import { RunStateService } from './run-state.service';
+import { UpgradeApplierService } from './upgrade-applier.service';
 
 export type { SkillNode, UserSkill, SkillUpgradeCost };
 
@@ -17,6 +18,7 @@ interface SkillTreeState {
 export class SkillTreeService {
   private readonly persistence = inject(SkillTreePersistenceService);
   private readonly runState = inject(RunStateService);
+  private readonly upgradeApplier = inject(UpgradeApplierService);
 
   private state = signal<SkillTreeState>({
     nodes: new Map(),
@@ -52,9 +54,6 @@ export class SkillTreeService {
     const currentLevel = userSkill?.level ?? 0;
     if (currentLevel >= node.maxLevel) return null;
 
-    // Primeira habilidade custa 600 SP, depois cresce exponencialmente
-    // 600 + (600 * 2^level) = 600 * (1 + 2^level)
-    // Nível 0: 600 SP, Nível 1: 1800 SP, Nível 2: 4200 SP...
     const BASE_SKILL_COST = 600;
     const cost = Math.ceil(BASE_SKILL_COST * (1 + Math.pow(2, currentLevel)));
     const missingPrereqs = this.getMissingPrerequisites(node);
@@ -68,6 +67,12 @@ export class SkillTreeService {
       missingPrereqs,
     };
   });
+
+  private static readonly LOCAL_SKILL_NODES: SkillNode[] = [
+    { id: '', key: 'BOMB_PLUS_1', name: 'Bomba Extra', description: '+1 bomba simultânea', icon: '💣', baseCost: 1, costScaling: 1.5, maxLevel: 3, prerequisites: [], category: 'BOMB', positionX: 0.4, positionY: 0.5, effects: {}, isActive: false },
+    { id: '', key: 'RANGE_PLUS_1', name: 'Alcance', description: '+1 alcance de explosão', icon: '📏', baseCost: 1, costScaling: 1.5, maxLevel: 3, prerequisites: [], category: 'RANGE', positionX: 0.5, positionY: 0.3, effects: {}, isActive: false },
+    { id: '', key: 'TIME_BONUS', name: 'Bônus de Tempo', description: '+30s no timer', icon: '⏱️', baseCost: 1, costScaling: 1.5, maxLevel: 1, prerequisites: [], category: 'UTILITY', positionX: 0.6, positionY: 0.7, effects: {}, isActive: false },
+  ];
 
   async load(): Promise<void> {
     this.state.update(s => ({ ...s, isLoading: true, error: null }));
@@ -98,8 +103,16 @@ export class SkillTreeService {
         nodePositions,
       });
     } catch (e) {
-      this.state.update(s => ({ ...s, isLoading: false, error: 'Falha ao carregar skill tree' }));
-      throw e;
+      // Fallback para modo local se backend não estiver disponível
+      const nodesMap = new Map(SkillTreeService.LOCAL_SKILL_NODES.map(n => [n.key, n]));
+      this.state.update(s => ({
+        ...s,
+        isLoading: false,
+        error: 'Backend indisponível, usando modo local',
+        nodes: nodesMap,
+        userSkills: s.userSkills, // manter userSkills existentes
+        nodePositions: this.calculateNodePositions(SkillTreeService.LOCAL_SKILL_NODES),
+      }));
     }
   }
 
@@ -127,17 +140,83 @@ export class SkillTreeService {
       // Limpar upgrades de cartas da run atual (skill fixa = reset parcial)
       const run = this.runState.currentRun();
       if (run) {
-        // Remover todos os upgrades de cartas, manter apenas skill points
         run.upgrades = run.upgrades.filter(u => {
           const isCardUpgrade = u.cardKey && u.cardKey !== 'SCORE_MULTIPLIER';
           return !isCardUpgrade;
         });
+        // Adicionar skill fixa como upgrade para refletir no jogo
+        const userSkill = this.state().userSkills.get(skillKey);
+        if (userSkill && userSkill.level > 0) {
+          run.upgrades.push({
+            id: 'tree-' + skillKey + '-' + Date.now(),
+            runId: run.id,
+            cardKey: skillKey,
+            stacks: userSkill.level,
+            createdAt: new Date(),
+          });
+        }
         this.runState.recomputeSynergies();
+        // Aplicar imediatamente para o jogo atual
+this.upgradeApplier.applyUpgrades(run.upgrades);
       }
 
       return true;
     } catch (e: any) {
-      this.state.update(s => ({ ...s, isLoading: false, error: e.error?.error || 'Falha ao upar skill' }));
+      // Fallback local se backend estiver offline
+      const node = this.getNode(skillKey);
+      const BASE_SKILL_COST = 600;
+      if (!node) {
+        this.state.update(s => ({ ...s, isLoading: false, error: 'Skill não encontrada' }));
+        return false;
+      }
+
+      const currentSkill = this.state().userSkills.get(skillKey);
+      const currentLevel = currentSkill?.level ?? 0;
+      const newLevel = Math.min(currentLevel + 1, node.maxLevel);
+      const cost = Math.ceil(BASE_SKILL_COST * (1 + Math.pow(2, currentLevel)));
+
+      if (newLevel > currentLevel && this.userSkillPoints() >= cost) {
+        const localUserSkill: UserSkill = {
+          id: 'local-skill-' + skillKey + '-' + Date.now(),
+          userId: 'local',
+          skillKey,
+          level: newLevel,
+          skill: node,
+        };
+        this.state.update(s => {
+          const updated = new Map(s.userSkills);
+          updated.set(skillKey, localUserSkill);
+          return { ...s, userSkills: updated, isLoading: false };
+        });
+
+        // Limpar upgrades de cartas e aplicar skill fixa imediatamente
+        const run = this.runState.currentRun();
+        if (run) {
+          run.upgrades = run.upgrades.filter(u => {
+            const isCardUpgrade = u.cardKey && u.cardKey !== 'SCORE_MULTIPLIER';
+            return !isCardUpgrade;
+          });
+          // Adicionar skill fixa como upgrade
+          run.upgrades.push({
+            id: 'tree-' + skillKey + '-' + Date.now(),
+            runId: run.id,
+            cardKey: skillKey,
+            stacks: newLevel,
+            createdAt: new Date(),
+          });
+          this.runState.recomputeSynergies();
+          // Aplicar imediatamente
+          this.upgradeApplier.applyUpgrades(run.upgrades);
+        }
+
+        return true;
+      }
+
+      if (newLevel > node.maxLevel) {
+        this.state.update(s => ({ ...s, isLoading: false, error: 'Nível máximo atingido' }));
+      } else {
+        this.state.update(s => ({ ...s, isLoading: false, error: 'SP insuficiente' }));
+      }
       return false;
     }
   }
@@ -176,5 +255,16 @@ export class SkillTreeService {
 
   clearError(): void {
     this.state.update(s => ({ ...s, error: null }));
+  }
+
+  private calculateNodePositions(nodes: SkillNode[]): Map<string, { x: number; y: number }> {
+    const positions = new Map<string, { x: number; y: number }>();
+    nodes.forEach(node => {
+      positions.set(node.key, {
+        x: node.positionX * 1200,
+        y: node.positionY * 800,
+      });
+    });
+    return positions;
   }
 }

@@ -18,11 +18,13 @@ export class RogueliteBootstrapService {
   private readonly enemyScaler = inject(EnemyScalerService);
   private readonly synergyEngine = inject(SynergyEngineService);
   private readonly persistence = inject(RunPersistenceService);
+  private _gameLogic: GameLogicService | null = null;
 
   private initialized = false;
 
   async initialize(gameLogic: GameLogicService): Promise<void> {
     if (this.initialized) return;
+    this._gameLogic = gameLogic;
 
     this.upgradeApplier.setGameLogic(gameLogic);
     this.upgradeApplier.setRunState(this.runState);
@@ -115,4 +117,5 @@ export class RogueliteBootstrapService {
   getUpgradeApplier() { return this.upgradeApplier; }
   getEnemyScaler() { return this.enemyScaler; }
   getSynergyEngine() { return this.synergyEngine; }
+  getGameLogic() { return this._gameLogic; }
 }

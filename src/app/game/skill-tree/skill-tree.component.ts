@@ -27,7 +27,9 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   // ViewBox computed for SVG
   readonly viewBox = computed(() => {
     const canvas = this.panzoomElement?.nativeElement;
-    if (!canvas) return '0 0 1200 800';
+    if (!canvas) {
+      return '0 0 1200 800';
+    }
     const rect = canvas.getBoundingClientRect();
     return `0 0 ${rect.width} ${rect.height}`;
   });

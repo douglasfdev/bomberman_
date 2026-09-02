@@ -11,7 +11,7 @@ export enum GamePhase {
 }
 
 export interface PowerUpDrop {
-  readonly position: GridPosition;
+  position: GridPosition;
   readonly type: PowerUpType;
 }
 

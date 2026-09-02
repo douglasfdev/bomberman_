@@ -408,6 +408,13 @@ export class RunStateService {
     });
   }
 
+  addSkillPoints(points: number): void {
+    this.currentRun.update((r) => {
+      if (!r) return r;
+      return { ...r, skillPoints: r.skillPoints + points };
+    });
+  }
+
   getScoreMultiplier(): number {
     const run = this.currentRun();
     if (!run) return 1;
