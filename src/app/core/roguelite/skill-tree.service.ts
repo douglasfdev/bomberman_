@@ -63,7 +63,7 @@ export class SkillTreeService {
       currentLevel,
       nextLevel: currentLevel + 1,
       cost,
-      canAfford: missingPrereqs.length === 0, // SP check done in backend
+      canAfford: missingPrereqs.length === 0,
       missingPrereqs,
     };
   });
@@ -85,7 +85,6 @@ export class SkillTreeService {
       const nodesMap = new Map(nodes.map(n => [n.key, n]));
       const userSkillsMap = new Map(userSkills.map(us => [us.skillKey, us]));
 
-      // Calculate node positions
       const nodePositions = new Map<string, { x: number; y: number }>();
       nodes.forEach(node => {
         nodePositions.set(node.key, {
@@ -103,14 +102,13 @@ export class SkillTreeService {
         nodePositions,
       });
     } catch (e) {
-      // Fallback para modo local se backend não estiver disponível
       const nodesMap = new Map(SkillTreeService.LOCAL_SKILL_NODES.map(n => [n.key, n]));
       this.state.update(s => ({
         ...s,
         isLoading: false,
         error: 'Backend indisponível, usando modo local',
         nodes: nodesMap,
-        userSkills: s.userSkills, // manter userSkills existentes
+        userSkills: s.userSkills,
         nodePositions: this.calculateNodePositions(SkillTreeService.LOCAL_SKILL_NODES),
       }));
     }
@@ -137,14 +135,12 @@ export class SkillTreeService {
         return { ...s, userSkills, isLoading: false };
       });
 
-      // Limpar upgrades de cartas da run atual (skill fixa = reset parcial)
       const run = this.runState.currentRun();
       if (run) {
         run.upgrades = run.upgrades.filter(u => {
           const isCardUpgrade = u.cardKey && u.cardKey !== 'SCORE_MULTIPLIER';
           return !isCardUpgrade;
         });
-        // Adicionar skill fixa como upgrade para refletir no jogo
         const userSkill = this.state().userSkills.get(skillKey);
         if (userSkill && userSkill.level > 0) {
           run.upgrades.push({
@@ -156,13 +152,11 @@ export class SkillTreeService {
           });
         }
         this.runState.recomputeSynergies();
-        // Aplicar imediatamente para o jogo atual
-this.upgradeApplier.applyUpgrades(run.upgrades);
+        this.upgradeApplier.applyUpgrades(run.upgrades);
       }
 
       return true;
     } catch (e: any) {
-      // Fallback local se backend estiver offline
       const node = this.getNode(skillKey);
       const BASE_SKILL_COST = 600;
       if (!node) {
@@ -189,14 +183,13 @@ this.upgradeApplier.applyUpgrades(run.upgrades);
           return { ...s, userSkills: updated, isLoading: false };
         });
 
-        // Limpar upgrades de cartas e aplicar skill fixa imediatamente
         const run = this.runState.currentRun();
         if (run) {
           run.upgrades = run.upgrades.filter(u => {
             const isCardUpgrade = u.cardKey && u.cardKey !== 'SCORE_MULTIPLIER';
             return !isCardUpgrade;
           });
-          // Adicionar skill fixa como upgrade
+
           run.upgrades.push({
             id: 'tree-' + skillKey + '-' + Date.now(),
             runId: run.id,
@@ -205,7 +198,6 @@ this.upgradeApplier.applyUpgrades(run.upgrades);
             createdAt: new Date(),
           });
           this.runState.recomputeSynergies();
-          // Aplicar imediatamente
           this.upgradeApplier.applyUpgrades(run.upgrades);
         }
 
