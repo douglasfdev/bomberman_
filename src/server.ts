@@ -39,7 +39,14 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
-  server.set('trust proxy', 'loopback');
+  // Trust proxy headers from Nginx Proxy Manager (or any reverse proxy)
+  // 'true' = trust all proxies, '1' = first proxy only, 'loopback' = loopback only
+  server.set('trust proxy', true);
+
+  server.set('view engine', 'html');
+  server.set('views', browserDistFolder);
+
+  server.set('trust proxy', true);
 
   server.use(express.json());
   server.use(express.urlencoded({ extended: true }));
@@ -51,8 +58,10 @@ export function app(): express.Express {
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
-        secure: false,          // HTTP, não HTTPS
-        sameSite: 'lax',        // necessário para o redirect do Google OAuth funcionar
+        // secure: true = HTTPS required (production). 
+        // In dev (localhost), false. In production (HTTPS), true.
+        secure: process.env['NODE_ENV'] === 'production',
+        sameSite: 'lax',
         maxAge: 24 * 60 * 60 * 1000,
       },
     })
