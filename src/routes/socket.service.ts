@@ -2,6 +2,7 @@ import { Inject, Injectable, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment.prod';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ export class SocketService implements OnDestroy {
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {
     if (isPlatformBrowser(this.platformId)) {
       // A conexão só é iniciada no navegador
-      this.socket = io('http://localhost:4000'); // URL do seu servidor Socket.io
+      this.socket = io(environment.apiBaseUrl); // URL do seu servidor Socket.io
     }
   }
 
