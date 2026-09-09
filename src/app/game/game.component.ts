@@ -340,9 +340,7 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
 
     try {
       const result = await this.runState.resetRunForPrestige(cardKeys);
-      // Apply the prestige upgrades to the game logic
       this.bootstrap.getUpgradeApplier().applyUpgrades(this.runState.upgrades());
-      // Restart the game with new run
       this.logic.restart();
     } catch (e) {
       console.error('Erro ao fazer prestígio:', e);
@@ -359,20 +357,11 @@ export class GameComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/achievements']);
   }
 
-  // Atualizado para aceitar e verificar o estado de login
   private enforcePaywall(isDonor: boolean, isLoggedIn: boolean): void {
     if (!isPlatformBrowser(this.platformId)) return;
     clearInterval(this.timerInterval);
 
-    // Skip paywall in development mode for faster testing
-    // Check multiple ways to detect dev mode
-    const isDev = !environment.production ||
-      (typeof window !== 'undefined' && window.location.hostname === 'localhost') ||
-      (typeof window !== 'undefined' && window.location.hostname === '127.0.0.1');
-
-    console.log('[Game] enforcePaywall:', { isDonor, isLoggedIn, isDev, canPlay: this.canPlay() });
-
-    if (isDonor || isLoggedIn || isDev) {
+    if (isDonor || isLoggedIn) {
       this.canPlay.set(true);
       this.waitTimer.set(0);
     } else {
@@ -438,7 +427,6 @@ restart(): void {
     this.runState.startRun().then(() => {
       this.logic.restart();
 
-      // Aplicar upgrades (cartas + skills fixas) à nova run
       const newRun = this.runState.currentRun();
       if (!newRun) return;
 
@@ -446,7 +434,6 @@ restart(): void {
       const upgradesToAdd: typeof newRun.upgrades = [];
       const now = Date.now();
 
-      // Adicionar upgrades de carta da run anterior
       for (const u of currentUpgrades) {
         if (!existingKeys.has(u.cardKey)) {
           upgradesToAdd.push({
@@ -460,7 +447,6 @@ restart(): void {
         }
       }
 
-      // Adicionar upgrades de skills fixas da árvore
       for (const key of treeSkillKeys) {
         if (!existingKeys.has(key)) {
           upgradesToAdd.push({
