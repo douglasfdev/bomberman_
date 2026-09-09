@@ -23,6 +23,7 @@ import skinRoutes from './routes/skinRoutes';
 import achievementRoutes from './routes/achievementRoutes';
 import rogueliteRoutes from './routes/rogueliteRoutes';
 import skillRoutes from './routes/skillRoutes';
+import { environment } from './environments/environment';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
@@ -78,7 +79,7 @@ export function app(): express.Express {
         {
           clientID: process.env['GOOGLE_CLIENT_ID'],
           clientSecret: process.env['GOOGLE_CLIENT_SECRET'],
-          callbackURL: (process.env['APP_BASE_URL'] || '') + '/auth/google/callback',
+          callbackURL: environment.apiBaseUrl + '/auth/google/callback',
           scope: ['profile', 'email'],
         },
         async (accessToken: any, refreshToken: any, profile: any, done: any) => {
