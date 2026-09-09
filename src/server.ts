@@ -23,7 +23,7 @@ import skinRoutes from './routes/skinRoutes';
 import achievementRoutes from './routes/achievementRoutes';
 import rogueliteRoutes from './routes/rogueliteRoutes';
 import skillRoutes from './routes/skillRoutes';
-import { environment } from './environments/environment';
+import { environment } from './environments/environment.prod';
 
 const serverDir = dirname(fileURLToPath(import.meta.url));
 const browserDistFolder = resolve(serverDir, '../browser');
@@ -87,39 +87,39 @@ export function app(): express.Express {
             const email = profile.emails?.[0]?.value?.toLowerCase().trim();
             if (!email) return done(new Error('No email provided'));
 
-          let user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
+            let user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
 
-          if (user) {
-            if (user.email !== email || user.name !== profile.displayName) {
-              user = await prismaClient.user.update({
-                where: { googleId: profile.id },
-                data: { email, name: profile.displayName },
-              });
-            }
-          } else {
-            try {
-              user = await prismaClient.user.upsert({
-                where: { email },
-                update: { name: profile.displayName, googleId: profile.id },
-                create: { email, name: profile.displayName, googleId: profile.id },
-              });
-            } catch (err: any) {
-              if (err?.code === 'P2002') {
-                user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
-                if (!user) throw err;
-              } else {
-                throw err;
+            if (user) {
+              if (user.email !== email || user.name !== profile.displayName) {
+                user = await prismaClient.user.update({
+                  where: { googleId: profile.id },
+                  data: { email, name: profile.displayName },
+                });
+              }
+            } else {
+              try {
+                user = await prismaClient.user.upsert({
+                  where: { email },
+                  update: { name: profile.displayName, googleId: profile.id },
+                  create: { email, name: profile.displayName, googleId: profile.id },
+                });
+              } catch (err: any) {
+                if (err?.code === 'P2002') {
+                  user = await prismaClient.user.findUnique({ where: { googleId: profile.id } });
+                  if (!user) throw err;
+                } else {
+                  throw err;
+                }
               }
             }
-          }
 
-          return done(null, user);
-        } catch (error) {
-          return done(error);
+            return done(null, user);
+          } catch (error) {
+            return done(error);
+          }
         }
-      }
-    )
-  );
+      )
+    );
   } // fim do if GOOGLE_CLIENT_ID
 
   // --- MUDANÇAS DE ROTA AQUI ---
