@@ -241,8 +241,8 @@ export class GameLogicService {
     this.player = {
       position: { ...this.level.playerSpawn },
       alive: true,
-      maxBombs: this.maxBombs(),
-      range: this.range(),
+      maxBombs: Math.max(1, this.maxBombs()),
+      range: Math.max(1, this.range()),
       moveDurationMs: BASE_MOVE_DURATION_MS,
       pierce: this.pierce(),
       freezeBomb: this.player.freezeBomb,
@@ -331,6 +331,18 @@ export class GameLogicService {
     const delta = directionDelta(direction!);
     const target = { x: this.player.position.x + delta.x, y: this.player.position.y + delta.y };
 
+    // Verifica se há uma bomba no alvo (BOMB_KICK)
+    const targetBombIndex = this.bombs.findIndex(b => samePosition(b.position, target));
+    if (targetBombIndex >= 0 && this.player.canKick) {
+      // Tentar empurrar a bomba
+      if (this.kickBomb(targetBombIndex, direction!)) {
+        // Após empurrar, mover para a posição original da bomba
+        // (Não bloqueia o movimento)
+      } else {
+        return;
+      }
+    }
+
     if (!this.level.isInBounds(target) || !this.level.isWalkable(target)) return;
     if (this.bombs.some(b => samePosition(b.position, target))) return;
 
@@ -364,6 +376,47 @@ export class GameLogicService {
     }
   }
 
+  /** Detona remotamente a bomba mais antiga do jogador (REMOTE_DETONATE) */
+  remoteDetonate(): void {
+    if (this.gamePhase() !== GamePhase.Playing || !this.player.alive) return;
+    if (!this.player.remoteDetonate) return;
+
+    const oldestBomb = this.bombs
+      .filter(b => b.planterId === 'player')
+      .sort((a, b) => a.plantedAtMs - b.plantedAtMs)[0];
+    if (!oldestBomb) return;
+
+    // Forçar detonação imediata: definir plantedAtMs para o passado
+    oldestBomb.plantedAtMs = performance.now() - BOMB_FUSE_MS - 1;
+  }
+
+  /** Empurra a bomba para a próxima posição (BOMB_KICK) */
+  kickBomb(bombIndex: number, direction: Direction): boolean {
+    if (!this.player.canKick) return false;
+    if (bombIndex < 0 || bombIndex >= this.bombs.length) return false;
+    const bomb = this.bombs[bombIndex];
+    if (bomb.planterId !== 'player') return false;
+
+    const delta = directionDelta(direction);
+    const newPos = { x: bomb.position.x + delta.x, y: bomb.position.y + delta.y };
+
+    // Não empurra se fora dos limites
+    if (!this.level.isInBounds(newPos)) return false;
+    // Não empurra se tiver parede ou caixa (não-walkable)
+    if (!this.level.isWalkable(newPos)) return false;
+    // Não empurra se tiver outra bomba
+    if (this.bombs.some(b => b !== bomb && samePosition(b.position, newPos))) return false;
+
+    bomb.position.x = newPos.x;
+    bomb.position.y = newPos.y;
+    return true;
+  }
+
+  /** Retorna alcance do ímã (MAGNET) */
+  getMagnetRange(): number {
+    return this.player.magnetRange ?? 0;
+  }
+
   applySpeedStacks(stacks: number): void {
     const step = SPEED_STEP_MS * stacks;
     const newDuration = Math.max(MIN_MOVE_DURATION_MS, this.player.moveDurationMs - step);
@@ -377,6 +430,26 @@ export class GameLogicService {
 
   getPlayerProperty<K extends keyof PlayerState>(key: K): PlayerState[K] {
     return this.player[key];
+  }
+
+  syncPlayerWithUpgrades(): void {
+    this.player.maxBombs = Math.max(1, this.maxBombs());
+    this.player.range = Math.max(1, this.range());
+    this.player.pierce = this.pierce();
+    this.player.canKick = this.player.canKick;
+    this.player.remoteDetonate = this.player.remoteDetonate;
+    this.player.megaBombCharges = this.player.megaBombCharges;
+    this.player.ghostWalkCd = this.player.ghostWalkCd;
+    this.player.magnetRange = this.player.magnetRange;
+    this.player.freezeBomb = this.player.freezeBomb;
+    this.player.lifeSteal = this.player.lifeSteal;
+    this.player.revenge = this.player.revenge;
+    this.player.reflect = this.player.reflect;
+    this.player.shatter = this.player.shatter;
+    this.player.ricochet = this.player.ricochet;
+    this.player.vampirism = this.player.vampirism;
+    this.player.bossSlayer = this.player.bossSlayer;
+    this.player.revenge = this.player.revenge;
   }
 
   private updatePlayer(elapsed: number): void {
@@ -955,6 +1028,23 @@ export class GameLogicService {
       }
       if (killsThisExplosion >= 3) {
         this.achievements.unlock('BOMB_MASTER');
+      }
+    }
+
+    // MAGNET: Puxar power-ups próximos para o player
+    if (this.player.magnetRange > 0) {
+      const magnetRange = this.player.magnetRange;
+      for (const pu of this.powerUps) {
+        const dx = this.player.position.x - pu.position.x;
+        const dy = this.player.position.y - pu.position.y;
+        const dist = Math.abs(dx) + Math.abs(dy);
+        if (dist > 0 && dist <= magnetRange) {
+          // Move em direção ao player
+          if (dx > 0) pu.position.x++;
+          else if (dx < 0) pu.position.x--;
+          if (dy > 0) pu.position.y++;
+          else if (dy < 0) pu.position.y--;
+        }
       }
     }
 

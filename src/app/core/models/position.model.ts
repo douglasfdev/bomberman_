@@ -1,6 +1,6 @@
 export interface GridPosition {
-  readonly x: number;
-  readonly y: number;
+  x: number;
+  y: number;
 }
 
 export function samePosition(a: GridPosition, b: GridPosition): boolean {
