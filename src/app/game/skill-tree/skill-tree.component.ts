@@ -24,6 +24,10 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   private resizeObserver: ResizeObserver | null = null;
   private readonly nodePositions = new Map<string, { x: number; y: number }>();
 
+  private isDragging = false;
+  private lastMousePosition = { x: 0, y: 0 };
+  private dragDelayTimeout: any = null;
+
   // ViewBox computed for SVG
   readonly viewBox = computed(() => {
     const canvas = this.panzoomElement?.nativeElement;
@@ -53,7 +57,7 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
         }
       });
     });
-    
+
     this.resizeObserver = new ResizeObserver(() => this.calculateViewport());
     this.resizeObserver.observe(this.container.nativeElement);
   }
@@ -219,8 +223,18 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
     });
 
     // Bind wheel zoom to the canvas element
-    canvas.addEventListener('wheel', (event) => {
+    // Using passive: false allows preventDefault
+    canvas.addEventListener('wheel', (event: WheelEvent) => {
+      event.preventDefault();
       this.panzoomInstance.zoomWithWheel(event);
+    }, { passive: false });
+
+    // Also allow ctrl+scroll to zoom
+    canvas.addEventListener('wheel', (event: WheelEvent) => {
+      if (event.ctrlKey) {
+        event.preventDefault();
+        this.panzoomInstance.zoomWithWheel(event);
+      }
     }, { passive: false });
 
     // Exclude interactive elements from panzoom
@@ -228,5 +242,62 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
     canvas.querySelectorAll('.skill-node, .skill-tooltip-panel, .reset-btn, .close-btn, .tooltip-close, .upgrade-btn, .zoom-in-btn, .zoom-out-btn, .skill-tree-header').forEach(el => {
       el.classList.add(excludeClass);
     });
+
+    // Add mouse event listeners for panning
+    canvas.addEventListener('mousedown', (event) => {
+      this.startPanning(event);
+    });
+
+    canvas.addEventListener('mousemove', (event) => {
+      this.onPan(event);
+    });
+
+    window.addEventListener('mouseup', () => {
+      this.endPanning();
+    });
+  }
+
+  startPanning(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    // Don't start panning if clicking on an excluded element
+    if (target && target.classList?.contains('panzoom-exclude')) {
+      return;
+    }
+
+    this.isDragging = true;
+    this.lastMousePosition = {
+      x: event.clientX,
+      y: event.clientY,
+    };
+
+    // Clear any existing drag delay timeout
+    if (this.dragDelayTimeout) {
+      clearTimeout(this.dragDelayTimeout);
+      this.dragDelayTimeout = null;
+    }
+  }
+
+  onPan(event: MouseEvent): void {
+    if (!this.isDragging) return;
+
+    const deltaX = event.clientX - this.lastMousePosition.x;
+    const deltaY = event.clientY - this.lastMousePosition.y;
+
+    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+      this.lastMousePosition = {
+        x: event.clientX,
+        y: event.clientY,
+      };
+
+      this.panzoomInstance?.pan({
+        x: deltaX,
+        y: deltaY,
+        animate: false,
+      });
+    }
+  }
+
+  endPanning(): void {
+    this.isDragging = false;
   }
 }

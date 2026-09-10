@@ -15,6 +15,7 @@ import { createServer } from 'node:http';
 import session from 'express-session';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import cors from 'cors';
 import { prismaClient } from './services/prisma';
 import { PrismaPg } from "@prisma/adapter-pg";
 import paymentRoutes from './routes/paymentRoutes';
@@ -51,6 +52,15 @@ export function app(): express.Express {
 
   server.use(express.json());
   server.use(express.urlencoded({ extended: true }));
+
+  // CORS configuration - allow the mobile dev origin
+  server.use(
+    cors({
+      origin: [String(process.env['APP_BASE_URL']), 'https://namrebmob.duckdns.org', 'http://localhost:4000', 'http://127.0.0.1:4000'],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    })
+  );
 
   server.use(
     session({
