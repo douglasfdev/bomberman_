@@ -24,10 +24,6 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
   private resizeObserver: ResizeObserver | null = null;
   private readonly nodePositions = new Map<string, { x: number; y: number }>();
 
-  private isDragging = false;
-  private lastMousePosition = { x: 0, y: 0 };
-  private dragDelayTimeout: any = null;
-
   // ViewBox computed for SVG
   readonly viewBox = computed(() => {
     const canvas = this.panzoomElement?.nativeElement;
@@ -238,66 +234,14 @@ export class SkillTreeComponent implements OnInit, OnDestroy {
     }, { passive: false });
 
     // Exclude interactive elements from panzoom
+    // This is crucial - skill nodes and buttons must be excluded from pan/zoom
     const excludeClass = 'panzoom-exclude';
     canvas.querySelectorAll('.skill-node, .skill-tooltip-panel, .reset-btn, .close-btn, .tooltip-close, .upgrade-btn, .zoom-in-btn, .zoom-out-btn, .skill-tree-header').forEach(el => {
       el.classList.add(excludeClass);
     });
 
-    // Add mouse event listeners for panning
-    canvas.addEventListener('mousedown', (event) => {
-      this.startPanning(event);
-    });
-
-    canvas.addEventListener('mousemove', (event) => {
-      this.onPan(event);
-    });
-
-    window.addEventListener('mouseup', () => {
-      this.endPanning();
-    });
-  }
-
-  startPanning(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    // Don't start panning if clicking on an excluded element
-    if (target && target.classList?.contains('panzoom-exclude')) {
-      return;
-    }
-
-    this.isDragging = true;
-    this.lastMousePosition = {
-      x: event.clientX,
-      y: event.clientY,
-    };
-
-    // Clear any existing drag delay timeout
-    if (this.dragDelayTimeout) {
-      clearTimeout(this.dragDelayTimeout);
-      this.dragDelayTimeout = null;
-    }
-  }
-
-  onPan(event: MouseEvent): void {
-    if (!this.isDragging) return;
-
-    const deltaX = event.clientX - this.lastMousePosition.x;
-    const deltaY = event.clientY - this.lastMousePosition.y;
-
-    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-      this.lastMousePosition = {
-        x: event.clientX,
-        y: event.clientY,
-      };
-
-      this.panzoomInstance?.pan({
-        x: deltaX,
-        y: deltaY,
-        animate: false,
-      });
-    }
-  }
-
-  endPanning(): void {
-    this.isDragging = false;
+    // No need for custom mousedown/mousemove listeners - Panzoom handles natively
+    // when panOnlyWhenZoomed is false. The excludeClass ensures skill nodes
+    // don't interfere with the drag operations.
   }
 }
